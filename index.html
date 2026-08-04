@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>えいご　ドラゴンクエスト</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ░░ 背景タイルレイヤー ░░ -->
+  <div class="bg-tiles" aria-hidden="true"></div>
+
+  <!-- ░░ エフェクトレイヤー ░░ -->
+  <div id="effect-layer" aria-hidden="true"></div>
+
+  <!-- ══════════════════════════════════════
+       アイテムゲット 演出
+  ══════════════════════════════════════ -->
+  <div id="item-drop-overlay" class="dq-overlay hidden" role="dialog" aria-modal="true" aria-label="アイテムゲット">
+    <div class="dq-modal item-drop-modal">
+      <div class="dq-modal-title">✨ アイテムゲット！ ✨</div>
+      <div class="item-drop-icon" id="item-drop-icon">⚔️</div>
+      <div class="item-drop-name" id="item-drop-name">どうのつるぎ</div>
+      <div class="item-drop-type" id="item-drop-type">武器</div>
+      <div class="item-drop-stat" id="item-drop-stat">ATK+1</div>
+      <div class="item-drop-msg" id="item-drop-msg">インベントリに追加した！</div>
+      <button id="item-drop-close" class="dq-btn dq-btn-gold">とじる</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       レベルアップ 演出
+  ══════════════════════════════════════ -->
+  <div id="levelup-overlay" class="dq-overlay hidden" role="dialog" aria-modal="true" aria-label="レベルアップ">
+    <div class="dq-modal levelup-modal">
+      <div class="dq-modal-title">★ LEVEL UP!! ★</div>
+      <div class="levelup-hero" id="lu-hero">🧙</div>
+      <div class="levelup-lv"  id="lu-lv">Lv. 2</div>
+      <div class="levelup-name" id="lu-name">みならいまほうつかい</div>
+      <div class="levelup-stats" id="lu-stats"></div>
+      <button id="lu-close" class="dq-btn dq-btn-gold">とじる</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       称号獲得 演出
+  ══════════════════════════════════════ -->
+  <div id="title-overlay" class="dq-overlay hidden" role="dialog" aria-modal="true" aria-label="称号獲得">
+    <div class="dq-modal title-modal">
+      <div class="dq-modal-title">☆ 称号かくとく ☆</div>
+      <div class="title-icon" id="ti-icon">🏆</div>
+      <div class="title-name" id="ti-name">はじめの勇者</div>
+      <div class="title-desc" id="ti-desc">はじめてもんだいにこたえた</div>
+      <button id="ti-close" class="dq-btn dq-btn-blue">よし！</button>
+    </div>
+  </div>
+
+  <!-- ヘッダー（ステータスバー）
+  ══════════════════════════════════════ -->
+  <header class="dq-header">
+    <div class="hdr-hero-block">
+      <span class="hdr-hero-icon" id="hdr-hero">🧙</span>
+      <div class="hdr-hero-info">
+        <div class="hdr-name" id="hdr-name">ゆうしゃ</div>
+        <div class="hdr-lv">Lv.<span id="hdr-lv">1</span>
+          <span class="hdr-title" id="hdr-title">みならい</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hdr-center-title">⚔️ えいごドラクエ ⚔️</div>
+
+    <div class="hdr-stats-block">
+      <div class="hdr-stat"><span class="hdr-stat-icon">💛</span>HP <span id="hdr-hp">100</span></div>
+      <div class="hdr-stat"><span class="hdr-stat-icon">💙</span>MP <span id="hdr-mp">50</span></div>
+      <div class="hdr-stat"><span class="hdr-stat-icon">💰</span>G  <span id="hdr-gold">0</span></div>
+      <button id="bgm-toggle" class="bgm-toggle-btn" title="BGMオン/オフ">🔔</button>
+    </div>
+  </header>
+
+  <!-- EXPバー -->
+  <div class="exp-bar-wrap">
+    <div class="exp-bar-inner">
+      <span class="exp-label">EXP</span>
+      <div class="exp-track"><div class="exp-fill" id="exp-fill"></div></div>
+      <span class="exp-text" id="exp-text">0/100</span>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       メインコンテンツ
+  ══════════════════════════════════════ -->
+  <main class="dq-main">
+
+    <!-- ────────────────────────────────
+         タイトル画面
+    ──────────────────────────────── -->
+    <section id="screen-title" class="screen active">
+      <div class="title-screen">
+        <div class="title-logo">
+          <div class="title-logo-sub">えいご</div>
+          <div class="title-logo-main">DRAGON QUEST</div>
+          <div class="title-logo-sub">英語習得への旅</div>
+        </div>
+        <div class="title-hero-art">🐉</div>
+        <div class="title-copy dq-blink">▼ おしてはじめる</div>
+        <button id="title-start" class="dq-btn dq-btn-gold title-start-btn">ぼうけんをはじめる</button>
+      </div>
+    </section>
+
+    <!-- ────────────────────────────────
+         フィールド画面（メニュー）
+    ──────────────────────────────── -->
+    <section id="screen-field" class="screen">
+
+      <!-- メッセージウィンドウ -->
+      <div class="dq-window msg-window" id="field-msg">
+        <p id="field-msg-text">どこへ　むかうか？　まおうをたおすには　えいごのちからが　ひつようだ！</p>
+      </div>
+
+      <!-- コマンドウィンドウ（モード選択） -->
+      <div class="field-layout">
+        <div class="field-map">
+          <div class="map-tile" id="field-map-art">
+            <div class="map-world">🏔️　🌲　🏰</div>
+            <div class="map-world">🌲　🗺️　🌊</div>
+            <div class="map-world">🐉　🌲　⚔️</div>
+          </div>
+        </div>
+
+        <div class="dq-window command-window">
+          <div class="cmd-title">▶ コマンド</div>
+          <button class="dq-cmd-btn" data-mode="vocab">
+            <span class="cmd-icon">⚔️</span> たんごバトル
+            <span class="cmd-exp">+10EXP</span>
+          </button>
+          <button class="dq-cmd-btn" data-mode="grammar">
+            <span class="cmd-icon">🪄</span> まほうぶんぽう
+            <span class="cmd-exp">+15EXP</span>
+          </button>
+          <button class="dq-cmd-btn" data-mode="typing">
+            <span class="cmd-icon">🗡️</span> タイピング修行
+            <span class="cmd-exp">+12EXP</span>
+          </button>
+          <button class="dq-cmd-btn" data-mode="listening">
+            <span class="cmd-icon">👂</span> リスニング訓練
+            <span class="cmd-exp">+18EXP</span>
+          </button>
+          <button class="dq-cmd-btn" data-mode="speaking">
+            <span class="cmd-icon">🎤</span> スピーキング道場
+            <span class="cmd-exp">+20EXP</span>
+          </button>
+          <button class="dq-cmd-btn" data-mode="weak">
+            <span class="cmd-icon">🔥</span> よわてき集中
+            <span class="cmd-exp">+25EXP</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 設定 -->
+      <div class="dq-window setting-window">
+        <span class="setting-row-item">
+          <label class="dq-label">難易度</label>
+          <select id="level-select" class="dq-select">
+            <option value="all">ぜんぶ</option>
+            <option value="beginner">★ 下級</option>
+            <option value="intermediate">★★ 中級</option>
+            <option value="advanced">★★★ 上級</option>
+          </select>
+        </span>
+        <span class="setting-row-item">
+          <label class="dq-label">問題数</label>
+          <select id="count-select" class="dq-select">
+            <option value="5">5問</option>
+            <option value="10" selected>10問</option>
+            <option value="20">20問</option>
+          </select>
+        </span>
+      </div>
+
+      <!-- ステータスウィンドウ -->
+      <div class="dq-window status-window">
+        <div class="status-title">▶ ぼうけんのきろく</div>
+        <div class="status-grid">
+          <div class="status-item"><span class="si-icon">⚔️</span><span class="si-val" id="st-answers">0</span><span class="si-lbl">たたかった数</span></div>
+          <div class="status-item"><span class="si-icon">✨</span><span class="si-val" id="st-correct">0</span><span class="si-lbl">かった数</span></div>
+          <div class="status-item"><span class="si-icon">📊</span><span class="si-val" id="st-rate">―</span><span class="si-lbl">しょうりりつ</span></div>
+          <div class="status-item"><span class="si-icon">💰</span><span class="si-val" id="st-gold">0</span><span class="si-lbl">ゴールド</span></div>
+        </div>
+      </div>
+
+      <!-- 称号一覧 -->
+      <div class="dq-window title-list-window">
+        <div class="status-title">▶ かくとくした称号</div>
+        <div class="title-badges" id="title-badges">
+          <span class="no-badge-msg">まだ称号をかくとくしていない</span>
+        </div>
+      </div>
+
+      <!-- アイテム欄 -->
+      <div class="dq-window item-window">
+        <div class="status-title">▶ アイテム / そうび</div>
+        <div class="equipment-display">
+          <div class="equip-row">
+            <span class="equip-label">武器:</span>
+            <span class="equip-value" id="equip-weapon-name">なし</span>
+          </div>
+          <div class="equip-row">
+            <span class="equip-label">防具:</span>
+            <span class="equip-value" id="equip-armor-name">なし</span>
+          </div>
+          <div class="equip-row">
+            <span class="equip-label">効果:</span>
+            <span class="equip-value" id="active-effects-display">なし</span>
+          </div>
+        </div>
+        <div class="inventory-scroll" id="inventory-list">
+          <div class="inv-empty">アイテムをもっていない</div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ────────────────────────────────
+         バトル画面（クイズ共通）
+    ──────────────────────────────── -->
+    <section id="screen-battle" class="screen">
+
+      <!-- 敵キャラエリア -->
+      <div class="battle-enemy-area">
+        <div class="enemy-sprite" id="enemy-sprite">👹</div>
+        <div class="enemy-name-plate">
+          <span class="enemy-name" id="enemy-name">スライム</span>
+          <span class="enemy-lv" id="enemy-lv">Lv.1</span>
+        </div>
+        <div class="enemy-hp-bar-wrap">
+          <div class="enemy-hp-bar" id="enemy-hp-bar"></div>
+        </div>
+      </div>
+
+      <!-- 進捗 -->
+      <div class="battle-progress">
+        <span id="b-current">1</span>/<span id="b-total">10</span>問
+        <div class="b-progress-track"><div class="b-progress-fill" id="b-progress-fill"></div></div>
+        <span class="combo-text" id="combo-text"></span>
+      </div>
+
+      <!-- 問題ウィンドウ -->
+      <div class="dq-window question-window" id="question-window">
+        <div class="question-text" id="question-text">…</div>
+
+        <!-- タイピング入力 -->
+        <div id="typing-wrap" class="typing-wrap hidden">
+          <input id="typing-input" class="dq-input" type="text"
+                 placeholder="えいごでうってね" autocomplete="off" spellcheck="false" />
+          <button id="typing-submit" class="dq-btn dq-btn-blue">こうげき！</button>
+        </div>
+
+        <!-- リスニング用 -->
+        <div id="listening-wrap" class="listening-wrap hidden">
+          <button id="listen-play-btn" class="dq-btn dq-btn-blue">🔊 もう一度きく</button>
+        </div>
+
+        <!-- スピーキング用 -->
+        <div id="speaking-wrap" class="speaking-wrap hidden">
+          <div class="speaking-target" id="speaking-target"></div>
+          <button id="speak-btn" class="dq-btn dq-btn-red" id="speak-btn">🎤 はなす！</button>
+          <div class="speak-status" id="speak-status"></div>
+          <div class="speak-result" id="speak-result" aria-live="polite"></div>
+        </div>
+      </div>
+
+      <!-- 選択肢（4択） -->
+      <div id="choices-wrap" class="choices-wrap hidden">
+        <button class="dq-choice" data-idx="0"></button>
+        <button class="dq-choice" data-idx="1"></button>
+        <button class="dq-choice" data-idx="2"></button>
+        <button class="dq-choice" data-idx="3"></button>
+      </div>
+
+      <!-- バトルメッセージ＆次へ -->
+      <div class="dq-window battle-msg-window hidden" id="battle-msg">
+        <div class="battle-msg-text" id="battle-msg-text"></div>
+        <div class="battle-exp-gain" id="battle-exp-gain"></div>
+        <button id="next-btn" class="dq-btn dq-btn-gold">▶ つぎへ</button>
+      </div>
+
+    </section>
+
+    <!-- ────────────────────────────────
+         リザルト画面
+    ──────────────────────────────── -->
+    <section id="screen-result" class="screen">
+      <div class="dq-window result-window">
+        <div class="result-title" id="result-title">ぼうけんかんりょう！</div>
+        <div class="result-hero" id="result-hero">🧙</div>
+
+        <div class="result-score-row">
+          <span class="rs-big" id="res-correct">0</span>
+          <span class="rs-sep">/</span>
+          <span class="rs-big" id="res-total">0</span>
+          <span class="rs-unit">もん せいかい</span>
+        </div>
+        <div class="result-rate" id="res-rate">0%</div>
+
+        <div class="result-exp-row">
+          <span class="exp-gain-label">かくとく EXP</span>
+          <span class="exp-gain-val" id="res-exp">+0</span>
+          <span class="gold-gain-label">GOLD</span>
+          <span class="gold-gain-val" id="res-gold">+0</span>
+        </div>
+
+        <div class="result-msg" id="result-msg"></div>
+
+        <!-- 間違い一覧 -->
+        <div id="wrong-wrap" class="wrong-wrap">
+          <div class="wrong-title">◆ まちがえた もんだい</div>
+          <ul id="wrong-list" class="wrong-list"></ul>
+        </div>
+
+        <div class="result-btns">
+          <button id="retry-btn" class="dq-btn dq-btn-blue">もう一度</button>
+          <button id="field-btn" class="dq-btn dq-btn-gold">フィールドへ</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
