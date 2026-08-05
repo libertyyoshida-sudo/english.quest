@@ -70,6 +70,9 @@ body {
 }
 .dq-overlay.hidden { display: none; }
 
+/* 汎用の非表示クラス（バトル画面の各入力UI切替に使用） */
+.hidden { display: none !important; }
+
 .dq-modal {
   background: var(--dq-win-bg);
   box-shadow: var(--win-shadow);
@@ -220,8 +223,85 @@ body {
 
 .field-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
 
-.field-map { background: var(--dq-win-bg); box-shadow: var(--win-shadow); padding: 14px; }
-.map-world { font-size: 1.6rem; line-height: 2.2; letter-spacing: .3em; text-align: center; }
+.field-map {
+  background: var(--dq-win-bg); box-shadow: var(--win-shadow); padding: 12px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+
+/* ---------- フィールド探索キャンバス ---------- */
+.field-canvas {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: linear-gradient(180deg, #0a2a12 0%, #123a1a 55%, #0d3218 100%);
+  border: 2px solid var(--dq-win-bd);
+  overflow: hidden;
+  touch-action: none;
+}
+.field-canvas::before {
+  content: '';
+  position: absolute; inset: 0; pointer-events: none;
+  background-image:
+    repeating-linear-gradient(0deg,  transparent, transparent 9%, #ffffff12 9%, #ffffff12 9.6%),
+    repeating-linear-gradient(90deg, transparent, transparent 9%, #ffffff12 9%, #ffffff12 9.6%);
+}
+
+.field-icon {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  pointer-events: none;
+  animation: field-icon-bob 2.2s ease-in-out infinite;
+  z-index: 2;
+}
+.field-icon-emoji { font-size: 1.6rem; filter: drop-shadow(0 0 6px #000000a0); }
+.field-icon-label {
+  font-size: .52rem; color: var(--dq-yellow);
+  background: #000a; padding: 1px 4px; white-space: nowrap;
+}
+@keyframes field-icon-bob {
+  0%,100% { transform: translate(-50%,-50%) translateY(0); }
+  50%     { transform: translate(-50%,-50%) translateY(-5px); }
+}
+
+.field-hero {
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.7rem;
+  z-index: 5;
+  filter: drop-shadow(0 0 6px #ffffffb0);
+  will-change: left, top;
+}
+.field-hero.facing-left { transform: translate(-50%, -50%) scaleX(-1); }
+
+.field-hint { font-size: .68rem; color: var(--dq-gray); text-align: center; }
+
+/* ---------- 十字キー（モバイル操作） ---------- */
+.field-dpad {
+  display: grid;
+  grid-template-columns: repeat(3, 42px);
+  grid-template-rows: repeat(3, 42px);
+  gap: 4px;
+  justify-content: center;
+  margin: 0 auto;
+  user-select: none;
+}
+.dpad-btn {
+  background: var(--dq-dark);
+  border: 2px solid var(--dq-blue);
+  color: var(--dq-white);
+  font-family: var(--font-dq);
+  font-size: 1.1rem;
+  cursor: pointer;
+  touch-action: none;
+}
+.dpad-btn:hover  { border-color: var(--dq-gold); }
+.dpad-btn:active { background: #223366; border-color: var(--dq-gold); }
+.dpad-up    { grid-column: 2; grid-row: 1; }
+.dpad-left  { grid-column: 1; grid-row: 2; }
+.dpad-right { grid-column: 3; grid-row: 2; }
+.dpad-down  { grid-column: 2; grid-row: 3; }
 
 .command-window { display: flex; flex-direction: column; gap: 4px; }
 .cmd-title { color: var(--dq-yellow); font-size: .85rem; margin-bottom: 6px; }
@@ -309,6 +389,16 @@ body {
   height: 100%; width: 100%;
   background: linear-gradient(90deg, var(--dq-hp), #88ff88);
   transition: width .5s ease;
+}
+
+/* フィールドへもどる（常時表示ボタン） */
+.battle-flee-btn {
+  position: fixed;
+  top: 96px;
+  right: 10px;
+  z-index: 200;
+  font-size: .72rem;
+  padding: 7px 12px;
 }
 
 /* 進捗 */
@@ -460,6 +550,7 @@ body {
   .hdr-stats-block { gap: 6px; }
   .hdr-stat        { font-size: .7rem; }
   .typing-wrap     { flex-direction: column; }
+  .battle-flee-btn { top: 88px; right: 6px; font-size: .64rem; padding: 6px 9px; }
 }
 
 /* ==========================================

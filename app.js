@@ -752,6 +752,20 @@ function buildQuestions(mode, level, count) {
 /* ══════════════════════════════════════════════════
    14. 音声合成（リスニング用）
 ══════════════════════════════════════════════════ */
+let pendingSpeechTimeouts = [];
+function scheduleSpeech(fn, delay) {
+  const id = setTimeout(() => {
+    pendingSpeechTimeouts = pendingSpeechTimeouts.filter(t => t !== id);
+    fn();
+  }, delay);
+  pendingSpeechTimeouts.push(id);
+  return id;
+}
+function clearPendingSpeech() {
+  pendingSpeechTimeouts.forEach(id => clearTimeout(id));
+  pendingSpeechTimeouts = [];
+}
+
 function speak(text, onEnd) {
   if (!window.speechSynthesis) { if (onEnd) onEnd(); return; }
   window.speechSynthesis.cancel();
@@ -761,7 +775,7 @@ function speak(text, onEnd) {
   utter.pitch = 1.0;
   if (onEnd) utter.onend = onEnd;
   // 少し遅らせて確実に再生
-  setTimeout(() => window.speechSynthesis.speak(utter), 120);
+  scheduleSpeech(() => window.speechSynthesis.speak(utter), 120);
 }
 
 /* ══════════════════════════════════════════════════
@@ -907,7 +921,7 @@ function renderQuestion() {
     $('listening-wrap').classList.remove('hidden');
     renderChoices(q);
     // 自動再生
-    setTimeout(() => speak(q.speakWord), 400);
+    scheduleSpeech(() => speak(q.speakWord), 400);
 
   } else if (q.type === 'speaking') {
     $('speaking-wrap').classList.remove('hidden');
@@ -916,7 +930,7 @@ function renderQuestion() {
     $('speak-result').textContent    = '';
     $('speak-btn').disabled          = false;
     // 手本を読み上げ
-    setTimeout(() => speak(q.speakWord), 400);
+    scheduleSpeech(() => speak(q.speakWord), 400);
 
   } else {
     // vocab / grammar / weak(4択)
@@ -1256,25 +1270,170 @@ function renderInventoryWindow() {
 }
 
 /* ══════════════════════════════════════════════════
-   21. イベントリスナー
+   21. フィールド探索（勇者の移動・アイコン接触）
+══════════════════════════════════════════════════ */
+const FIELD_ICON_TOUCH_RATIO = 0.10; // キャンバス短辺に対する接触判定の割合
+const FIELD_ICON_LEAVE_RATIO = FIELD_ICON_TOUCH_RATIO * 1.6;
+const FIELD_MOVE_SPEED = 130; // px/秒（キャンバス実寸換算）
+
+const heroPos = { x: 50, y: 50 }; // フィールド上の勇者位置（%）
+const moveKeys = new Set();
+const touchedFieldIcons = new Set();
+let fieldLastTime = null;
+
+function isFieldScreenActive() {
+  const scr = $('screen-field');
+  return !!scr && scr.classList.contains('active');
+}
+
+function keyToDir(key) {
+  switch (key) {
+    case 'ArrowUp':    case 'w': case 'W': return 'up';
+    case 'ArrowDown':  case 's': case 'S': return 'down';
+    case 'ArrowLeft':  case 'a': case 'A': return 'left';
+    case 'ArrowRight': case 'd': case 'D': return 'right';
+    default: return null;
+  }
+}
+
+function setupFieldControls() {
+  window.addEventListener('keydown', e => {
+    if (!isFieldScreenActive()) return;
+    const tag = document.activeElement && document.activeElement.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    const dir = keyToDir(e.key);
+    if (dir) { moveKeys.add(dir); e.preventDefault(); }
+  });
+  window.addEventListener('keyup', e => {
+    const dir = keyToDir(e.key);
+    if (dir) moveKeys.delete(dir);
+  });
+
+  document.querySelectorAll('.dpad-btn').forEach(btn => {
+    const dir     = btn.dataset.dir;
+    const press   = ev => { ev.preventDefault(); moveKeys.add(dir); };
+    const release = () => moveKeys.delete(dir);
+    btn.addEventListener('pointerdown', press);
+    btn.addEventListener('pointerup', release);
+    btn.addEventListener('pointerleave', release);
+    btn.addEventListener('pointercancel', release);
+  });
+}
+
+function updateHeroMovement(dt) {
+  let dx = 0, dy = 0;
+  if (moveKeys.has('up'))    dy -= 1;
+  if (moveKeys.has('down'))  dy += 1;
+  if (moveKeys.has('left'))  dx -= 1;
+  if (moveKeys.has('right')) dx += 1;
+  if (dx === 0 && dy === 0) return;
+
+  const canvas = $('field-canvas');
+  const hero   = $('field-hero');
+  if (!canvas || !hero) return;
+  const rect = canvas.getBoundingClientRect();
+  if (rect.width === 0 || rect.height === 0) return;
+
+  const len = Math.hypot(dx, dy);
+  dx /= len; dy /= len;
+
+  const heroHalfWPct = (hero.offsetWidth  / 2 / rect.width)  * 100;
+  const heroHalfHPct = (hero.offsetHeight / 2 / rect.height) * 100;
+
+  heroPos.x += (dx * FIELD_MOVE_SPEED * dt / rect.width)  * 100;
+  heroPos.y += (dy * FIELD_MOVE_SPEED * dt / rect.height) * 100;
+  heroPos.x = Math.min(100 - heroHalfWPct, Math.max(heroHalfWPct, heroPos.x));
+  heroPos.y = Math.min(100 - heroHalfHPct, Math.max(heroHalfHPct, heroPos.y));
+
+  hero.style.left = heroPos.x + '%';
+  hero.style.top  = heroPos.y + '%';
+  hero.classList.toggle('facing-left', dx < 0);
+}
+
+function checkFieldIconContacts() {
+  const canvas = $('field-canvas');
+  const hero   = $('field-hero');
+  if (!canvas || !hero) return;
+  const rect = canvas.getBoundingClientRect();
+  if (rect.width === 0 || rect.height === 0) return;
+
+  const heroRect = hero.getBoundingClientRect();
+  const heroCx = heroRect.left + heroRect.width / 2;
+  const heroCy = heroRect.top  + heroRect.height / 2;
+  const short  = Math.min(rect.width, rect.height);
+  const touchDist = short * FIELD_ICON_TOUCH_RATIO;
+  const leaveDist = short * FIELD_ICON_LEAVE_RATIO;
+
+  document.querySelectorAll('.field-icon').forEach(iconEl => {
+    const mode  = iconEl.dataset.mode;
+    const iRect = iconEl.getBoundingClientRect();
+    const iCx = iRect.left + iRect.width / 2;
+    const iCy = iRect.top  + iRect.height / 2;
+    const dist = Math.hypot(heroCx - iCx, heroCy - iCy);
+
+    if (dist < touchDist) {
+      if (!touchedFieldIcons.has(mode)) {
+        touchedFieldIcons.add(mode);
+        startBattle(mode);
+      }
+    } else if (dist > leaveDist) {
+      touchedFieldIcons.delete(mode);
+    }
+  });
+}
+
+function fieldLoop(ts) {
+  requestAnimationFrame(fieldLoop);
+  if (!isFieldScreenActive()) { fieldLastTime = null; return; }
+  if (fieldLastTime === null) { fieldLastTime = ts; return; }
+  const dt = Math.min(0.05, (ts - fieldLastTime) / 1000);
+  fieldLastTime = ts;
+  updateHeroMovement(dt);
+  checkFieldIconContacts();
+}
+
+/* ══════════════════════════════════════════════════
+   22. フィールドへ戻る（バトル中断・音声停止）
+══════════════════════════════════════════════════ */
+function stopSpeechAll() {
+  clearPendingSpeech();
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
+  if (recognition) {
+    try { recognition.abort(); } catch (e) { /* noop */ }
+    recognition = null;
+  }
+}
+
+function goToField() {
+  stopSpeechAll();
+  showScreen('screen-field');
+  refreshHeader();
+  refreshExpBar();
+  refreshField();
+  refreshEquipmentDisplay();
+  renderInventoryWindow();
+  playFieldBGM();
+}
+
+/* ══════════════════════════════════════════════════
+   23. イベントリスナー
 ══════════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', () => {
 
   /* ── タイトル → フィールド ── */
-  $('title-start')?.addEventListener('click', () => {
-    showScreen('screen-field');
-    refreshHeader();
-    refreshExpBar();
-    refreshField();
-    refreshEquipmentDisplay();
-    renderInventoryWindow();
-    playFieldBGM();
-  });
+  $('title-start')?.addEventListener('click', goToField);
 
   /* ── コマンドボタン（モード選択） ── */
   document.querySelectorAll('.dq-cmd-btn').forEach(btn => {
     btn.addEventListener('click', () => startBattle(btn.dataset.mode));
   });
+
+  /* ── フィールド探索の初期化 ── */
+  setupFieldControls();
+  requestAnimationFrame(fieldLoop);
+
+  /* ── フィールドへもどる（バトル中断） ── */
+  $('battle-flee-btn')?.addEventListener('click', goToField);
 
   /* ── 選択肢ボタン ── */
   document.querySelectorAll('.dq-choice').forEach(btn => {
@@ -1283,10 +1442,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  /* ── タイピング送信 ── */
-  $('typing-submit')?.addEventListener('click', () => {
-    handleAnswer($('typing-input').value);
-  });
+  /* ── タイピング送信（Enterで回答／回答後Enterで次へ） ── */
   $('typing-input')?.addEventListener('keydown', e => {
     if (e.key === 'Enter') {
       if (battle.answered) nextQuestion();
@@ -1305,14 +1461,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (battle.answered) return;
     const q = battle.questions[battle.cur];
     if (!q) return;
-    startSpeaking(q.targetWord, (ok, heard) => {
+    startSpeaking(q.speakWord, (ok, heard) => {
       if (ok === null) {
         // エラー・聞き取れなかった（再試行可）
         $('speak-result').textContent = heard || '';
         return;
       }
       $('speak-result').textContent =
-        ok ? `✅ 認識: "${heard}"` : `❌ 認識: "${heard}" → 正解は "${q.targetWord}"`;
+        ok ? `✅ 認識: "${heard}"` : `❌ 認識: "${heard}" → 正解は "${q.speakWord}"`;
       handleAnswer(ok, heard);
     });
   });
@@ -1324,15 +1480,7 @@ document.addEventListener('DOMContentLoaded', () => {
   $('retry-btn')?.addEventListener('click', () => startBattle(battle.mode));
 
   /* ── リザルト：フィールドへ ── */
-  $('field-btn')?.addEventListener('click', () => {
-    showScreen('screen-field');
-    refreshField();
-    refreshHeader();
-    refreshExpBar();
-    refreshEquipmentDisplay();
-    renderInventoryWindow();
-    playFieldBGM();
-  });
+  $('field-btn')?.addEventListener('click', goToField);
 
   /* ── レベルアップダイアログを閉じる ── */
   $('lu-close')?.addEventListener('click', () => {
