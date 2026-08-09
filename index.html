@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>えいご　クエスト</title>
-  <script type="module" crossorigin src="./assets/index-BH2sQlfq.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-1DxZQITa.css">
+  <script type="module" crossorigin src="./assets/index-B1KaSr8k.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-BfHtxTVC.css">
 </head>
 <body>
 
@@ -156,6 +156,9 @@
             <div class="field-icon" data-mode="weak"      style="left:84%;top:78%;">
               <span class="field-icon-emoji">🔥</span><span class="field-icon-label">よわてき集中</span>
             </div>
+            <div class="field-icon" data-mode="inn"       style="left:68%;top:50%;">
+              <span class="field-icon-emoji">🏨</span><span class="field-icon-label">やどや</span>
+            </div>
             <div class="field-hero" id="field-hero">🧙</div>
           </div>
           <div class="field-dpad" id="field-dpad">
@@ -192,6 +195,10 @@
           <button class="dq-cmd-btn" data-mode="weak">
             <span class="cmd-icon">🔥</span> よわてき集中
             <span class="cmd-exp">+25EXP</span>
+          </button>
+          <button class="dq-cmd-btn" data-mode="inn">
+            <span class="cmd-icon">🏨</span> やどや（よむ・やすむ）
+            <span class="cmd-exp">HP回復</span>
           </button>
         </div>
       </div>
@@ -258,6 +265,26 @@
         </div>
       </div>
 
+    </section>
+
+    <!-- ────────────────────────────────
+         やどや（単語・文法の読み返し／HP回復／にがて特訓）
+    ──────────────────────────────── -->
+    <section id="screen-inn" class="screen">
+      <button id="inn-flee-btn" class="dq-btn dq-btn-blue battle-flee-btn" type="button">◀ フィールドへもどる</button>
+
+      <div class="dq-window msg-window" id="inn-msg">
+        <p id="inn-msg-text">やどやの　おばあさんが　むかえてくれた。「ここで　むかしの　たんごや　ぶんぽうを　よみかえすと　こころも　からだも　やすまるじゃろう」</p>
+      </div>
+
+      <div class="inn-filter-row">
+        <button class="dq-btn inn-filter-btn active" data-filter="all">すべて</button>
+        <button class="dq-btn inn-filter-btn" data-filter="vocab">たんご</button>
+        <button class="dq-btn inn-filter-btn" data-filter="grammar">ぶんぽう</button>
+        <button class="dq-btn dq-btn-red inn-filter-btn" data-filter="weak">🔥 にがて</button>
+      </div>
+
+      <div class="inn-list" id="inn-list"></div>
     </section>
 
     <!-- ────────────────────────────────
