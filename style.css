@@ -549,19 +549,34 @@ body {
    レスポンシブ
 ========================================== */
 @media (max-width: 640px) {
-  .dq-header { padding: 6px 10px; gap: 6px; }
-  .hdr-hero-icon { font-size: 1.8rem; }
-  .hdr-hero-block { gap: 6px; }
+  .dq-header { padding: 5px 8px; gap: 4px; }
+  .hdr-hero-icon { font-size: 1.6rem; }
+  .hdr-hero-block { gap: 4px; }
+  .hdr-name { font-size: 0.72rem; }
+  .hdr-lv { font-size: 0.68rem; }
   .hdr-title { display: none; }
+  .hdr-center-title {
+    font-size: 0.75rem;
+    letter-spacing: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
+  .hdr-stats-block { gap: 4px; }
+  .hdr-stat { font-size: 0.68rem; gap: 2px; }
+  .hdr-stat-icon { font-size: 0.8rem; }
+  .bgm-toggle-btn { font-size: 0.85rem; padding: 2px 4px; }
 }
 
 @media (max-width: 520px) {
-  .hdr-center-title { display: none; } /* スマホ画面で中央タイトルを非表示にし、縦伸ばしを完全に防ぐ */
+  .hdr-center-title {
+    font-size: 0.7rem;
+    padding: 0 2px;
+  }
   .field-layout    { grid-template-columns: 1fr; }
   .choices-wrap    { grid-template-columns: 1fr; }
   .status-grid     { grid-template-columns: repeat(2,1fr); }
-  .hdr-stats-block { gap: 6px; }
-  .hdr-stat        { font-size: .7rem; }
   .typing-wrap     { flex-direction: column; }
   .battle-flee-btn { top: 88px; right: 6px; font-size: .64rem; padding: 6px 9px; }
 }

@@ -207,6 +207,7 @@ const P = {
   totalAnswers: 0, totalCorrect: 0,
   listenCorrect: 0, speakCorrect: 0,
   maxCombo: 0, hasPerfect: false, lv: 1,
+  currentHp: 20,
   titles: new Set(),
   inventory: [],
   equipment: { weapon: ITEM_DB.w1, armor: ITEM_DB.a1 },
@@ -530,6 +531,7 @@ function gainGold(mode, combo) {
 }
 
 function triggerLevelUp(row) {
+  P.currentHp = row.hp;
   const next = getNextLvRow(row.lv);
   $('lu-hero').textContent = row.hero;
   $('lu-lv').textContent   = `Lv. ${row.lv}`;
@@ -557,10 +559,14 @@ function refreshExpBar() {
 
 function refreshHeader() {
   const row = getLvRow(P.totalExp);
+  const maxHp = row.hp;
+  if (P.currentHp === undefined || P.currentHp > maxHp) {
+    P.currentHp = maxHp;
+  }
   if ($('hdr-hero'))  $('hdr-hero').textContent  = row.hero;
   if ($('hdr-lv'))    $('hdr-lv').textContent    = row.lv;
   if ($('hdr-title')) $('hdr-title').textContent = row.name;
-  if ($('hdr-hp'))    $('hdr-hp').textContent    = row.hp;
+  if ($('hdr-hp'))    $('hdr-hp').textContent    = `${P.currentHp}/${maxHp}`;
   if ($('hdr-mp'))    $('hdr-mp').textContent    = row.mp;
   if ($('hdr-gold'))  $('hdr-gold').textContent  = P.gold;
 }
@@ -983,14 +989,22 @@ function handleAnswer(userAns, userText) {
     if (q.type === 'speaking')  P.speakCorrect++;
     playSoundCorrect();
   } else {
+    let damage = 0;
     // エリクサーのコンボシールド効果
     if (battle.comboShield && !battle.comboShieldUsed) {
       battle.comboShieldUsed = true;
-      // コンボは維持
     } else {
       battle.combo = 0;
     }
     playSoundWrong();
+    // 問題失敗時のHP減少処理
+    const row = getLvRow(P.totalExp);
+    const maxHp = row.hp;
+    damage = Math.max(5, Math.round(maxHp * 0.2));
+    if (P.currentHp === undefined) P.currentHp = maxHp;
+    P.currentHp = Math.max(0, P.currentHp - damage);
+    refreshHeader();
+
     battle.wrongItems.push({
       question: q.qText,
       correct:  q.type === 'typing' || q.type === 'speaking'
@@ -1040,7 +1054,8 @@ function handleAnswer(userAns, userText) {
                  : '';
     msg = `${q.type==='speaking' ? '🎤 うまく はっわできた！' : '⚔️ せいかい！　モンスターにダメージ！'}${combos ? '\n' + combos : ''}`;
   } else {
-    msg = `💀 まちがい…　せいかいは「${q.type==='typing'||q.type==='speaking' ? q.ans : q.choices[q.ans]}」`;
+    const row = getLvRow(P.totalExp);
+    msg = `💀 まちがい… プレイヤーに ${damage} ダメージ！ (HP:${P.currentHp}/${row.hp})\nせいかいは「${q.type==='typing'||q.type==='speaking' ? q.ans : q.choices[q.ans]}」`;
   }
 
   $('battle-msg-text').innerHTML  = msg.replace(/\n/g,'<br>');
@@ -1463,6 +1478,10 @@ function stopSpeechAll() {
 
 function goToField() {
   stopSpeechAll();
+  const row = getLvRow(P.totalExp);
+  if (P.currentHp === undefined || P.currentHp <= 0) {
+    P.currentHp = row.hp; // 宿屋でHP全回復
+  }
   showScreen('screen-field');
   refreshHeader();
   refreshExpBar();
