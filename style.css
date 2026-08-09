@@ -221,6 +221,14 @@ body {
 
 .title-start-btn { font-size: 1.1rem; padding: 14px 40px; margin-top: 8px; }
 
+.login-box {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  width: min(320px, 86vw);
+}
+.login-input { width: 100%; text-align: center; }
+.login-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.login-error { color: #ff6b6b; font-size: .8rem; min-height: 1.2em; margin: 0; }
+
 /* ==========================================
    フィールド画面
 ========================================== */
@@ -455,8 +463,9 @@ body {
 }
 .dq-input:focus { outline: none; border-color: var(--dq-gold); box-shadow: 0 0 8px var(--dq-gold); }
 
-/* リスニング */
-.listening-wrap { margin-top: 14px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+/* リスニング（キャラクターゾーン内に配置） */
+.listening-wrap { margin-top: 8px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.listening-wrap .dq-btn { font-size: .78rem; padding: 6px 14px; }
 
 /* スピーキング */
 .speaking-wrap { margin-top: 14px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
@@ -567,6 +576,37 @@ body {
   .hdr-stat { font-size: 0.68rem; gap: 2px; }
   .hdr-stat-icon { font-size: 0.8rem; }
   .bgm-toggle-btn { font-size: 0.85rem; padding: 2px 4px; }
+
+  /* バトル画面（問題・回答ページ）：スクロールなしで収まるよう全体を圧縮 */
+  .dq-main { padding: 10px 10px 16px; }
+
+  .battle-enemy-area { padding: 6px 0 6px; margin-bottom: 6px; }
+  .enemy-sprite { font-size: 2.4rem; }
+  .enemy-name-plate { margin-top: 2px; gap: 6px; }
+  .enemy-name { font-size: .74rem; }
+  .enemy-lv   { font-size: .66rem; }
+  .enemy-hp-bar-wrap { margin: 4px auto 0; height: 6px; }
+  .listening-wrap { margin-top: 4px; gap: 4px; }
+  .listening-wrap .dq-btn { font-size: .68rem; padding: 5px 10px; }
+
+  .battle-flee-btn { top: 78px; right: 6px; font-size: .6rem; padding: 5px 8px; }
+
+  .battle-progress { margin-bottom: 6px; font-size: .72rem; gap: 6px; }
+  .combo-text { min-width: 60px; font-size: .74rem; }
+
+  .question-window { min-height: 0; padding: 10px 12px; margin-bottom: 8px; }
+  .question-text { font-size: .9rem; line-height: 1.5; }
+
+  .choices-wrap { gap: 6px; margin-bottom: 6px; }
+  .dq-choice { padding: 9px 8px; font-size: .78rem; line-height: 1.3; }
+
+  .typing-wrap { margin-top: 8px; }
+  .speaking-wrap { margin-top: 8px; gap: 6px; }
+  .speaking-target { font-size: 1.05rem; padding: 6px; }
+
+  .battle-msg-window { padding: 10px 14px; }
+  .battle-msg-text { font-size: .8rem; line-height: 1.5; margin-bottom: 6px; }
+  .battle-exp-gain { font-size: .72rem; margin-bottom: 8px; min-height: 16px; }
 }
 
 @media (max-width: 520px) {
@@ -575,10 +615,10 @@ body {
     padding: 0 2px;
   }
   .field-layout    { grid-template-columns: 1fr; }
-  .choices-wrap    { grid-template-columns: 1fr; }
+  /* バトル画面は縦のスペースを節約するため2列を維持（1列にすると4問分の高さが増えスクロールが発生するため） */
   .status-grid     { grid-template-columns: repeat(2,1fr); }
   .typing-wrap     { flex-direction: column; }
-  .battle-flee-btn { top: 88px; right: 6px; font-size: .64rem; padding: 6px 9px; }
+  .battle-flee-btn { top: 74px; right: 6px; font-size: .6rem; padding: 5px 8px; }
 }
 
 /* ==========================================

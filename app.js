@@ -5,6 +5,84 @@
 ===================================================== */
 'use strict';
 
+import {
+  ITEM_DB, LEVEL_TABLE, TITLE_DEFS, EXP_BASE, GOLD_BASE,
+  comboMult, getLvRow, getNextLvRow,
+} from './shared/gameData.js';
+import { VOCAB_DB, GRAMMAR_DB } from './shared/questionData.js';
+
+/* ══════════════════════════════════════════════════
+   0. バックエンドAPI（ログイン時のみ使用。未ログインはゲストモードでローカル動作）
+══════════════════════════════════════════════════ */
+const API_BASE = 'http://localhost:3001/api';
+let authToken = localStorage.getItem('eigoDQ_token') || null;
+
+async function apiFetch(path, opts = {}) {
+  const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
+  if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+  const res = await fetch(`${API_BASE}${path}`, { ...opts, headers });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `通信エラー (${res.status})`);
+  return data;
+}
+
+// サーバーから受け取った PlayerProfile を P に反映
+function applyProfile(profile) {
+  P.totalExp      = profile.totalExp;
+  P.gold          = profile.gold;
+  P.lv            = profile.level;
+  P.currentHp     = profile.currentHp;
+  P.maxCombo      = profile.maxCombo;
+  P.hasPerfect    = profile.hasPerfect;
+  P.totalAnswers  = profile.totalAnswers;
+  P.totalCorrect  = profile.totalCorrect;
+  P.listenCorrect = profile.listenCorrect;
+  P.speakCorrect  = profile.speakCorrect;
+  P.equipment.weapon = ITEM_DB[profile.equippedWeaponId] || ITEM_DB.w1;
+  P.equipment.armor  = ITEM_DB[profile.equippedArmorId]  || ITEM_DB.a1;
+}
+
+// ログイン直後・再開時にプロファイル全体（称号・回答統計を含む）を取得して反映
+async function loadFullProfile() {
+  const data = await apiFetch('/player/profile');
+  applyProfile(data.profile);
+  P.titles = new Set((data.titles || []).map(t => t.titleId));
+  for (const k in answerStats) delete answerStats[k];
+  Object.assign(answerStats, data.answerStats || {});
+}
+
+async function tryRestoreSession() {
+  if (!authToken) return false;
+  try {
+    await loadFullProfile();
+    return true;
+  } catch (err) {
+    authToken = null;
+    localStorage.removeItem('eigoDQ_token');
+    return false;
+  }
+}
+
+async function handleAuthSuccess(token) {
+  authToken = token;
+  localStorage.setItem('eigoDQ_token', token);
+  await loadFullProfile();
+  $('logout-btn')?.classList.remove('hidden');
+  goToField();
+}
+
+function logout() {
+  authToken = null;
+  localStorage.removeItem('eigoDQ_token');
+  $('logout-btn')?.classList.add('hidden');
+  location.reload();
+}
+
+function showLoginError(msg) {
+  const el = $('login-error');
+  if (el) el.textContent = msg || '';
+}
+
 /* ══════════════════════════════════════════════════
    1. Web Audio API で BGM・効果音生成
 ══════════════════════════════════════════════════ */
@@ -144,60 +222,8 @@ function playSoundItem() {
 }
 
 /* ══════════════════════════════════════════════════
-   2. アイテムデータベース
+   2〜3. アイテム・レベル・称号テーブルは shared/gameData.js に集約
 ══════════════════════════════════════════════════ */
-const ITEM_DB = {
-  w1: { type:'weapon', id:'w1', name:'ひのきのぼう', icon:'🪵', atk:0, expMult:1.0 },
-  w2: { type:'weapon', id:'w2', name:'どうのつるぎ',   icon:'⚔️', atk:1, expMult:1.1 },
-  w3: { type:'weapon', id:'w3', name:'てつのつるぎ',   icon:'🗡️', atk:2, expMult:1.2 },
-  w4: { type:'weapon', id:'w4', name:'はがねのつるぎ', icon:'💎', atk:3, expMult:1.3 },
-  w5: { type:'weapon', id:'w5', name:'ロトのつるぎ',   icon:'👑', atk:5, expMult:1.5 },
-  a1: { type:'armor',  id:'a1', name:'ぬののふく',     icon:'👘', def:0, goldMult:1.0 },
-  a2: { type:'armor',  id:'a2', name:'かわのよろい',   icon:'🛡️', def:1, goldMult:1.1 },
-  a3: { type:'armor',  id:'a3', name:'くさりかたびら', icon:'⛓️', def:2, goldMult:1.2 },
-  a4: { type:'armor',  id:'a4', name:'てつのよろい',   icon:'🔩', def:3, goldMult:1.3 },
-  a5: { type:'armor',  id:'a5', name:'ロトのよろい',   icon:'👑', def:5, goldMult:1.5 },
-  c1: { type:'consumable', id:'c1', name:'やくそう',     icon:'🌿', effect:'expBoost',   value:1.5 },
-  c2: { type:'consumable', id:'c2', name:'まほうのほん', icon:'📖', effect:'expBoost',   value:1.3 },
-  c3: { type:'consumable', id:'c3', name:'エリクサー',   icon:'🧪', effect:'comboShield', value:1 },
-};
-
-/* ══════════════════════════════════════════════════
-   3. レベル & 称号テーブル
-══════════════════════════════════════════════════ */
-const LEVEL_TABLE = [
-  { lv:1,  exp:0,    hero:'🧙', name:'みならいまほうつかい',  hp:20,  mp:5  },
-  { lv:2,  exp:80,   hero:'🧙', name:'まほうつかいのたまご',  hp:24,  mp:7  },
-  { lv:3,  exp:200,  hero:'🧝', name:'エルフのせんし',        hp:30,  mp:10 },
-  { lv:4,  exp:380,  hero:'🧝', name:'つよいエルフ',          hp:38,  mp:14 },
-  { lv:5,  exp:620,  hero:'⚔️', name:'けんしのたまご',        hp:48,  mp:18 },
-  { lv:6,  exp:920,  hero:'⚔️', name:'えいごのけんし',        hp:60,  mp:24 },
-  { lv:7,  exp:1300, hero:'🛡️', name:'えいごのパラディン',    hp:75,  mp:30 },
-  { lv:8,  exp:1800, hero:'🧙‍♂️', name:'だいまどうし',       hp:90,  mp:40 },
-  { lv:9,  exp:2500, hero:'🦸', name:'えいごのヒーロー',      hp:110, mp:52 },
-  { lv:10, exp:3500, hero:'👑', name:'えいごのおうさま',      hp:140, mp:68 },
-];
-
-const TITLE_DEFS = [
-  { id:'first',    icon:'🎖️', name:'はじめての勇者',   check: p => p.totalAnswers >= 1 },
-  { id:'correct10',icon:'⭐',  name:'10問せいかいし',  check: p => p.totalCorrect >= 10 },
-  { id:'correct50',icon:'🌟',  name:'50問せいかいし',  check: p => p.totalCorrect >= 50 },
-  { id:'perfect',  icon:'👑',  name:'かんぺき勇者',    check: p => p.hasPerfect },
-  { id:'combo5',   icon:'⚡',  name:'5コンボ達人',     check: p => p.maxCombo >= 5 },
-  { id:'combo10',  icon:'🌪️',  name:'10コンボ伝説',    check: p => p.maxCombo >= 10 },
-  { id:'listen5',  icon:'👂',  name:'ちょうりょく5',   check: p => p.listenCorrect >= 5 },
-  { id:'speak5',   icon:'🎤',  name:'はっわ5',         check: p => p.speakCorrect >= 5 },
-  { id:'lv5',      icon:'🦸',  name:'レベル5達成',     check: p => p.lv >= 5 },
-  { id:'lv10',     icon:'🐉',  name:'まおうをたおした', check: p => p.lv >= 10 },
-  { id:'gold100',  icon:'💰',  name:'ゴールド100G',    check: p => p.gold >= 100 },
-];
-
-function getLvRow(totalExp) {
-  let row = LEVEL_TABLE[0];
-  for (const r of LEVEL_TABLE) { if (totalExp >= r.exp) row = r; else break; }
-  return row;
-}
-function getNextLvRow(lv) { return LEVEL_TABLE.find(r => r.lv === lv + 1) || null; }
 
 /* ══════════════════════════════════════════════════
    4. プレイヤー状態
@@ -254,194 +280,9 @@ function pickEnemy(level) {
 
 
 /* ══════════════════════════════════════════════════
-   6. 単語データ（90語）
+   6〜7. 単語・文法データは shared/questionData.js に集約
 ══════════════════════════════════════════════════ */
-const VOCAB_DB = [
-  {id:'v01',lv:'beginner',    word:'apply',       jp:'おうぼする・つかう',       ex:'I will apply for the job.'},
-  {id:'v02',lv:'beginner',    word:'arrange',     jp:'てはいする・せいりする',    ex:'Please arrange the meeting.'},
-  {id:'v03',lv:'beginner',    word:'attend',      jp:'しゅっせきする',           ex:'She will attend the conference.'},
-  {id:'v04',lv:'beginner',    word:'budget',      jp:'よさん',                  ex:'We need to cut the budget.'},
-  {id:'v05',lv:'beginner',    word:'cancel',      jp:'とりけす',                ex:'They canceled the order.'},
-  {id:'v06',lv:'beginner',    word:'confirm',     jp:'かくにんする',             ex:'Please confirm your reservation.'},
-  {id:'v07',lv:'beginner',    word:'contact',     jp:'れんらくする',             ex:'Contact us by email.'},
-  {id:'v08',lv:'beginner',    word:'deliver',     jp:'はいたつする',             ex:'The package will be delivered tomorrow.'},
-  {id:'v09',lv:'beginner',    word:'discount',    jp:'わりびき',                ex:'There is a 20% discount.'},
-  {id:'v10',lv:'beginner',    word:'document',    jp:'しょるい・ぶんしょ',       ex:'Sign the document, please.'},
-  {id:'v11',lv:'beginner',    word:'employee',    jp:'じゅうぎょういん',         ex:'All employees must attend.'},
-  {id:'v12',lv:'beginner',    word:'equipment',   jp:'せつび・きき',             ex:'Check the equipment before use.'},
-  {id:'v13',lv:'beginner',    word:'estimate',    jp:'みつもる',                ex:'Please estimate the cost.'},
-  {id:'v14',lv:'beginner',    word:'expand',      jp:'かくだいする',             ex:'The company will expand overseas.'},
-  {id:'v15',lv:'beginner',    word:'extend',      jp:'えんちょうする',           ex:'They extended the deadline.'},
-  {id:'v16',lv:'beginner',    word:'flexible',    jp:'じゅうなんな',             ex:'We offer flexible working hours.'},
-  {id:'v17',lv:'beginner',    word:'hire',        jp:'やとう',                  ex:'We plan to hire new staff.'},
-  {id:'v18',lv:'beginner',    word:'improve',     jp:'かいぜんする',             ex:'We need to improve service.'},
-  {id:'v19',lv:'beginner',    word:'increase',    jp:'ふやす・ぞうかする',        ex:'Sales increased last quarter.'},
-  {id:'v20',lv:'beginner',    word:'interview',   jp:'めんせつ',                ex:'He passed the interview.'},
-  {id:'v21',lv:'beginner',    word:'invoice',     jp:'せいきゅうしょ',           ex:'Send the invoice by Friday.'},
-  {id:'v22',lv:'beginner',    word:'manage',      jp:'かんりする',               ex:'She manages a team of ten.'},
-  {id:'v23',lv:'beginner',    word:'meeting',     jp:'かいぎ',                  ex:'The meeting starts at 9 AM.'},
-  {id:'v24',lv:'beginner',    word:'notify',      jp:'つうちする',               ex:'Please notify us in advance.'},
-  {id:'v25',lv:'beginner',    word:'offer',       jp:'ていあんする',             ex:'They offered a good price.'},
-  {id:'v26',lv:'beginner',    word:'order',       jp:'ちゅうもんする',           ex:'Place your order online.'},
-  {id:'v27',lv:'beginner',    word:'pay',         jp:'はらう',                  ex:'Pay by credit card.'},
-  {id:'v28',lv:'beginner',    word:'policy',      jp:'ほうしん・きそく',          ex:'Read the company policy.'},
-  {id:'v29',lv:'beginner',    word:'provide',     jp:'ていきょうする',           ex:'We provide free support.'},
-  {id:'v30',lv:'beginner',    word:'receive',     jp:'うけとる',                ex:'Did you receive my email?'},
-  {id:'v31',lv:'intermediate',word:'accomplish',  jp:'たっせいする',             ex:'He accomplished his goal.'},
-  {id:'v32',lv:'intermediate',word:'adequate',    jp:'じゅうぶんな',             ex:'The budget is adequate.'},
-  {id:'v33',lv:'intermediate',word:'announce',    jp:'はっぴょうする',           ex:'The CEO will announce the plan.'},
-  {id:'v34',lv:'intermediate',word:'authorize',   jp:'しょうにんする',           ex:'I authorized the purchase.'},
-  {id:'v35',lv:'intermediate',word:'collaborate', jp:'きょうりょくする',         ex:'Let\'s collaborate on this project.'},
-  {id:'v36',lv:'intermediate',word:'compensate',  jp:'ほしょうする',             ex:'We will compensate for the delay.'},
-  {id:'v37',lv:'intermediate',word:'comply',      jp:'じゅんしゅする',           ex:'You must comply with the rules.'},
-  {id:'v38',lv:'intermediate',word:'conduct',     jp:'じっしする',               ex:'They conducted a survey.'},
-  {id:'v39',lv:'intermediate',word:'deadline',    jp:'しめきり',                ex:'Meet the deadline on time.'},
-  {id:'v40',lv:'intermediate',word:'decline',     jp:'ことわる・へる',           ex:'Sales declined this month.'},
-  {id:'v41',lv:'intermediate',word:'efficient',   jp:'こうりつてきな',           ex:'Find a more efficient method.'},
-  {id:'v42',lv:'intermediate',word:'evaluate',    jp:'ひょうかする',             ex:'Evaluate the performance quarterly.'},
-  {id:'v43',lv:'intermediate',word:'generate',    jp:'うみだす',                ex:'Generate more revenue.'},
-  {id:'v44',lv:'intermediate',word:'implement',   jp:'じっしする',               ex:'Implement the new system.'},
-  {id:'v45',lv:'intermediate',word:'negotiate',   jp:'こうしょうする',           ex:'Negotiate a better deal.'},
-  {id:'v46',lv:'intermediate',word:'objective',   jp:'もくひょう',               ex:'Set clear objectives.'},
-  {id:'v47',lv:'intermediate',word:'opportunity', jp:'きかい',                  ex:'This is a great opportunity.'},
-  {id:'v48',lv:'intermediate',word:'postpone',    jp:'えんきする',               ex:'Postpone the launch event.'},
-  {id:'v49',lv:'intermediate',word:'priority',    jp:'ゆうせんじこう',           ex:'Set your priorities clearly.'},
-  {id:'v50',lv:'intermediate',word:'promote',     jp:'しょうしんさせる',         ex:'She was promoted to manager.'},
-  {id:'v51',lv:'intermediate',word:'proposal',    jp:'ていあんしょ',             ex:'Submit the proposal by Monday.'},
-  {id:'v52',lv:'intermediate',word:'require',     jp:'ひつようとする',           ex:'The job requires experience.'},
-  {id:'v53',lv:'intermediate',word:'revenue',     jp:'しゅうえき',               ex:'Annual revenue increased.'},
-  {id:'v54',lv:'intermediate',word:'productive',  jp:'せいさんてきな',           ex:'Have a productive meeting.'},
-  {id:'v55',lv:'intermediate',word:'contribute',  jp:'こうけんする',             ex:'She contributed to the project.'},
-  {id:'v56',lv:'intermediate',word:'outsource',   jp:'がいぶにいたくする',        ex:'They outsourced IT support.'},
-  {id:'v57',lv:'intermediate',word:'inventory',   jp:'ざいこ',                  ex:'Check the inventory levels.'},
-  {id:'v58',lv:'intermediate',word:'consequence', jp:'けっか・えいきょう',        ex:'Consider the consequences.'},
-  {id:'v59',lv:'intermediate',word:'approach',    jp:'ちかづく・アプローチ',      ex:'We need a new approach.'},
-  {id:'v60',lv:'intermediate',word:'complaint',   jp:'くじょう',                ex:'We received a complaint.'},
-  {id:'v61',lv:'advanced',    word:'acquisition', jp:'ばいしゅう',               ex:'The acquisition was completed.'},
-  {id:'v62',lv:'advanced',    word:'allocate',    jp:'わりあてる',               ex:'Allocate resources wisely.'},
-  {id:'v63',lv:'advanced',    word:'ambiguous',   jp:'あいまいな',               ex:'The instructions are ambiguous.'},
-  {id:'v64',lv:'advanced',    word:'benchmark',   jp:'きじゅん・ひょうじゅん',    ex:'Set a performance benchmark.'},
-  {id:'v65',lv:'advanced',    word:'contingency', jp:'ふそくのじたい',           ex:'Prepare a contingency plan.'},
-  {id:'v66',lv:'advanced',    word:'deplete',     jp:'こかつさせる',             ex:'Resources are being depleted.'},
-  {id:'v67',lv:'advanced',    word:'discrepancy', jp:'そうい・むじゅん',          ex:'There is a discrepancy in the report.'},
-  {id:'v68',lv:'advanced',    word:'fiscal',      jp:'ざいせいの',               ex:'The fiscal year ends in March.'},
-  {id:'v69',lv:'advanced',    word:'fluctuate',   jp:'へんどうする',             ex:'Prices fluctuate daily.'},
-  {id:'v70',lv:'advanced',    word:'leverage',    jp:'かつようする',             ex:'Leverage your network.'},
-  {id:'v71',lv:'advanced',    word:'mitigate',    jp:'かんわする',               ex:'Mitigate the financial risk.'},
-  {id:'v72',lv:'advanced',    word:'obsolete',    jp:'じだいおくれの',           ex:'This technology is obsolete.'},
-  {id:'v73',lv:'advanced',    word:'paradigm',    jp:'パラダイム',               ex:'A paradigm shift in business.'},
-  {id:'v74',lv:'advanced',    word:'procurement', jp:'ちょうたつ',               ex:'Procurement costs rose.'},
-  {id:'v75',lv:'advanced',    word:'reconcile',   jp:'てらしあわせる',           ex:'Reconcile the accounts.'},
-  {id:'v76',lv:'advanced',    word:'restructure', jp:'さいへんする',             ex:'The company will restructure.'},
-  {id:'v77',lv:'advanced',    word:'scrutinize',  jp:'せいさする',               ex:'Scrutinize the contract carefully.'},
-  {id:'v78',lv:'advanced',    word:'stipulate',   jp:'きていする',               ex:'The contract stipulates the terms.'},
-  {id:'v79',lv:'advanced',    word:'subsidiary',  jp:'こがいしゃ',               ex:'A wholly owned subsidiary.'},
-  {id:'v80',lv:'advanced',    word:'viable',      jp:'じっこうかのうな',         ex:'A viable business model.'},
-  {id:'v81',lv:'advanced',    word:'amalgamate',  jp:'がっぺいする',             ex:'The two firms will amalgamate.'},
-  {id:'v82',lv:'advanced',    word:'arbitrate',   jp:'ちゅうさいする',           ex:'A third party will arbitrate.'},
-  {id:'v83',lv:'advanced',    word:'bureaucracy', jp:'かんりょうしゅぎ',         ex:'Cut through the bureaucracy.'},
-  {id:'v84',lv:'advanced',    word:'capitalize',  jp:'かつようする',             ex:'Capitalize on the opportunity.'},
-  {id:'v85',lv:'advanced',    word:'enumerate',   jp:'れっきょする',             ex:'Enumerate the key findings.'},
-  {id:'v86',lv:'advanced',    word:'inaugurate',  jp:'しゅうにんさせる',         ex:'The president was inaugurated.'},
-  {id:'v87',lv:'advanced',    word:'tangible',    jp:'ゆうけいの・ぐたいてきな',  ex:'Show tangible results.'},
-  {id:'v88',lv:'advanced',    word:'trajectory',  jp:'きせき・しんろ',           ex:'The growth trajectory is positive.'},
-  {id:'v89',lv:'advanced',    word:'unanimous',   jp:'ぜんいんいっちの',         ex:'A unanimous decision was reached.'},
-  {id:'v90',lv:'advanced',    word:'commensurate',jp:'つりあった',               ex:'Salary commensurate with experience.'},
-];
 
-/* ══════════════════════════════════════════════════
-   7. 文法データ（22問）
-══════════════════════════════════════════════════ */
-const GRAMMAR_DB = [
-  {id:'g01',lv:'beginner',
-   q:'The meeting _____ at 9 AM tomorrow.',
-   choices:['start','starts','starting','started'], ans:1,
-   exp:'3人称単数現在形 → starts'},
-  {id:'g02',lv:'beginner',
-   q:'Please send the report _____ Friday.',
-   choices:['in','on','at','by'], ans:3,
-   exp:'by = 〜までに（期限）'},
-  {id:'g03',lv:'beginner',
-   q:'She has worked here _____ five years.',
-   choices:['since','for','during','from'], ans:1,
-   exp:'for = 期間の長さ'},
-  {id:'g04',lv:'beginner',
-   q:'The package _____ delivered yesterday.',
-   choices:['is','was','were','be'], ans:1,
-   exp:'過去の受動態 → was + 過去分詞'},
-  {id:'g05',lv:'beginner',
-   q:'We need _____ the budget before Friday.',
-   choices:['approve','approves','approved','to approve'], ans:3,
-   exp:'need to do → to + 動詞原形'},
-  {id:'g06',lv:'beginner',
-   q:'_____ of the employees attended the seminar.',
-   choices:['Much','Every','All','Each'], ans:2,
-   exp:'All of the employees = 全従業員'},
-  {id:'g07',lv:'beginner',
-   q:'Could you _____ me with this task?',
-   choices:['help','helping','helped','to help'], ans:0,
-   exp:'Could you + 動詞原形（助動詞の後は原形）'},
-  {id:'g08',lv:'beginner',
-   q:'The new product will be launched _____ next month.',
-   choices:['in','on','at','（不要）'], ans:3,
-   exp:'next month などには前置詞不要'},
-  {id:'g09',lv:'intermediate',
-   q:'The manager suggested _____ the deadline.',
-   choices:['extend','to extend','extending','extended'], ans:2,
-   exp:'suggest + 動名詞（〜ing）'},
-  {id:'g10',lv:'intermediate',
-   q:'_____ the heavy traffic, she arrived on time.',
-   choices:['Despite','Although','Because','Since'], ans:0,
-   exp:'Despite + 名詞句（前置詞）'},
-  {id:'g11',lv:'intermediate',
-   q:'The report _____ by the time the boss arrived.',
-   choices:['has been completed','was completing','had been completed','completed'], ans:2,
-   exp:'過去完了受動態 → had been done'},
-  {id:'g12',lv:'intermediate',
-   q:'We are considering _____ a new office in Tokyo.',
-   choices:['open','to open','opening','opened'], ans:2,
-   exp:'consider + 動名詞（〜ing）'},
-  {id:'g13',lv:'intermediate',
-   q:'_____ the project is approved, we will begin immediately.',
-   choices:['Once','Until','Unless','Though'], ans:0,
-   exp:'Once = 〜したらすぐに'},
-  {id:'g14',lv:'intermediate',
-   q:'Sales have increased _____ 15% compared to last year.',
-   choices:['by','at','in','for'], ans:0,
-   exp:'変化の幅には by（by 15% = 15%増）'},
-  {id:'g15',lv:'intermediate',
-   q:'Employees are required _____ safety regulations.',
-   choices:['follow','follows','following','to follow'], ans:3,
-   exp:'be required to do = 〜することが求められる'},
-  {id:'g16',lv:'intermediate',
-   q:'The CEO, _____ speech inspired everyone, retired last year.',
-   choices:['who','whose','whom','which'], ans:1,
-   exp:'whose + 名詞 = 〜の（関係代名詞所有格）'},
-  {id:'g17',lv:'advanced',
-   q:'Had the contract _____ earlier, we would have saved costs.',
-   choices:['reviewed','been reviewed','review','reviewing'], ans:1,
-   exp:'仮定法過去完了受動態 → Had S been done'},
-  {id:'g18',lv:'advanced',
-   q:'_____ to attend the conference, the director sent a representative.',
-   choices:['Unable','Being unable','Not able','Inability'], ans:0,
-   exp:'分詞構文の形容詞型 → Unable to do'},
-  {id:'g19',lv:'advanced',
-   q:'The acquisition deal is contingent _____ board approval.',
-   choices:['for','on','with','at'], ans:1,
-   exp:'be contingent on〜 = 〜次第である'},
-  {id:'g20',lv:'advanced',
-   q:'No sooner _____ the meeting ended than the phone rang.',
-   choices:['had','has','have','did'], ans:0,
-   exp:'No sooner had S done... than〜（倒置形）'},
-  {id:'g21',lv:'advanced',
-   q:'The new policy, _____ effective next month, will affect all staff.',
-   choices:['becomes','becoming','to become','become'], ans:1,
-   exp:'分詞構文（現在分詞）→ becoming'},
-  {id:'g22',lv:'advanced',
-   q:'It is imperative that the data _____ backed up daily.',
-   choices:['is','was','be','being'], ans:2,
-   exp:'imperative 後の that節 → 仮定法現在（動詞原形）'},
-];
 
 /* ══════════════════════════════════════════════════
    8. ユーティリティ
@@ -488,18 +329,8 @@ function showScreen(id) {
 }
 
 /* ══════════════════════════════════════════════════
-   9. EXP・ゴールド・レベルアップ
+   9. EXP・ゴールド・レベルアップ（EXP_BASE等は shared/gameData.js）
 ══════════════════════════════════════════════════ */
-const EXP_BASE = { vocab:10, grammar:15, typing:12, listening:18, speaking:20, weak:25 };
-const GOLD_BASE = { vocab:2,  grammar:3,  typing:2,  listening:4,  speaking:5,  weak:6  };
-
-function comboMult(combo) {
-  if (combo >= 10) return 3;
-  if (combo >= 5)  return 2;
-  if (combo >= 3)  return 1.5;
-  return 1;
-}
-
 function gainExp(mode, combo) {
   const base    = EXP_BASE[mode] || 10;
   const combMul = comboMult(combo);
@@ -605,16 +436,21 @@ function renderTitleBadges() {
 function checkTitles() {
   for (const def of TITLE_DEFS) {
     if (!P.titles.has(def.id) && def.check(P)) {
-      P.titles.add(def.id);
-      setTimeout(() => {
-        $('ti-icon').textContent = def.icon;
-        $('ti-name').textContent = def.name;
-        $('ti-desc').textContent = def.id;
-        $('title-overlay').classList.remove('hidden');
-      }, 800);
+      setTimeout(() => showUnlockedTitle(def), 800);
       break;
     }
   }
+}
+
+// サーバー応答／ローカル判定のどちらからも呼ばれる称号獲得演出
+function showUnlockedTitle(def) {
+  if (P.titles.has(def.id)) return;
+  P.titles.add(def.id);
+  $('ti-icon').textContent = def.icon;
+  $('ti-name').textContent = def.name;
+  $('ti-desc').textContent = def.id;
+  $('title-overlay').classList.remove('hidden');
+  renderTitleBadges();
 }
 
 /* ══════════════════════════════════════════════════
@@ -961,7 +797,37 @@ function renderChoices(q) {
 /* ══════════════════════════════════════════════════
    18. 回答処理
 ══════════════════════════════════════════════════ */
-function handleAnswer(userAns, userText) {
+// ゲストモード（未ログイン）専用：ローカルのみでEXP/GOLD/HPを計算
+function localAnswerUpdate(q, ok) {
+  P.totalAnswers++;
+  let expGot = 0, goldGot = 0, damage = 0;
+
+  if (ok) {
+    P.totalCorrect++;
+    battle.combo++;
+    if (battle.combo > P.maxCombo) P.maxCombo = battle.combo;
+    if (q.type === 'listening') P.listenCorrect++;
+    if (q.type === 'speaking')  P.speakCorrect++;
+    expGot  = gainExp(battle.mode, battle.combo);
+    goldGot = gainGold(battle.mode, battle.combo);
+  } else {
+    if (battle.comboShield && !battle.comboShieldUsed) {
+      battle.comboShieldUsed = true;
+    } else {
+      battle.combo = 0;
+    }
+    const maxHp = getLvRow(P.totalExp).hp;
+    damage = Math.max(5, Math.round(maxHp * 0.2));
+    if (P.currentHp === undefined) P.currentHp = maxHp;
+    P.currentHp = Math.max(0, P.currentHp - damage);
+    refreshHeader();
+  }
+
+  setTimeout(checkTitles, 600);
+  return { expGot, goldGot, damage };
+}
+
+async function handleAnswer(userAns, userText) {
   if (battle.answered) return;
   battle.answered = true;
 
@@ -977,34 +843,13 @@ function handleAnswer(userAns, userText) {
     ok = userAns === q.ans;
   }
 
-  // 統計更新
+  // 統計更新（弱点重み付けなどの出題ロジック用ローカルキャッシュ）
   recordStat(q.id, ok);
-  P.totalAnswers++;
   if (ok) {
-    P.totalCorrect++;
     battle.correct++;
-    battle.combo++;
-    if (battle.combo > P.maxCombo) P.maxCombo = battle.combo;
-    if (q.type === 'listening') P.listenCorrect++;
-    if (q.type === 'speaking')  P.speakCorrect++;
     playSoundCorrect();
   } else {
-    let damage = 0;
-    // エリクサーのコンボシールド効果
-    if (battle.comboShield && !battle.comboShieldUsed) {
-      battle.comboShieldUsed = true;
-    } else {
-      battle.combo = 0;
-    }
     playSoundWrong();
-    // 問題失敗時のHP減少処理
-    const row = getLvRow(P.totalExp);
-    const maxHp = row.hp;
-    damage = Math.max(5, Math.round(maxHp * 0.2));
-    if (P.currentHp === undefined) P.currentHp = maxHp;
-    P.currentHp = Math.max(0, P.currentHp - damage);
-    refreshHeader();
-
     battle.wrongItems.push({
       question: q.qText,
       correct:  q.type === 'typing' || q.type === 'speaking'
@@ -1018,9 +863,39 @@ function handleAnswer(userAns, userText) {
     });
   }
 
-  // EXP & GOLD
-  const expGot  = ok ? gainExp(battle.mode, battle.combo)  : 0;
-  const goldGot = ok ? gainGold(battle.mode, battle.combo) : 0;
+  // EXP・GOLD・HP・コンボはログイン時サーバー権威、ゲスト時ローカル計算
+  let expGot = 0, goldGot = 0, damage = 0;
+  if (authToken) {
+    try {
+      const answerPayload = q.type === 'typing' ? (userAns || '')
+        : q.type === 'speaking' ? (userText || '')
+        : String(q.choices?.[userAns] ?? '');
+      const result = await apiFetch('/battle/answer', {
+        method: 'POST',
+        body: JSON.stringify({ questionId: q.id, isCorrect: ok, mode: battle.mode, userAnswer: answerPayload }),
+      });
+      applyProfile(result.profile);
+      battle.combo = result.combo;
+      expGot  = result.expGain;
+      goldGot = result.goldGain;
+      damage  = -result.hpChange;
+      refreshHeader();
+      refreshExpBar();
+      if (result.leveledUp) {
+        setTimeout(() => triggerLevelUp(getLvRow(P.totalExp)), 500);
+        playSoundLevelUp();
+      }
+      if (result.unlockedTitles?.length) {
+        setTimeout(() => showUnlockedTitle(result.unlockedTitles[0]), 800);
+      }
+    } catch (err) {
+      console.error('サーバーとの通信に失敗しました。ローカル計算にフォールバックします:', err);
+      ({ expGot, goldGot, damage } = localAnswerUpdate(q, ok));
+    }
+  } else {
+    ({ expGot, goldGot, damage } = localAnswerUpdate(q, ok));
+  }
+
   battle.expGained  += expGot;
   battle.goldGained += goldGot;
 
@@ -1071,9 +946,6 @@ function handleAnswer(userAns, userText) {
       s.classList.add('defeat');
     }, 300);
   }
-
-  // 称号チェック
-  setTimeout(checkTitles, 600);
 }
 
 /* ══════════════════════════════════════════════════
@@ -1088,12 +960,35 @@ function nextQuestion() {
   }
 }
 
+// バトル終了をサーバーに通知（全問正解フラグの反映・称号判定）。ゲスト時は呼ばれない
+async function finishBattleOnServer(isPerfect) {
+  try {
+    const result = await apiFetch('/battle/finish', {
+      method: 'POST',
+      body: JSON.stringify({ isPerfect }),
+    });
+    applyProfile(result.profile);
+    refreshField();
+    if (result.unlockedTitles?.length) {
+      setTimeout(() => showUnlockedTitle(result.unlockedTitles[0]), 500);
+    }
+  } catch (err) {
+    console.error('バトル終了処理のサーバー同期に失敗しました:', err);
+  }
+}
+
 function showResult() {
   const total   = battle.questions.length;
   const correct = battle.correct;
   const rate    = total > 0 ? Math.round(correct/total*100) : 0;
+  const isPerfect = rate === 100;
 
-  if (rate === 100) P.hasPerfect = true;
+  if (authToken) {
+    finishBattleOnServer(isPerfect);
+  } else {
+    if (isPerfect) P.hasPerfect = true;
+    checkTitles();
+  }
 
   $('res-correct').textContent = correct;
   $('res-total').textContent   = total;
@@ -1131,7 +1026,6 @@ function showResult() {
   }
 
   refreshField();
-  checkTitles();
   showScreen('screen-result');
 
   // アイテムドロップ判定（正解率40%以上、30%の確率）
@@ -1496,8 +1390,46 @@ function goToField() {
 ══════════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', () => {
 
-  /* ── タイトル → フィールド ── */
+  /* ── セッション復元（トークンがあれば自動ログイン） ── */
+  tryRestoreSession().then(restored => {
+    if (restored) {
+      $('logout-btn')?.classList.remove('hidden');
+      goToField();
+    }
+  });
+
+  /* ── タイトル → フィールド（ゲスト・セーブなし） ── */
   $('title-start')?.addEventListener('click', goToField);
+
+  /* ── ログイン／新規登録 ── */
+  $('login-btn')?.addEventListener('click', async () => {
+    const username = $('login-username').value.trim();
+    const password = $('login-password').value;
+    if (!username || !password) { showLoginError('なまえとひみつのコードを入力してください'); return; }
+    showLoginError('');
+    try {
+      const data = await apiFetch('/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) });
+      await handleAuthSuccess(data.token);
+    } catch (err) {
+      showLoginError(err.message);
+    }
+  });
+
+  $('register-btn')?.addEventListener('click', async () => {
+    const username = $('login-username').value.trim();
+    const password = $('login-password').value;
+    if (!username || !password) { showLoginError('なまえとひみつのコードを入力してください'); return; }
+    if (password.length < 4) { showLoginError('ひみつのコードは4文字以上にしてください'); return; }
+    showLoginError('');
+    try {
+      const data = await apiFetch('/auth/register', { method: 'POST', body: JSON.stringify({ username, password }) });
+      await handleAuthSuccess(data.token);
+    } catch (err) {
+      showLoginError(err.message);
+    }
+  });
+
+  $('logout-btn')?.addEventListener('click', logout);
 
   /* ── コマンドボタン（モード選択） ── */
   document.querySelectorAll('.dq-cmd-btn').forEach(btn => {

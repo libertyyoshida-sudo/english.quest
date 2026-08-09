@@ -74,6 +74,7 @@
       <div class="hdr-stat"><span class="hdr-stat-icon">💙</span>MP <span id="hdr-mp">50</span></div>
       <div class="hdr-stat"><span class="hdr-stat-icon">💰</span>G  <span id="hdr-gold">0</span></div>
       <button id="bgm-toggle" class="bgm-toggle-btn" title="BGMオン/オフ">🔔</button>
+      <button id="logout-btn" class="bgm-toggle-btn hidden" title="ログアウト">🚪</button>
     </div>
   </header>
 
@@ -102,8 +103,19 @@
           <div class="title-logo-sub">英語習得への旅</div>
         </div>
         <div class="title-hero-art">🐉</div>
-        <div class="title-copy dq-blink">▼ おしてはじめる</div>
-        <button id="title-start" class="dq-btn dq-btn-gold title-start-btn">ぼうけんをはじめる</button>
+
+        <div class="login-box">
+          <input id="login-username" class="dq-select login-input" type="text" placeholder="なまえ" autocomplete="username" maxlength="20" />
+          <input id="login-password" class="dq-select login-input" type="password" placeholder="ひみつのコード（4文字以上）" autocomplete="current-password" maxlength="64" />
+          <p id="login-error" class="login-error"></p>
+          <div class="login-actions">
+            <button id="login-btn" class="dq-btn">つづきから</button>
+            <button id="register-btn" class="dq-btn dq-btn-gold">はじめから とうろく</button>
+          </div>
+        </div>
+
+        <div class="title-copy dq-blink">▼ または</div>
+        <button id="title-start" class="dq-btn title-start-btn">ゲストであそぶ（セーブされません）</button>
       </div>
     </section>
 
@@ -261,6 +273,11 @@
         <div class="enemy-hp-bar-wrap">
           <div class="enemy-hp-bar" id="enemy-hp-bar"></div>
         </div>
+
+        <!-- リスニング用（キャラクターゾーンに配置：音が敵側から聞こえる演出も兼ねる） -->
+        <div id="listening-wrap" class="listening-wrap hidden">
+          <button id="listen-play-btn" class="dq-btn dq-btn-blue">🔊 もう一度きく</button>
+        </div>
       </div>
 
       <!-- 進捗 -->
@@ -278,11 +295,6 @@
         <div id="typing-wrap" class="typing-wrap hidden">
           <input id="typing-input" class="dq-input" type="text"
                  placeholder="えいごでうってね（Enterでかいとう）" autocomplete="off" spellcheck="false" />
-        </div>
-
-        <!-- リスニング用 -->
-        <div id="listening-wrap" class="listening-wrap hidden">
-          <button id="listen-play-btn" class="dq-btn dq-btn-blue">🔊 もう一度きく</button>
         </div>
 
         <!-- スピーキング用 -->
