@@ -1318,6 +1318,63 @@ function setupFieldControls() {
     btn.addEventListener('pointerleave', release);
     btn.addEventListener('pointercancel', release);
   });
+
+  /* ── スマホ用フリック・スワイプ移動 ── */
+  const canvas = $('field-canvas');
+  if (canvas) {
+    let flickStartX = 0;
+    let flickStartY = 0;
+    let isFlicking = false;
+    let flickTimer = null;
+    const MIN_FLICK_DIST = 15;
+
+    const clearFlickKeys = () => {
+      moveKeys.delete('up');
+      moveKeys.delete('down');
+      moveKeys.delete('left');
+      moveKeys.delete('right');
+    };
+
+    const handleFlickStart = ev => {
+      if (!isFieldScreenActive()) return;
+      const touch = ev.touches ? ev.touches[0] : ev;
+      flickStartX = touch.clientX;
+      flickStartY = touch.clientY;
+      isFlicking = true;
+      if (flickTimer) { clearTimeout(flickTimer); flickTimer = null; }
+    };
+
+    const handleFlickMove = ev => {
+      if (!isFlicking || !isFieldScreenActive()) return;
+      const touch = ev.touches ? ev.touches[0] : ev;
+      const dx = touch.clientX - flickStartX;
+      const dy = touch.clientY - flickStartY;
+      const dist = Math.hypot(dx, dy);
+
+      if (dist >= MIN_FLICK_DIST) {
+        clearFlickKeys();
+        if (Math.abs(dx) > Math.abs(dy)) {
+          moveKeys.add(dx > 0 ? 'right' : 'left');
+        } else {
+          moveKeys.add(dy > 0 ? 'down' : 'up');
+        }
+      }
+    };
+
+    const handleFlickEnd = () => {
+      if (!isFlicking) return;
+      isFlicking = false;
+      flickTimer = setTimeout(() => {
+        clearFlickKeys();
+        flickTimer = null;
+      }, 350);
+    };
+
+    canvas.addEventListener('touchstart', handleFlickStart, { passive: true });
+    canvas.addEventListener('touchmove', handleFlickMove, { passive: true });
+    canvas.addEventListener('touchend', handleFlickEnd, { passive: true });
+    canvas.addEventListener('touchcancel', handleFlickEnd, { passive: true });
+  }
 }
 
 function updateHeroMovement(dt) {

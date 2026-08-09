@@ -115,28 +115,33 @@ body {
   position: sticky; top: 0; z-index: 100;
   background: var(--dq-navy);
   border-bottom: 3px solid var(--dq-win-bd);
-  display: flex; align-items: center;
+  display: flex; align-items: center; justify-content: space-between;
   padding: 8px 16px; gap: 12px;
+  white-space: nowrap;
 }
 
-.hdr-hero-block { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-.hdr-hero-icon  { font-size: 2.2rem; animation: hero-idle 3s ease-in-out infinite; }
+.hdr-hero-block { display: flex; align-items: center; gap: 8px; flex-shrink: 0; white-space: nowrap; }
+.hdr-hero-icon  { font-size: 2.2rem; animation: hero-idle 3s ease-in-out infinite; flex-shrink: 0; }
 @keyframes hero-idle { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
 
-.hdr-name  { font-size: .8rem; color: var(--dq-yellow); }
-.hdr-lv    { font-size: .78rem; color: var(--dq-white); }
-.hdr-title { color: var(--dq-blue-l); font-size: .72rem; margin-left: 4px; }
+.hdr-name  { font-size: .8rem; color: var(--dq-yellow); white-space: nowrap; }
+.hdr-lv    { font-size: .78rem; color: var(--dq-white); white-space: nowrap; }
+.hdr-title { color: var(--dq-blue-l); font-size: .72rem; margin-left: 4px; white-space: nowrap; }
 
 .hdr-center-title {
   flex: 1; text-align: center;
   font-size: clamp(.85rem, 2.5vw, 1.15rem);
   color: var(--dq-gold); letter-spacing: .08em;
   text-shadow: 0 0 8px var(--dq-gold);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
-.hdr-stats-block { display: flex; gap: 10px; flex-shrink: 0; }
-.hdr-stat { font-size: .78rem; display: flex; align-items: center; gap: 3px; }
-.hdr-stat-icon { font-size: .9rem; }
+.hdr-stats-block { display: flex; align-items: center; gap: 10px; flex-shrink: 0; white-space: nowrap; }
+.hdr-stat { font-size: .78rem; display: flex; align-items: center; gap: 3px; white-space: nowrap; }
+.hdr-stat-icon { font-size: .9rem; flex-shrink: 0; }
 
 /* EXPバー */
 .exp-bar-wrap {
@@ -543,7 +548,15 @@ body {
 /* ==========================================
    レスポンシブ
 ========================================== */
+@media (max-width: 640px) {
+  .dq-header { padding: 6px 10px; gap: 6px; }
+  .hdr-hero-icon { font-size: 1.8rem; }
+  .hdr-hero-block { gap: 6px; }
+  .hdr-title { display: none; }
+}
+
 @media (max-width: 520px) {
+  .hdr-center-title { display: none; } /* スマホ画面で中央タイトルを非表示にし、縦伸ばしを完全に防ぐ */
   .field-layout    { grid-template-columns: 1fr; }
   .choices-wrap    { grid-template-columns: 1fr; }
   .status-grid     { grid-template-columns: repeat(2,1fr); }
