@@ -11,7 +11,7 @@ async function main() {
       where: { id: item.id },
       update: {
         category: 'vocab',
-        level: item.lv,
+        level: String(item.lv),
         word: item.word,
         japanese: item.jp,
         exampleSentence: item.ex,
@@ -19,7 +19,7 @@ async function main() {
       create: {
         id: item.id,
         category: 'vocab',
-        level: item.lv,
+        level: String(item.lv),
         word: item.word,
         japanese: item.jp,
         exampleSentence: item.ex,
@@ -33,7 +33,7 @@ async function main() {
       where: { id: item.id },
       update: {
         category: 'grammar',
-        level: item.lv,
+        level: String(item.lv),
         word: item.q,
         japanese: item.choices[item.ans],
         choicesJson,
@@ -41,7 +41,7 @@ async function main() {
       create: {
         id: item.id,
         category: 'grammar',
-        level: item.lv,
+        level: String(item.lv),
         word: item.q,
         japanese: item.choices[item.ans],
         choicesJson,

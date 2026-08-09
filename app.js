@@ -7,7 +7,7 @@
 
 import {
   ITEM_DB, LEVEL_TABLE, TITLE_DEFS, EXP_BASE, GOLD_BASE,
-  comboMult, getLvRow, getNextLvRow,
+  comboMult, getLvRow, getNextLvRow, toeicLabel,
 } from './shared/gameData.js';
 import { VOCAB_DB, GRAMMAR_DB } from './shared/questionData.js';
 
@@ -298,16 +298,12 @@ const ENEMIES = [
   { name:'まおうのてさき',sprite:'😈', lv:9, expRate:3.0 },
   { name:'だいまおう',   sprite:'💀', lv:10,expRate:4.0 },
 ];
-function pickEnemy(level) {
-  // 難易度連動：advanced=強敵、intermediate=中級、beginner=弱敵
-  let range;
-  if (level === 'advanced') range = [6, 9]; // Lv7-10
-  else if (level === 'intermediate') range = [3, 6]; // Lv4-7
-  else if (level === 'beginner') range = [0, 3]; // Lv1-4
-  else range = [Math.max(0, Math.floor(P.lv/1.5)-1), Math.min(9, Math.floor(P.lv/1.5)+1)];
-
-  const idx = range[0] + Math.floor(Math.random() * (range[1] - range[0] + 1));
-  return ENEMIES[Math.min(idx, ENEMIES.length - 1)];
+// tier: 'all' か 1〜10。問題のティア（TOEICレベル）と同じ数値で敵の強さを決める
+function pickEnemy(tier) {
+  const baseTier = tier === 'all' ? getLvRow(P.totalExp).lv : tier;
+  const spread = Math.floor(Math.random() * 3) - 1; // -1〜+1でばらつきを持たせる
+  const idx = Math.min(9, Math.max(0, baseTier - 1 + spread));
+  return ENEMIES[idx];
 }
 
 
@@ -329,10 +325,17 @@ const shuffle = arr => {
   return a;
 };
 
+// level-select の値（'auto' | 'all' | '1'〜'10'）を実際のティア（'all' か 1〜10の数値）に解決する
+// 'auto' は勇者の現在レベルに連動させる（敵の強さ・問題レベルが自動で上がる）
+function resolveLevelSelection(rawValue) {
+  if (rawValue === 'all') return 'all';
+  if (rawValue === 'auto') return getLvRow(P.totalExp).lv;
+  return parseInt(rawValue, 10);
+}
+
 function filterLevel(pool, level) {
   if (level === 'all') return pool;
-  const map = { beginner:'beginner', intermediate:'intermediate', advanced:'advanced' };
-  return pool.filter(x => (x.lv || x.level) === (map[level] || level));
+  return pool.filter(x => x.lv === level);
 }
 
 // 弱点重み付きシャッフル
@@ -726,7 +729,7 @@ let battle = {
    17. バトル開始 & レンダリング
 ══════════════════════════════════════════════════ */
 function startBattle(mode) {
-  const level = $('level-select').value;
+  const level = resolveLevelSelection($('level-select').value);
   const count = parseInt($('count-select').value, 10);
   const qs    = buildQuestions(mode, level, count);
 
@@ -1237,14 +1240,46 @@ const FIELD_ICON_TOUCH_RATIO = 0.10; // キャンバス短辺に対する接触�
 const FIELD_ICON_LEAVE_RATIO = FIELD_ICON_TOUCH_RATIO * 1.6;
 const FIELD_MOVE_SPEED = 130; // px/秒（キャンバス実寸換算）
 
-const heroPos = { x: 50, y: 50 }; // フィールド上の勇者位置（%）
+// 「歩ける画面」の定義。まち（フィールド）とせかいマップの両方で同じ移動システムを使い回す
+const WALKABLE_SCREENS = {
+  'screen-field': { canvasId: 'field-canvas', heroId: 'field-hero', onTouch: mode => enterCommand(mode) },
+  'screen-world': { canvasId: 'world-canvas', heroId: 'world-hero', onTouch: bossId => enterBossZone(bossId) },
+};
+// 画面ごとの勇者位置（%）。画面を切り替えるたびに入り口の位置へリセットする
+const heroPositions = {
+  'screen-field': { x: 50, y: 50 },
+  'screen-world': { x: 50, y: 92 },
+};
 const moveKeys = new Set();
 const touchedFieldIcons = new Set();
 let fieldLastTime = null;
+let worldEncounterTimer = 0;
+let nextEncounterAt = randomEncounterThreshold();
 
-function isFieldScreenActive() {
-  const scr = $('screen-field');
-  return !!scr && scr.classList.contains('active');
+function getActiveWalkable() {
+  for (const [screenId, cfg] of Object.entries(WALKABLE_SCREENS)) {
+    const scr = $(screenId);
+    if (scr && scr.classList.contains('active')) {
+      return { screenId, ...cfg, pos: heroPositions[screenId] };
+    }
+  }
+  return null;
+}
+
+function resetHeroPosition(screenId) {
+  const start = screenId === 'screen-world' ? { x: 50, y: 92 } : { x: 50, y: 50 };
+  heroPositions[screenId] = { ...start };
+  touchedFieldIcons.clear();
+  const cfg = WALKABLE_SCREENS[screenId];
+  const hero = cfg && $(cfg.heroId);
+  if (hero) {
+    hero.style.left = start.x + '%';
+    hero.style.top  = start.y + '%';
+  }
+}
+
+function randomEncounterThreshold() {
+  return 1800 + Math.random() * 2200; // 1.8〜4秒うごき続けるとエンカウント
 }
 
 function keyToDir(key) {
@@ -1259,7 +1294,7 @@ function keyToDir(key) {
 
 function setupFieldControls() {
   window.addEventListener('keydown', e => {
-    if (!isFieldScreenActive()) return;
+    if (!getActiveWalkable()) return;
     const tag = document.activeElement && document.activeElement.tagName;
     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
     const dir = keyToDir(e.key);
@@ -1280,77 +1315,81 @@ function setupFieldControls() {
     btn.addEventListener('pointercancel', release);
   });
 
-  /* ── スマホ用フリック・スワイプ移動 ── */
-  const canvas = $('field-canvas');
-  if (canvas) {
-    let flickStartX = 0;
-    let flickStartY = 0;
-    let isFlicking = false;
-    let flickTimer = null;
-    const MIN_FLICK_DIST = 15;
-
-    const clearFlickKeys = () => {
-      moveKeys.delete('up');
-      moveKeys.delete('down');
-      moveKeys.delete('left');
-      moveKeys.delete('right');
-    };
-
-    const handleFlickStart = ev => {
-      if (!isFieldScreenActive()) return;
-      const touch = ev.touches ? ev.touches[0] : ev;
-      flickStartX = touch.clientX;
-      flickStartY = touch.clientY;
-      isFlicking = true;
-      if (flickTimer) { clearTimeout(flickTimer); flickTimer = null; }
-    };
-
-    const handleFlickMove = ev => {
-      if (!isFlicking || !isFieldScreenActive()) return;
-      const touch = ev.touches ? ev.touches[0] : ev;
-      const dx = touch.clientX - flickStartX;
-      const dy = touch.clientY - flickStartY;
-      const dist = Math.hypot(dx, dy);
-
-      if (dist >= MIN_FLICK_DIST) {
-        clearFlickKeys();
-        if (Math.abs(dx) > Math.abs(dy)) {
-          moveKeys.add(dx > 0 ? 'right' : 'left');
-        } else {
-          moveKeys.add(dy > 0 ? 'down' : 'up');
-        }
-      }
-    };
-
-    const handleFlickEnd = () => {
-      if (!isFlicking) return;
-      isFlicking = false;
-      flickTimer = setTimeout(() => {
-        clearFlickKeys();
-        flickTimer = null;
-      }, 350);
-    };
-
-    canvas.addEventListener('touchstart', handleFlickStart, { passive: true });
-    canvas.addEventListener('touchmove', handleFlickMove, { passive: true });
-    canvas.addEventListener('touchend', handleFlickEnd, { passive: true });
-    canvas.addEventListener('touchcancel', handleFlickEnd, { passive: true });
-  }
+  /* ── スマホ用フリック・スワイプ移動（フィールド／せかいマップ共通） ── */
+  Object.values(WALKABLE_SCREENS).forEach(cfg => setupFlickForCanvas(cfg.canvasId));
 }
 
-function updateHeroMovement(dt) {
+function setupFlickForCanvas(canvasId) {
+  const canvas = $(canvasId);
+  if (!canvas) return;
+
+  let flickStartX = 0;
+  let flickStartY = 0;
+  let isFlicking = false;
+  let flickTimer = null;
+  const MIN_FLICK_DIST = 15;
+
+  const clearFlickKeys = () => {
+    moveKeys.delete('up');
+    moveKeys.delete('down');
+    moveKeys.delete('left');
+    moveKeys.delete('right');
+  };
+
+  const handleFlickStart = ev => {
+    if (!getActiveWalkable()) return;
+    const touch = ev.touches ? ev.touches[0] : ev;
+    flickStartX = touch.clientX;
+    flickStartY = touch.clientY;
+    isFlicking = true;
+    if (flickTimer) { clearTimeout(flickTimer); flickTimer = null; }
+  };
+
+  const handleFlickMove = ev => {
+    if (!isFlicking || !getActiveWalkable()) return;
+    const touch = ev.touches ? ev.touches[0] : ev;
+    const dx = touch.clientX - flickStartX;
+    const dy = touch.clientY - flickStartY;
+    const dist = Math.hypot(dx, dy);
+
+    if (dist >= MIN_FLICK_DIST) {
+      clearFlickKeys();
+      if (Math.abs(dx) > Math.abs(dy)) {
+        moveKeys.add(dx > 0 ? 'right' : 'left');
+      } else {
+        moveKeys.add(dy > 0 ? 'down' : 'up');
+      }
+    }
+  };
+
+  const handleFlickEnd = () => {
+    if (!isFlicking) return;
+    isFlicking = false;
+    flickTimer = setTimeout(() => {
+      clearFlickKeys();
+      flickTimer = null;
+    }, 350);
+  };
+
+  canvas.addEventListener('touchstart', handleFlickStart, { passive: true });
+  canvas.addEventListener('touchmove', handleFlickMove, { passive: true });
+  canvas.addEventListener('touchend', handleFlickEnd, { passive: true });
+  canvas.addEventListener('touchcancel', handleFlickEnd, { passive: true });
+}
+
+function updateHeroMovement(dt, active) {
   let dx = 0, dy = 0;
   if (moveKeys.has('up'))    dy -= 1;
   if (moveKeys.has('down'))  dy += 1;
   if (moveKeys.has('left'))  dx -= 1;
   if (moveKeys.has('right')) dx += 1;
-  if (dx === 0 && dy === 0) return;
+  if (dx === 0 && dy === 0) return false;
 
-  const canvas = $('field-canvas');
-  const hero   = $('field-hero');
-  if (!canvas || !hero) return;
+  const canvas = $(active.canvasId);
+  const hero   = $(active.heroId);
+  if (!canvas || !hero) return false;
   const rect = canvas.getBoundingClientRect();
-  if (rect.width === 0 || rect.height === 0) return;
+  if (rect.width === 0 || rect.height === 0) return false;
 
   const len = Math.hypot(dx, dy);
   dx /= len; dy /= len;
@@ -1358,19 +1397,21 @@ function updateHeroMovement(dt) {
   const heroHalfWPct = (hero.offsetWidth  / 2 / rect.width)  * 100;
   const heroHalfHPct = (hero.offsetHeight / 2 / rect.height) * 100;
 
-  heroPos.x += (dx * FIELD_MOVE_SPEED * dt / rect.width)  * 100;
-  heroPos.y += (dy * FIELD_MOVE_SPEED * dt / rect.height) * 100;
-  heroPos.x = Math.min(100 - heroHalfWPct, Math.max(heroHalfWPct, heroPos.x));
-  heroPos.y = Math.min(100 - heroHalfHPct, Math.max(heroHalfHPct, heroPos.y));
+  const pos = active.pos;
+  pos.x += (dx * FIELD_MOVE_SPEED * dt / rect.width)  * 100;
+  pos.y += (dy * FIELD_MOVE_SPEED * dt / rect.height) * 100;
+  pos.x = Math.min(100 - heroHalfWPct, Math.max(heroHalfWPct, pos.x));
+  pos.y = Math.min(100 - heroHalfHPct, Math.max(heroHalfHPct, pos.y));
 
-  hero.style.left = heroPos.x + '%';
-  hero.style.top  = heroPos.y + '%';
+  hero.style.left = pos.x + '%';
+  hero.style.top  = pos.y + '%';
   hero.classList.toggle('facing-left', dx < 0);
+  return true;
 }
 
-function checkFieldIconContacts() {
-  const canvas = $('field-canvas');
-  const hero   = $('field-hero');
+function checkFieldIconContacts(active) {
+  const canvas = $(active.canvasId);
+  const hero   = $(active.heroId);
   if (!canvas || !hero) return;
   const rect = canvas.getBoundingClientRect();
   if (rect.width === 0 || rect.height === 0) return;
@@ -1382,32 +1423,43 @@ function checkFieldIconContacts() {
   const touchDist = short * FIELD_ICON_TOUCH_RATIO;
   const leaveDist = short * FIELD_ICON_LEAVE_RATIO;
 
-  document.querySelectorAll('.field-icon').forEach(iconEl => {
-    const mode  = iconEl.dataset.mode;
+  canvas.querySelectorAll('.field-icon').forEach(iconEl => {
+    const key   = iconEl.dataset.mode || iconEl.dataset.boss;
     const iRect = iconEl.getBoundingClientRect();
     const iCx = iRect.left + iRect.width / 2;
     const iCy = iRect.top  + iRect.height / 2;
     const dist = Math.hypot(heroCx - iCx, heroCy - iCy);
 
     if (dist < touchDist) {
-      if (!touchedFieldIcons.has(mode)) {
-        touchedFieldIcons.add(mode);
-        enterCommand(mode);
+      if (!touchedFieldIcons.has(key)) {
+        touchedFieldIcons.add(key);
+        active.onTouch(key);
       }
     } else if (dist > leaveDist) {
-      touchedFieldIcons.delete(mode);
+      touchedFieldIcons.delete(key);
     }
   });
 }
 
 function fieldLoop(ts) {
   requestAnimationFrame(fieldLoop);
-  if (!isFieldScreenActive()) { fieldLastTime = null; return; }
+  const active = getActiveWalkable();
+  if (!active) { fieldLastTime = null; return; }
   if (fieldLastTime === null) { fieldLastTime = ts; return; }
   const dt = Math.min(0.05, (ts - fieldLastTime) / 1000);
   fieldLastTime = ts;
-  updateHeroMovement(dt);
-  checkFieldIconContacts();
+  const moved = updateHeroMovement(dt, active);
+  checkFieldIconContacts(active);
+
+  // せかいマップではうろついているとランダムにモンスターが出現する
+  if (active.screenId === 'screen-world' && moved) {
+    worldEncounterTimer += dt * 1000;
+    if (worldEncounterTimer >= nextEncounterAt) {
+      worldEncounterTimer = 0;
+      nextEncounterAt = randomEncounterThreshold();
+      triggerRandomEncounter();
+    }
+  }
 }
 
 /* ══════════════════════════════════════════════════
@@ -1440,7 +1492,103 @@ function goToField() {
 // フィールドのコマンド選択（アイコン接触／ボタンクリック共通の入り口）
 function enterCommand(mode) {
   if (mode === 'inn') goToInn();
+  else if (mode === 'world') goToWorld();
   else startBattle(mode);
+}
+
+/* ══════════════════════════════════════════════════
+   せかいマップ：まちの外・ランダムせんとう・ボス戦
+══════════════════════════════════════════════════ */
+const WORLD_BOSSES = {
+  forest:   { tier: 3,  count: 10, title: 'もりの ぬし' },
+  cave:     { tier: 6,  count: 12, title: 'どうくつの ぬし' },
+  mountain: { tier: 8,  count: 14, title: 'やまの ドラゴン' },
+  castle:   { tier: 10, count: 16, title: 'まおうのしろ の あるじ' },
+};
+
+function goToWorld() {
+  stopSpeechAll();
+  resetHeroPosition('screen-world');
+  worldEncounterTimer = 0;
+  nextEncounterAt = randomEncounterThreshold();
+  showScreen('screen-world');
+  playFieldBGM();
+  refreshHeader();
+}
+
+// バトル画面の「フィールドへもどる／フィールドへ」共通の戻り先判定
+// ランダムエンカウント・ボス戦はせかいマップへ、通常のコマンドバトルはまちへ戻る
+function returnFromBattle() {
+  if (battle && battle.returnTo === 'screen-world') goToWorld();
+  else goToField();
+}
+
+function randomEncounterMode() {
+  const modes = ['vocab', 'grammar', 'typing', 'listening', 'speaking'];
+  return modes[Math.floor(Math.random() * modes.length)];
+}
+
+// せかいマップをうろついていると発生するランダムせんとう。難易度は勇者のレベルに自動連動する
+function triggerRandomEncounter() {
+  const mode  = randomEncounterMode();
+  const tier  = getLvRow(P.totalExp).lv;
+  const qs    = buildQuestions(mode, tier, 4);
+  if (qs.length === 0) return;
+
+  const enemy = pickEnemy(tier);
+  battle = {
+    mode, questions: qs, cur: 0,
+    correct: 0, wrongItems: [],
+    combo: 0, expGained: 0, goldGained: 0,
+    answered: false, enemy,
+    activeEffects: [], comboShield: false, comboShieldUsed: false,
+    returnTo: 'screen-world', isRandomEncounter: true,
+  };
+
+  const msgEl = $('world-msg-text');
+  if (msgEl) msgEl.textContent = `${enemy.sprite} ${enemy.name}が とびだしてきた！`;
+
+  setupBattleScreenUI(enemy);
+  showScreen('screen-battle');
+  renderQuestion();
+}
+
+// 単語＋文法を混ぜたボス戦用の問題セットを作る
+function buildBossQuestions(tier, count) {
+  const vocabCount   = Math.ceil(count * 0.7);
+  const grammarCount = count - vocabCount;
+  const qs = [
+    ...buildQuestions('vocab', tier, vocabCount),
+    ...buildQuestions('grammar', tier, grammarCount),
+  ];
+  return shuffle(qs);
+}
+
+function enterBossZone(bossId) {
+  const boss = WORLD_BOSSES[bossId];
+  if (!boss) return;
+  stopSpeechAll();
+
+  const qs = buildBossQuestions(boss.tier, boss.count);
+  if (qs.length === 0) {
+    alert('このボスに ちょうせんするには もんだいが たりません。');
+    return;
+  }
+
+  const enemy = { ...ENEMIES[boss.tier - 1], name: boss.title };
+
+  battle = {
+    mode: 'boss', questions: qs, cur: 0,
+    correct: 0, wrongItems: [],
+    combo: 0, expGained: 0, goldGained: 0,
+    answered: false, enemy,
+    activeEffects: [], comboShield: false, comboShieldUsed: false,
+    returnTo: 'screen-world', isBoss: true, bossId,
+  };
+
+  setupBattleScreenUI(enemy);
+  showScreen('screen-battle');
+  renderQuestion();
 }
 
 /* ══════════════════════════════════════════════════
@@ -1525,6 +1673,7 @@ function renderInnList(filter) {
     row.innerHTML = `
       <div class="inn-item-main">${mainHtml}</div>
       <div class="inn-item-side">
+        <span class="inn-tier-badge">${toeicLabel(item.lv)}</span>
         <span class="inn-rate ${rateClass}">${rateText}</span>
         ${weak ? '<span class="inn-weak-badge">🔥 にがて</span>' : ''}
         ${weak ? '<button type="button" class="dq-btn dq-btn-blue inn-train-btn">とっくん</button>' : ''}
@@ -1601,8 +1750,9 @@ document.addEventListener('DOMContentLoaded', () => {
   requestAnimationFrame(fieldLoop);
 
   /* ── フィールドへもどる（バトル中断） ── */
-  $('battle-flee-btn')?.addEventListener('click', goToField);
+  $('battle-flee-btn')?.addEventListener('click', returnFromBattle);
   $('inn-flee-btn')?.addEventListener('click', goToField);
+  $('world-back-btn')?.addEventListener('click', goToField);
 
   /* ── やどやフィルタータブ ── */
   document.querySelectorAll('.inn-filter-btn').forEach(btn => {
@@ -1651,10 +1801,14 @@ document.addEventListener('DOMContentLoaded', () => {
   $('next-btn')?.addEventListener('click', nextQuestion);
 
   /* ── リザルト：もう一度 ── */
-  $('retry-btn')?.addEventListener('click', () => startBattle(battle.mode));
+  $('retry-btn')?.addEventListener('click', () => {
+    if (battle.isBoss) enterBossZone(battle.bossId);
+    else if (battle.isRandomEncounter) triggerRandomEncounter();
+    else startBattle(battle.mode);
+  });
 
-  /* ── リザルト：フィールドへ ── */
-  $('field-btn')?.addEventListener('click', goToField);
+  /* ── リザルト：フィールド／せかいマップへ ── */
+  $('field-btn')?.addEventListener('click', returnFromBattle);
 
   /* ── レベルアップダイアログを閉じる ── */
   $('lu-close')?.addEventListener('click', () => {

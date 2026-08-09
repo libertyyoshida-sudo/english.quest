@@ -158,6 +158,9 @@
             <div class="field-icon" data-mode="inn"       style="left:68%;top:50%;">
               <span class="field-icon-emoji">🏨</span><span class="field-icon-label">やどや</span>
             </div>
+            <div class="field-icon field-icon-exit" data-mode="world" style="left:96%;top:50%;">
+              <span class="field-icon-emoji">🗺️</span><span class="field-icon-label">まちの外へ</span>
+            </div>
             <div class="field-hero" id="field-hero">🧙</div>
           </div>
           <div class="field-dpad" id="field-dpad">
@@ -199,6 +202,10 @@
             <span class="cmd-icon">🏨</span> やどや（よむ・やすむ）
             <span class="cmd-exp">HP回復</span>
           </button>
+          <button class="dq-cmd-btn" data-mode="world">
+            <span class="cmd-icon">🗺️</span> まちの外へ（せかいマップ）
+            <span class="cmd-exp">ランダムせんとう</span>
+          </button>
         </div>
       </div>
 
@@ -207,10 +214,18 @@
         <span class="setting-row-item">
           <label class="dq-label">難易度</label>
           <select id="level-select" class="dq-select">
-            <option value="all">ぜんぶ</option>
-            <option value="beginner">★ 下級</option>
-            <option value="intermediate">★★ 中級</option>
-            <option value="advanced">★★★ 上級</option>
+            <option value="auto" selected>おまかせ（ゆうしゃレベルに連動）</option>
+            <option value="1">Lv.1（TOEIC300）</option>
+            <option value="2">Lv.2（TOEIC400）</option>
+            <option value="3">Lv.3（TOEIC500）</option>
+            <option value="4">Lv.4（TOEIC600）</option>
+            <option value="5">Lv.5（TOEIC700）</option>
+            <option value="6">Lv.6（TOEIC730）</option>
+            <option value="7">Lv.7（TOEIC800）</option>
+            <option value="8">Lv.8（TOEIC860）</option>
+            <option value="9">Lv.9（TOEIC900）</option>
+            <option value="10">Lv.10（TOEIC990）</option>
+            <option value="all">ぜんぶ（ランダム混合）</option>
           </select>
         </span>
         <span class="setting-row-item">
@@ -270,7 +285,7 @@
          やどや（単語・文法の読み返し／HP回復／にがて特訓）
     ──────────────────────────────── -->
     <section id="screen-inn" class="screen">
-      <button id="inn-flee-btn" class="dq-btn dq-btn-blue battle-flee-btn" type="button">◀ フィールドへもどる</button>
+      <button id="inn-flee-btn" class="dq-btn dq-btn-blue inn-back-btn" type="button">◀ まちへもどる</button>
 
       <div class="dq-window msg-window" id="inn-msg">
         <p id="inn-msg-text">やどやの　おばあさんが　むかえてくれた。「ここで　むかしの　たんごや　ぶんぽうを　よみかえすと　こころも　からだも　やすまるじゃろう」</p>
@@ -284,6 +299,42 @@
       </div>
 
       <div class="inn-list" id="inn-list"></div>
+    </section>
+
+    <!-- ────────────────────────────────
+         せかいマップ（まちの外・ランダムせんとう／ボス戦）
+    ──────────────────────────────── -->
+    <section id="screen-world" class="screen">
+      <button id="world-back-btn" class="dq-btn dq-btn-blue inn-back-btn" type="button">◀ まちへもどる</button>
+
+      <div class="dq-window msg-window" id="world-msg">
+        <p id="world-msg-text">まちの外は きけんな せかいだ。あるいていると まものが とつぜん あらわれる…！　★の場所には つよい ぬしが すんでいる。</p>
+      </div>
+
+      <div class="field-map">
+        <div class="field-canvas" id="world-canvas">
+          <div class="field-icon world-boss-icon" data-boss="forest" style="left:18%;top:28%;">
+            <span class="field-icon-emoji">🌲👹</span><span class="field-icon-label">もりのぬし</span>
+          </div>
+          <div class="field-icon world-boss-icon" data-boss="cave" style="left:80%;top:22%;">
+            <span class="field-icon-emoji">🕳️🦅</span><span class="field-icon-label">どうくつのぬし</span>
+          </div>
+          <div class="field-icon world-boss-icon" data-boss="mountain" style="left:14%;top:80%;">
+            <span class="field-icon-emoji">⛰️🐉</span><span class="field-icon-label">やまのドラゴン</span>
+          </div>
+          <div class="field-icon world-boss-icon" data-boss="castle" style="left:84%;top:82%;">
+            <span class="field-icon-emoji">🏰💀</span><span class="field-icon-label">まおうのしろ</span>
+          </div>
+          <div class="field-hero" id="world-hero">🧙</div>
+        </div>
+        <div class="field-dpad" id="world-dpad">
+          <button type="button" class="dpad-btn dpad-up"    data-dir="up"    aria-label="上へ">▲</button>
+          <button type="button" class="dpad-btn dpad-left"  data-dir="left"  aria-label="左へ">◀</button>
+          <button type="button" class="dpad-btn dpad-right" data-dir="right" aria-label="右へ">▶</button>
+          <button type="button" class="dpad-btn dpad-down"  data-dir="down"  aria-label="下へ">▼</button>
+        </div>
+        <div class="field-hint">矢印キー / WASD / 十字ボタン / フリック操作で うごける。うろつくと モンスターが あらわれる！</div>
+      </div>
     </section>
 
     <!-- ────────────────────────────────

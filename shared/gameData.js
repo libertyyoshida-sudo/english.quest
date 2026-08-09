@@ -46,8 +46,26 @@ export const TITLE_DEFS = [
   { id: 'gold100', icon: '💰', name: 'ゴールド100G', check: p => p.gold >= 100 },
 ];
 
-export const EXP_BASE = { vocab: 10, grammar: 15, typing: 12, listening: 18, speaking: 20, weak: 25 };
-export const GOLD_BASE = { vocab: 2, grammar: 3, typing: 2, listening: 4, speaking: 5, weak: 6 };
+// 問題の難易度階層（1=TOEIC300 〜 10=TOEIC990）。勇者のレベルと同じ1-10スケールで対応させている
+export const TOEIC_TIERS = [
+  { tier: 1,  toeic: 300 },
+  { tier: 2,  toeic: 400 },
+  { tier: 3,  toeic: 500 },
+  { tier: 4,  toeic: 600 },
+  { tier: 5,  toeic: 700 },
+  { tier: 6,  toeic: 730 },
+  { tier: 7,  toeic: 800 },
+  { tier: 8,  toeic: 860 },
+  { tier: 9,  toeic: 900 },
+  { tier: 10, toeic: 990 },
+];
+export function toeicLabel(tier) {
+  const row = TOEIC_TIERS.find(t => t.tier === tier);
+  return row ? `TOEIC${row.toeic}` : '';
+}
+
+export const EXP_BASE = { vocab: 10, grammar: 15, typing: 12, listening: 18, speaking: 20, weak: 25, boss: 35 };
+export const GOLD_BASE = { vocab: 2, grammar: 3, typing: 2, listening: 4, speaking: 5, weak: 6, boss: 10 };
 
 export function comboMult(combo) {
   if (combo >= 10) return 3;

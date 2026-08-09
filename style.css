@@ -312,6 +312,14 @@ body {
 
 .field-hint { font-size: .68rem; color: var(--dq-gray); text-align: center; }
 
+/* まちの外へ出るアイコン（世界マップへの入り口） */
+.field-icon-exit .field-icon-emoji { filter: drop-shadow(0 0 8px var(--dq-gold)); }
+.field-icon-exit .field-icon-label { color: var(--dq-gold); }
+
+/* せかいマップのボスアイコン */
+.world-boss-icon .field-icon-emoji { font-size: 1.9rem; filter: drop-shadow(0 0 8px var(--dq-red)); }
+.world-boss-icon .field-icon-label { color: var(--dq-red); }
+
 /* ---------- 十字キー（モバイル操作） ---------- */
 .field-dpad {
   display: grid;
@@ -738,6 +746,9 @@ body {
 /* ==========================================
    やどや（読み返し・HP回復・にがて特訓）
 ========================================== */
+/* バトル画面の固定フリーボタンとは違い、通常フローに配置して他要素との重なりを防ぐ */
+.inn-back-btn { display: inline-block; margin-bottom: 10px; font-size: .78rem; padding: 7px 14px; }
+
 .inn-filter-row {
   display: flex; gap: 8px; flex-wrap: wrap;
   margin-bottom: 10px;
@@ -768,6 +779,11 @@ body {
 .inn-item-side {
   display: flex; flex-direction: column; align-items: flex-end; gap: 6px;
   flex-shrink: 0;
+}
+.inn-tier-badge {
+  font-size: .68rem; color: var(--dq-blue-l);
+  background: #0a0a20; border: 1px solid var(--dq-blue);
+  padding: 1px 6px; white-space: nowrap;
 }
 .inn-rate { font-size: .74rem; white-space: nowrap; }
 .inn-rate-none { color: var(--dq-gray); }
