@@ -751,16 +751,36 @@ function startBattle(mode) {
     comboShieldUsed: false,
   };
 
-  // BGMをバトル曲に切り替え
-  playBattleBGM();
+  setupBattleScreenUI(enemy);
+  showScreen('screen-battle');
+  renderQuestion();
+}
 
-  // 敵セット
+function setupBattleScreenUI(enemy) {
+  playBattleBGM();
   $('enemy-sprite').textContent   = enemy.sprite;
   $('enemy-sprite').className     = 'enemy-sprite';
   $('enemy-name').textContent     = enemy.name;
   $('enemy-lv').textContent       = `Lv.${enemy.lv}`;
   $('enemy-hp-bar').style.width   = '100%';
+}
 
+// やどやの「とっくん」ボタンから、にがてな1問だけを集中して練習する
+function startFocusedBattle(item) {
+  stopSpeechAll();
+  const mode = item.category === 'grammar' ? 'grammar' : 'vocab';
+  const q    = item.category === 'grammar' ? buildGrammarQ(item) : buildVocabQ(item, VOCAB_DB);
+  const enemy = pickEnemy(item.lv);
+
+  battle = {
+    mode, questions: [q], cur: 0,
+    correct: 0, wrongItems: [],
+    combo: 0, expGained: 0, goldGained: 0,
+    answered: false, enemy,
+    activeEffects: [], comboShield: false, comboShieldUsed: false,
+  };
+
+  setupBattleScreenUI(enemy);
   showScreen('screen-battle');
   renderQuestion();
 }
@@ -1372,7 +1392,7 @@ function checkFieldIconContacts() {
     if (dist < touchDist) {
       if (!touchedFieldIcons.has(mode)) {
         touchedFieldIcons.add(mode);
-        startBattle(mode);
+        enterCommand(mode);
       }
     } else if (dist > leaveDist) {
       touchedFieldIcons.delete(mode);
@@ -1415,6 +1435,108 @@ function goToField() {
   refreshEquipmentDisplay();
   renderInventoryWindow();
   playFieldBGM();
+}
+
+// フィールドのコマンド選択（アイコン接触／ボタンクリック共通の入り口）
+function enterCommand(mode) {
+  if (mode === 'inn') goToInn();
+  else startBattle(mode);
+}
+
+/* ══════════════════════════════════════════════════
+   やどや：単語・文法の読み返し／HP回復／にがて特訓の入り口
+══════════════════════════════════════════════════ */
+let currentInnFilter = 'all';
+
+async function goToInn() {
+  stopSpeechAll();
+  showScreen('screen-inn');
+  playFieldBGM();
+  renderInnList(currentInnFilter);
+
+  // 休憩してHPを全回復
+  if (authToken) {
+    try {
+      const result = await apiFetch('/player/rest', { method: 'POST' });
+      applyProfile(result.profile);
+    } catch (err) {
+      console.error('休憩の同期に失敗しました。ローカルのみ回復します:', err);
+      P.currentHp = getLvRow(P.totalExp).hp;
+    }
+  } else {
+    P.currentHp = getLvRow(P.totalExp).hp;
+  }
+  refreshHeader();
+
+  const msgEl = $('inn-msg-text');
+  if (msgEl) {
+    msgEl.textContent = 'やどやの おばあさんが うたを うたってくれた。HPが ぜんかいふく した！';
+  }
+}
+
+function renderInnList(filter) {
+  currentInnFilter = filter;
+  document.querySelectorAll('.inn-filter-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.filter === filter);
+  });
+
+  const container = $('inn-list');
+  if (!container) return;
+
+  const isWeak = item => {
+    const r = answerStats[item.id];
+    return !!r && r.attempts >= 2 && r.correct / r.attempts < 0.6;
+  };
+
+  let items = [
+    ...VOCAB_DB.map(it => ({ ...it, category: 'vocab' })),
+    ...GRAMMAR_DB.map(it => ({ ...it, category: 'grammar' })),
+  ];
+
+  if (filter === 'vocab')        items = items.filter(it => it.category === 'vocab');
+  else if (filter === 'grammar') items = items.filter(it => it.category === 'grammar');
+  else if (filter === 'weak')    items = items.filter(isWeak);
+
+  container.innerHTML = '';
+  if (items.length === 0) {
+    container.innerHTML = '<p class="inn-empty">このカテゴリーには まだ もんだいが ありません。</p>';
+    return;
+  }
+
+  items.forEach(item => {
+    const r = answerStats[item.id];
+    const rate = r && r.attempts > 0 ? Math.round((r.correct / r.attempts) * 100) : null;
+    const weak = isWeak(item);
+
+    const row = document.createElement('div');
+    row.className = 'inn-item' + (weak ? ' inn-item-weak' : '');
+
+    const mainHtml = item.category === 'vocab'
+      ? `<div class="inn-item-word">${item.word}</div>
+         <div class="inn-item-jp">${item.jp}</div>
+         <div class="inn-item-ex">${item.ex}</div>`
+      : `<div class="inn-item-q">${item.q}</div>
+         <div class="inn-item-jp">こたえ: ${item.choices[item.ans]}</div>
+         <div class="inn-item-ex">${item.exp}</div>`;
+
+    const rateText  = rate === null ? 'みがくしゅう' : `${rate}%（${r.correct}/${r.attempts}）`;
+    const rateClass = rate === null ? 'inn-rate-none' : rate >= 80 ? 'inn-rate-good' : rate >= 50 ? 'inn-rate-mid' : 'inn-rate-bad';
+
+    row.innerHTML = `
+      <div class="inn-item-main">${mainHtml}</div>
+      <div class="inn-item-side">
+        <span class="inn-rate ${rateClass}">${rateText}</span>
+        ${weak ? '<span class="inn-weak-badge">🔥 にがて</span>' : ''}
+        ${weak ? '<button type="button" class="dq-btn dq-btn-blue inn-train-btn">とっくん</button>' : ''}
+      </div>
+    `;
+
+    if (weak) {
+      row.querySelector('.inn-train-btn')?.addEventListener('click', () => startFocusedBattle(item));
+    }
+
+    container.appendChild(row);
+  });
 }
 
 /* ══════════════════════════════════════════════════
@@ -1471,7 +1593,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* ── コマンドボタン（モード選択） ── */
   document.querySelectorAll('.dq-cmd-btn').forEach(btn => {
-    btn.addEventListener('click', () => startBattle(btn.dataset.mode));
+    btn.addEventListener('click', () => enterCommand(btn.dataset.mode));
   });
 
   /* ── フィールド探索の初期化 ── */
@@ -1480,6 +1602,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* ── フィールドへもどる（バトル中断） ── */
   $('battle-flee-btn')?.addEventListener('click', goToField);
+  $('inn-flee-btn')?.addEventListener('click', goToField);
+
+  /* ── やどやフィルタータブ ── */
+  document.querySelectorAll('.inn-filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => renderInnList(btn.dataset.filter));
+  });
 
   /* ── 選択肢ボタン ── */
   document.querySelectorAll('.dq-choice').forEach(btn => {

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { prisma } from '../db.js';
 import { authenticateToken } from '../middleware/auth.js';
+import { getLvRow } from '../../../shared/gameData.js';
 
 const router = Router();
 
@@ -66,6 +67,25 @@ router.post('/equip', authenticateToken, async (req, res) => {
     res.json(updated);
   } catch (error) {
     res.status(500).json({ error: '装備変更に失敗しました。' });
+  }
+});
+
+// やどやで休憩：HPを現在レベルの最大値まで全回復
+router.post('/rest', authenticateToken, async (req, res) => {
+  try {
+    const profile = await prisma.playerProfile.findUnique({ where: { userId: req.user.userId } });
+    if (!profile) return res.status(404).json({ error: 'プロファイルが見つかりません。' });
+
+    const maxHp = getLvRow(profile.totalExp).hp;
+    const updated = await prisma.playerProfile.update({
+      where: { userId: req.user.userId },
+      data: { currentHp: maxHp },
+    });
+
+    res.json({ profile: updated });
+  } catch (error) {
+    console.error('Rest error:', error);
+    res.status(500).json({ error: '休憩処理に失敗しました。' });
   }
 });
 

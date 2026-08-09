@@ -629,6 +629,12 @@ body {
   .battle-msg-window { padding: 10px 14px; }
   .battle-msg-text { font-size: .8rem; line-height: 1.5; margin-bottom: 6px; }
   .battle-exp-gain { font-size: .72rem; margin-bottom: 8px; min-height: 16px; }
+
+  /* やどや */
+  .inn-filter-btn { font-size: .7rem; padding: 5px 10px; }
+  .inn-item { flex-direction: column; align-items: stretch; gap: 6px; padding: 8px 10px; }
+  .inn-item-side { flex-direction: row; align-items: center; justify-content: space-between; }
+  .inn-list { max-height: 65vh; }
 }
 
 @media (max-width: 520px) {
@@ -728,6 +734,48 @@ body {
   font-size: .82rem;
 }
 .inv-row:hover { border-color: var(--dq-win-bd); }
+
+/* ==========================================
+   やどや（読み返し・HP回復・にがて特訓）
+========================================== */
+.inn-filter-row {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.inn-filter-btn { font-size: .78rem; padding: 6px 14px; opacity: .6; }
+.inn-filter-btn.active { opacity: 1; box-shadow: 0 0 8px var(--dq-gold); }
+
+.inn-list {
+  display: flex; flex-direction: column; gap: 8px;
+  max-height: 60vh; overflow-y: auto;
+  padding-right: 4px;
+}
+.inn-empty { font-size: .85rem; color: var(--dq-gray); text-align: center; padding: 24px 12px; }
+
+.inn-item {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  background: var(--dq-win-bg); border: 2px solid #333366;
+  padding: 10px 12px;
+}
+.inn-item-weak { border-color: var(--dq-red); }
+
+.inn-item-main { min-width: 0; flex: 1; }
+.inn-item-word { color: var(--dq-gold); font-size: .95rem; }
+.inn-item-q    { color: var(--dq-white); font-size: .88rem; line-height: 1.5; }
+.inn-item-jp   { color: var(--dq-blue-l); font-size: .8rem; margin-top: 2px; }
+.inn-item-ex   { color: var(--dq-gray); font-size: .74rem; margin-top: 2px; line-height: 1.5; }
+
+.inn-item-side {
+  display: flex; flex-direction: column; align-items: flex-end; gap: 6px;
+  flex-shrink: 0;
+}
+.inn-rate { font-size: .74rem; white-space: nowrap; }
+.inn-rate-none { color: var(--dq-gray); }
+.inn-rate-good { color: var(--dq-green); }
+.inn-rate-mid  { color: var(--dq-yellow); }
+.inn-rate-bad  { color: var(--dq-red); }
+.inn-weak-badge { font-size: .7rem; color: var(--dq-red); white-space: nowrap; }
+.inn-train-btn { font-size: .7rem; padding: 5px 10px; }
 .inv-icon { font-size: 1.1rem; flex-shrink: 0; }
 .inv-name { flex: 1; color: var(--dq-white); }
 .inv-equipped { color: var(--dq-gold); font-size: .72rem; }
