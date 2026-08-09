@@ -85,6 +85,36 @@ function showLoginError(msg) {
   if (el) el.textContent = msg || '';
 }
 
+// ログイン/登録中のローディング表示。Renderの無料プランはスリープからの復帰に
+// 数十秒かかることがあるため、経過時間に応じてメッセージを切り替えて不安を減らす
+let loginLoadingTimers = [];
+function setLoginLoading(isLoading) {
+  loginLoadingTimers.forEach(clearTimeout);
+  loginLoadingTimers = [];
+
+  const loadingEl = $('login-loading');
+  const textEl = $('login-loading-text');
+  const controls = [$('login-btn'), $('register-btn'), $('login-username'), $('login-password')];
+
+  controls.forEach(el => { if (el) el.disabled = isLoading; });
+
+  if (isLoading) {
+    loadingEl?.classList.remove('hidden');
+    const messages = [
+      { delay: 0,     text: '🔮 つうしんちゅう…' },
+      { delay: 4000,  text: '⏳ サーバーがねむっているようです…おこしています' },
+      { delay: 12000, text: '🌙 はじめてのアクセスは めざめに1分ほどかかることがあります。もう少しお待ちください…' },
+      { delay: 30000, text: '🐢 もうすぐです！このままお待ちください…' },
+    ];
+    if (textEl) textEl.textContent = messages[0].text;
+    messages.slice(1).forEach(({ delay, text }) => {
+      loginLoadingTimers.push(setTimeout(() => { if (textEl) textEl.textContent = text; }, delay));
+    });
+  } else {
+    loadingEl?.classList.add('hidden');
+  }
+}
+
 /* ══════════════════════════════════════════════════
    1. Web Audio API で BGM・効果音生成
 ══════════════════════════════════════════════════ */
@@ -1409,11 +1439,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const password = $('login-password').value;
     if (!username || !password) { showLoginError('なまえとひみつのコードを入力してください'); return; }
     showLoginError('');
+    setLoginLoading(true);
     try {
       const data = await apiFetch('/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) });
       await handleAuthSuccess(data.token);
     } catch (err) {
       showLoginError(err.message);
+    } finally {
+      setLoginLoading(false);
     }
   });
 
@@ -1423,11 +1456,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!username || !password) { showLoginError('なまえとひみつのコードを入力してください'); return; }
     if (password.length < 4) { showLoginError('ひみつのコードは4文字以上にしてください'); return; }
     showLoginError('');
+    setLoginLoading(true);
     try {
       const data = await apiFetch('/auth/register', { method: 'POST', body: JSON.stringify({ username, password }) });
       await handleAuthSuccess(data.token);
     } catch (err) {
       showLoginError(err.message);
+    } finally {
+      setLoginLoading(false);
     }
   });
 
