@@ -1,0 +1,91 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String         @id @default(uuid())
+  username     String         @unique
+  passwordHash String
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  profile      PlayerProfile?
+  answerLogs   AnswerLog[]
+  userItems    UserItem[]
+  userTitles   UserTitle[]
+}
+
+model PlayerProfile {
+  id               String   @id @default(uuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  totalExp         Int      @default(0)
+  level            Int      @default(1)
+  gold             Int      @default(0)
+  currentHp        Int      @default(20)
+  maxCombo         Int      @default(0)
+  currentCombo     Int      @default(0)
+  hasPerfect       Boolean  @default(false)
+  totalAnswers     Int      @default(0)
+  totalCorrect     Int      @default(0)
+  listenCorrect    Int      @default(0)
+  speakCorrect     Int      @default(0)
+  equippedWeaponId String?  @default("w1")
+  equippedArmorId  String?  @default("a1")
+  updatedAt        DateTime @updatedAt
+}
+
+model Question {
+  id              String      @id
+  category        String
+  level           String
+  word            String
+  japanese        String
+  exampleSentence String?
+  choicesJson     String?
+  createdAt       DateTime    @default(now())
+  answerLogs      AnswerLog[]
+
+  @@index([category, level])
+}
+
+model AnswerLog {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id])
+  mode       String
+  isCorrect  Boolean
+  userAnswer String?
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([questionId])
+}
+
+model UserItem {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  itemId     String
+  isEquipped Boolean  @default(false)
+  acquiredAt DateTime @default(now())
+
+  @@unique([userId, itemId])
+}
+
+model UserTitle {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  titleId    String
+  unlockedAt DateTime @default(now())
+
+  @@unique([userId, titleId])
+}

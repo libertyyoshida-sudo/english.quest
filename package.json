@@ -5,13 +5,27 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "server": "node --env-file=.env server/src/index.js",
     "build": "vite build",
     "preview": "vite preview",
-    "start": "vite",
-    "deploy": "gh-pages -d dist"
+    "start": "node --env-file=.env server/src/index.js",
+    "deploy": "gh-pages -d dist",
+    "db:push": "prisma db push --schema=server/prisma/schema.prisma",
+    "db:migrate": "prisma migrate dev --schema=server/prisma/schema.prisma",
+    "db:studio": "prisma studio --schema=server/prisma/schema.prisma",
+    "db:seed": "node --env-file=.env server/prisma/seed.js",
+    "postinstall": "prisma generate --schema=server/prisma/schema.prisma"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.19.1",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2"
   },
   "devDependencies": {
     "gh-pages": "^6.3.0",
+    "prisma": "^5.19.1",
     "vite": "^5.4.11"
   }
 }
