@@ -1279,7 +1279,7 @@ function resetHeroPosition(screenId) {
 }
 
 function randomEncounterThreshold() {
-  return 1800 + Math.random() * 2200; // 1.8〜4秒うごき続けるとエンカウント
+  return 3500 + Math.random() * 3500; // 3.5〜7秒うごき続けるとエンカウント（連続エンカウントで詰まないよう余裕を持たせる）
 }
 
 function keyToDir(key) {
@@ -1516,8 +1516,11 @@ function goToWorld() {
   refreshHeader();
 }
 
-// バトル画面の「フィールドへもどる／フィールドへ」共通の戻り先判定
-// ランダムエンカウント・ボス戦はせかいマップへ、通常のコマンドバトルはまちへ戻る
+// リザルト画面「フィールドへ」の戻り先判定：
+// せかいマップ発のバトルに勝利／終了したときだけ、続けて探索できるようせかいマップへ戻す。
+// それ以外（通常のコマンドバトル）はまちへ戻る。
+// ※「にげる」ボタンは常にまちへ確実に戻す（下のイベントリスナー参照）。
+//   せかいマップに戻す仕様だと、ランダムエンカウントが連続してまちに戻れなくなる問題があったため。
 function returnFromBattle() {
   if (battle && battle.returnTo === 'screen-world') goToWorld();
   else goToField();
@@ -1750,7 +1753,8 @@ document.addEventListener('DOMContentLoaded', () => {
   requestAnimationFrame(fieldLoop);
 
   /* ── フィールドへもどる（バトル中断） ── */
-  $('battle-flee-btn')?.addEventListener('click', returnFromBattle);
+  // 「にげる」は必ずまちへ戻す（せかいマップへ戻すと連続エンカウントで詰むため、確実な避難先として固定）
+  $('battle-flee-btn')?.addEventListener('click', goToField);
   $('inn-flee-btn')?.addEventListener('click', goToField);
   $('world-back-btn')?.addEventListener('click', goToField);
 

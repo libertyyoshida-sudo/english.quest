@@ -262,6 +262,7 @@ body {
   background: var(--dq-win-bg); box-shadow: var(--win-shadow); padding: 12px;
   display: flex; flex-direction: column; gap: 10px;
 }
+#screen-world .field-map { border: 2px solid var(--dq-gold); }
 
 /* ---------- フィールド探索キャンバス ---------- */
 .field-canvas {
@@ -279,6 +280,22 @@ body {
   background-image:
     repeating-linear-gradient(0deg,  transparent, transparent 9%, #ffffff12 9%, #ffffff12 9.6%),
     repeating-linear-gradient(90deg, transparent, transparent 9%, #ffffff12 9%, #ffffff12 9.6%);
+}
+
+/* せかいマップ：まちの緑一色フィールドとは別の見た目にし、地形の違いが分かるようにする */
+#world-canvas {
+  background:
+    radial-gradient(circle at 18% 28%, #1f5a24 0%, transparent 40%),  /* もり */
+    radial-gradient(circle at 80% 22%, #55555f 0%, transparent 40%),  /* どうくつ・岩場 */
+    radial-gradient(circle at 14% 80%, #6b4423 0%, transparent 42%),  /* やま */
+    radial-gradient(circle at 84% 82%, #5a0a1e 0%, transparent 44%),  /* まおうのしろ */
+    linear-gradient(180deg, #182338 0%, #202f4a 100%);                 /* 荒野のベース */
+  border-color: var(--dq-gold);
+}
+#world-canvas::before {
+  background-image:
+    repeating-linear-gradient(0deg,  transparent, transparent 12%, #ffffff0a 12%, #ffffff0a 12.6%),
+    repeating-linear-gradient(90deg, transparent, transparent 12%, #ffffff0a 12%, #ffffff0a 12.6%);
 }
 
 .field-icon {
