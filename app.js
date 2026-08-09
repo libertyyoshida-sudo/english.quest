@@ -14,7 +14,9 @@ import { VOCAB_DB, GRAMMAR_DB } from './shared/questionData.js';
 /* ══════════════════════════════════════════════════
    0. バックエンドAPI（ログイン時のみ使用。未ログインはゲストモードでローカル動作）
 ══════════════════════════════════════════════════ */
-const API_BASE = 'http://localhost:3001/api';
+const API_BASE = import.meta.env.DEV
+  ? 'http://localhost:3001/api'
+  : 'https://english-quest-26nu.onrender.com/api';
 let authToken = localStorage.getItem('eigoDQ_token') || null;
 
 async function apiFetch(path, opts = {}) {
