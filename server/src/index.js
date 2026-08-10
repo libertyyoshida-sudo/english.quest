@@ -23,5 +23,5 @@ app.get('/api/health', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`⚔️ えいごクエスト Backend API Server running at http://localhost:${PORT}`);
+  console.log(`⚔️ Language Quest Backend API Server running at http://localhost:${PORT}`);
 });

@@ -296,3 +296,192 @@ export const GRAMMAR_DB = [
    choices:['did','does','had','was'], ans:0,
    exp:'Not until〜 が文頭 → 倒置（did + 主語 + 動詞原形）'},
 ];
+
+export const LANGUAGE_OPTIONS = [
+  { code:'en', label:'英語', native:'English', speechLang:'en-US' },
+  { code:'fr', label:'フランス語', native:'Français', speechLang:'fr-FR' },
+  { code:'it', label:'イタリア語', native:'Italiano', speechLang:'it-IT' },
+  { code:'es', label:'スペイン語', native:'Español', speechLang:'es-ES' },
+  { code:'de', label:'ドイツ語', native:'Deutsch', speechLang:'de-DE' },
+  { code:'ar', label:'アラビア語', native:'العربية', speechLang:'ar-SA' },
+  { code:'th', label:'タイ語', native:'ไทย', speechLang:'th-TH' },
+  { code:'vi', label:'ベトナム語', native:'Tiếng Việt', speechLang:'vi-VN' },
+  { code:'zh', label:'中国語', native:'中文', speechLang:'zh-CN' },
+  { code:'ko', label:'韓国語', native:'한국어', speechLang:'ko-KR' },
+  { code:'tl', label:'タガログ語', native:'Tagalog / Filipino', speechLang:'fil-PH' },
+  { code:'id', label:'インドネシア語', native:'Bahasa Indonesia', speechLang:'id-ID' },
+  { code:'bn', label:'ベンガル語', native:'বাংলা', speechLang:'bn-BD' },
+  { code:'my', label:'ミャンマー語', native:'မြန်မာ', speechLang:'my-MM' },
+  { code:'si', label:'シンハラ語', native:'සිංහල', speechLang:'si-LK' },
+  { code:'ta', label:'タミル語', native:'தமிழ்', speechLang:'ta-IN' },
+  { code:'hi', label:'ヒンディー語', native:'हिन्दी', speechLang:'hi-IN' },
+  { code:'ne', label:'ネパール語', native:'नेपाली', speechLang:'ne-NP' },
+];
+
+export const LANGUAGE_PROFILES = {
+  en: { countries:'米国、英国、カナダ、オーストラリア、インド、フィリピン、シンガポールなど', speakers:'L1 約380,000,000人 / L2 約1,135,000,000人 / 合計 約1,515,000,000人', note:'国際ビジネス、IT、学術で広く使われる世界共通語の一つ。' },
+  fr: { countries:'フランス、ベルギー、スイス、カナダ、セネガル、コートジボワールなど', speakers:'L1 約79,000,000人 / L2 約238,000,000人 / 合計 約312,000,000人', note:'欧州、アフリカ、カナダに広がる国際語。外交・文化分野でも存在感が大きい。' },
+  it: { countries:'イタリア、スイス、サンマリノ、バチカンなど', speakers:'合計 約85,000,000人', note:'音楽、美術、料理、ファッション分野と結びつきが強いロマンス語。' },
+  es: { countries:'スペイン、メキシコ、コロンビア、アルゼンチン、ペルー、チリなど', speakers:'L1 約486,000,000人 / L2 約74,000,000人 / 合計 約560,000,000人', note:'中南米を中心に広く使われ、世界的な話者数が非常に多い。' },
+  de: { countries:'ドイツ、オーストリア、スイス、リヒテンシュタイン、ルクセンブルクなど', speakers:'L1 約75,000,000人 / L2 約58,000,000人 / 合計 約133,000,000人', note:'欧州経済、工学、哲学、クラシック音楽と関係が深い。' },
+  ar: { countries:'エジプト、サウジアラビア、UAE、モロッコ、アルジェリア、イラクなど', speakers:'合計 約274,000,000〜422,000,000人（標準アラビア語・諸方言で集計差あり）', note:'地域方言と現代標準アラビア語の使い分けが特徴。中東・北アフリカに広がる。' },
+  th: { countries:'タイ', speakers:'合計 約60,000,000〜70,000,000人', note:'声調と独自文字が特徴。タイの文化・観光・ビジネス理解に役立つ。' },
+  vi: { countries:'ベトナム', speakers:'合計 約86,000,000人', note:'声調を持ち、ラテン文字ベースの表記を使う東南アジアの主要言語。' },
+  zh: { countries:'中国、台湾、シンガポール、マレーシアなど', speakers:'L1 約941,000,000人 / L2 約199,000,000人 / 合計 約1,140,000,000人', note:'ここでは普通話・標準中国語を対象。漢字と声調が学習の柱。' },
+  ko: { countries:'韓国、北朝鮮、中国東北部、在外コリアン社会など', speakers:'合計 約82,000,000人', note:'ハングルは体系的な文字で、発音変化と敬語表現が重要。' },
+  tl: { countries:'フィリピン、在外フィリピン人コミュニティなど', speakers:'合計 約82,000,000〜100,000,000人（フィリピノ語・タガログ語の集計で差あり）', note:'フィリピンの国語フィリピノの基盤となる言語。語順や接辞、英語・スペイン語由来語も学習ポイント。' },
+  id: { countries:'インドネシア', speakers:'L1 約44,000,000人 / L2 約155,000,000人 / 合計 約199,000,000人', note:'多民族国家インドネシアの共通語。比較的規則的で学びやすい。' },
+  bn: { countries:'バングラデシュ、インド東部など', speakers:'L1 約234,000,000人 / L2 約39,000,000〜43,000,000人 / 合計 約273,000,000〜284,000,000人', note:'南アジアの大言語。文学・音楽・映画文化も豊か。' },
+  my: { countries:'ミャンマー', speakers:'合計 約33,000,000〜43,000,000人', note:'丸みのある文字と声調的特徴を持つ。ミャンマーの公用語。' },
+  si: { countries:'スリランカ', speakers:'合計 約17,000,000〜20,000,000人', note:'スリランカ多数派の言語。独自文字とインド系語彙が特徴。' },
+  ta: { countries:'インド、スリランカ、シンガポール、マレーシアなど', speakers:'合計 約87,000,000〜90,000,000人', note:'長い文学伝統を持つドラヴィダ語族の代表的言語。' },
+  hi: { countries:'インド、フィジー、ネパール周辺、在外インド系社会など', speakers:'L1 約345,000,000人 / L2 約264,000,000人 / 合計 約609,000,000人', note:'インド北部を中心に広く使われ、映画・音楽文化とも結びつきが強い。' },
+  ne: { countries:'ネパール、インド北東部、ブータン、在外ネパール人コミュニティなど', speakers:'合計 約30,000,000〜35,000,000人', note:'デーヴァナーガリー文字を使うインド・アーリア系の言語。ヒンディー語と文字体系が近い。' },
+};
+
+const BASIC_MEANINGS = [
+  ['hello','こんにちは'], ['thank you','ありがとう'], ['yes','はい'], ['no','いいえ'],
+  ['water','水'], ['food','食べ物'], ['book','本'], ['school','学校'],
+  ['house','家'], ['friend','友だち'], ['work','仕事'], ['money','お金'],
+  ['time','時間'], ['today','今日'], ['tomorrow','明日'], ['language','言語'],
+  ['travel','旅行'], ['market','市場'], ['help','助ける'], ['study','勉強する'],
+  ['family','家族'], ['morning','朝'], ['night','夜'], ['city','都市'],
+  ['country','国'], ['company','会社'], ['office','オフィス'], ['computer','コンピューター'],
+  ['phone','電話'], ['station','駅'], ['airport','空港'], ['hotel','ホテル'],
+  ['restaurant','レストラン'], ['doctor','医者'], ['hospital','病院'], ['medicine','薬'],
+  ['left','左'], ['right','右'], ['good','良い'], ['bad','悪い'],
+];
+
+const BASIC_WORDS_BY_LANGUAGE = {
+  fr:['bonjour','merci','oui','non','eau','nourriture','livre','école','maison','ami','travail','argent','temps',"aujourd'hui",'demain','langue','voyage','marché','aider','étudier','famille','matin','nuit','ville','pays','entreprise','bureau','ordinateur','téléphone','gare','aéroport','hôtel','restaurant','médecin','hôpital','médicament','gauche','droite','bon','mauvais'],
+  it:['ciao','grazie','sì','no','acqua','cibo','libro','scuola','casa','amico','lavoro','denaro','tempo','oggi','domani','lingua','viaggio','mercato','aiutare','studiare','famiglia','mattina','notte','città','paese','azienda','ufficio','computer','telefono','stazione','aeroporto','hotel','ristorante','medico','ospedale','medicina','sinistra','destra','buono','cattivo'],
+  es:['hola','gracias','sí','no','agua','comida','libro','escuela','casa','amigo','trabajo','dinero','tiempo','hoy','mañana','idioma','viaje','mercado','ayudar','estudiar','familia','mañana','noche','ciudad','país','empresa','oficina','computadora','teléfono','estación','aeropuerto','hotel','restaurante','médico','hospital','medicina','izquierda','derecha','bueno','malo'],
+  de:['hallo','danke','ja','nein','Wasser','Essen','Buch','Schule','Haus','Freund','Arbeit','Geld','Zeit','heute','morgen','Sprache','Reise','Markt','helfen','lernen','Familie','Morgen','Nacht','Stadt','Land','Firma','Büro','Computer','Telefon','Bahnhof','Flughafen','Hotel','Restaurant','Arzt','Krankenhaus','Medizin','links','rechts','gut','schlecht'],
+  ar:['مرحبا','شكرا','نعم','لا','ماء','طعام','كتاب','مدرسة','بيت','صديق','عمل','مال','وقت','اليوم','غدا','لغة','سفر','سوق','يساعد','يدرس','عائلة','صباح','ليل','مدينة','بلد','شركة','مكتب','حاسوب','هاتف','محطة','مطار','فندق','مطعم','طبيب','مستشفى','دواء','يسار','يمين','جيد','سيئ'],
+  th:['สวัสดี','ขอบคุณ','ใช่','ไม่','น้ำ','อาหาร','หนังสือ','โรงเรียน','บ้าน','เพื่อน','งาน','เงิน','เวลา','วันนี้','พรุ่งนี้','ภาษา','การเดินทาง','ตลาด','ช่วย','เรียน','ครอบครัว','ตอนเช้า','กลางคืน','เมือง','ประเทศ','บริษัท','สำนักงาน','คอมพิวเตอร์','โทรศัพท์','สถานี','สนามบิน','โรงแรม','ร้านอาหาร','หมอ','โรงพยาบาล','ยา','ซ้าย','ขวา','ดี','ไม่ดี'],
+  vi:['xin chào','cảm ơn','vâng','không','nước','đồ ăn','sách','trường học','nhà','bạn','công việc','tiền','thời gian','hôm nay','ngày mai','ngôn ngữ','du lịch','chợ','giúp đỡ','học','gia đình','buổi sáng','ban đêm','thành phố','quốc gia','công ty','văn phòng','máy tính','điện thoại','nhà ga','sân bay','khách sạn','nhà hàng','bác sĩ','bệnh viện','thuốc','trái','phải','tốt','xấu'],
+  zh:['你好','谢谢','是','不','水','食物','书','学校','家','朋友','工作','钱','时间','今天','明天','语言','旅行','市场','帮助','学习','家人','早上','晚上','城市','国家','公司','办公室','电脑','电话','车站','机场','酒店','餐厅','医生','医院','药','左','右','好','坏'],
+  ko:['안녕하세요','감사합니다','네','아니요','물','음식','책','학교','집','친구','일','돈','시간','오늘','내일','언어','여행','시장','돕다','공부하다','가족','아침','밤','도시','나라','회사','사무실','컴퓨터','전화','역','공항','호텔','식당','의사','병원','약','왼쪽','오른쪽','좋다','나쁘다'],
+  tl:['kumusta','salamat','oo','hindi','tubig','pagkain','aklat','paaralan','bahay','kaibigan','trabaho','pera','oras','ngayon','bukas','wika','paglalakbay','palengke','tumulong','mag-aral','pamilya','umaga','gabi','lungsod','bansa','kumpanya','opisina','kompyuter','telepono','istasyon','paliparan','hotel','restawran','doktor','ospital','gamot','kaliwa','kanan','mabuti','masama'],
+  id:['halo','terima kasih','ya','tidak','air','makanan','buku','sekolah','rumah','teman','pekerjaan','uang','waktu','hari ini','besok','bahasa','perjalanan','pasar','membantu','belajar','keluarga','pagi','malam','kota','negara','perusahaan','kantor','komputer','telepon','stasiun','bandara','hotel','restoran','dokter','rumah sakit','obat','kiri','kanan','baik','buruk'],
+  bn:['নমস্কার','ধন্যবাদ','হ্যাঁ','না','পানি','খাবার','বই','স্কুল','বাড়ি','বন্ধু','কাজ','টাকা','সময়','আজ','আগামীকাল','ভাষা','ভ্রমণ','বাজার','সাহায্য করা','পড়াশোনা করা','পরিবার','সকাল','রাত','শহর','দেশ','কোম্পানি','অফিস','কম্পিউটার','ফোন','স্টেশন','বিমানবন্দর','হোটেল','রেস্তোরাঁ','ডাক্তার','হাসপাতাল','ওষুধ','বাম','ডান','ভাল','খারাপ'],
+  my:['မင်္ဂလာပါ','ကျေးဇူးတင်ပါတယ်','ဟုတ်ကဲ့','မဟုတ်ဘူး','ရေ','အစားအစာ','စာအုပ်','ကျောင်း','အိမ်','သူငယ်ချင်း','အလုပ်','ငွေ','အချိန်','ဒီနေ့','မနက်ဖြန်','ဘာသာစကား','ခရီးသွားခြင်း','ဈေး','ကူညီသည်','လေ့လာသည်','မိသားစု','မနက်','ည','မြို့','နိုင်ငံ','ကုမ္ပဏီ','ရုံး','ကွန်ပျူတာ','ဖုန်း','ဘူတာရုံ','လေဆိပ်','ဟိုတယ်','စားသောက်ဆိုင်','ဆရာဝန်','ဆေးရုံ','ဆေး','ဘယ်','ညာ','ကောင်းသော','မကောင်းသော'],
+  si:['ආයුබෝවන්','ස්තූතියි','ඔව්','නැහැ','ජලය','ආහාර','පොත','පාසල','ගෙදර','මිතුරා','වැඩ','මුදල්','කාලය','අද','හෙට','භාෂාව','ගමන','වෙළඳපොළ','උදව් කිරීම','ඉගෙනීම','පවුල','උදෑසන','රාත්‍රිය','නගරය','රට','සමාගම','කාර්යාලය','පරිගණකය','දුරකථනය','දුම්රිය ස්ථානය','ගුවන්තොටුපළ','හෝටලය','ආපනශාලාව','වෛද්‍යවරයා','රෝහල','ඖෂධ','වම','දකුණ','හොඳ','නරක'],
+  ta:['வணக்கம்','நன்றி','ஆம்','இல்லை','தண்ணீர்','உணவு','புத்தகம்','பள்ளி','வீடு','நண்பர்','வேலை','பணம்','நேரம்','இன்று','நாளை','மொழி','பயணம்','சந்தை','உதவுதல்','படித்தல்','குடும்பம்','காலை','இரவு','நகரம்','நாடு','நிறுவனம்','அலுவலகம்','கணினி','தொலைபேசி','நிலையம்','விமான நிலையம்','ஹோட்டல்','உணவகம்','மருத்துவர்','மருத்துவமனை','மருந்து','இடது','வலது','நல்ல','கெட்ட'],
+  hi:['नमस्ते','धन्यवाद','हाँ','नहीं','पानी','भोजन','किताब','स्कूल','घर','दोस्त','काम','पैसा','समय','आज','कल','भाषा','यात्रा','बाज़ार','मदद करना','पढ़ना','परिवार','सुबह','रात','शहर','देश','कंपनी','कार्यालय','कंप्यूटर','फ़ोन','स्टेशन','हवाई अड्डा','होटल','रेस्तरां','डॉक्टर','अस्पताल','दवा','बायाँ','दायाँ','अच्छा','बुरा'],
+  ne:['नमस्ते','धन्यवाद','हो','होइन','पानी','खाना','किताब','विद्यालय','घर','साथी','काम','पैसा','समय','आज','भोलि','भाषा','यात्रा','बजार','मद्दत गर्नु','पढ्नु','परिवार','बिहान','रात','शहर','देश','कम्पनी','कार्यालय','कम्प्युटर','फोन','स्टेशन','विमानस्थल','होटल','रेस्टुरेन्ट','डाक्टर','अस्पताल','औषधि','बायाँ','दायाँ','राम्रो','नराम्रो'],
+};
+
+const BASIC_PRON_BY_LANGUAGE = Object.fromEntries(
+  Object.entries(BASIC_WORDS_BY_LANGUAGE).map(([code, words]) => [code, words]),
+);
+
+Object.assign(BASIC_PRON_BY_LANGUAGE, {
+  fr:['bon-zhoor','mehr-see','wee','noh','oh','noo-ree-toor','leevr','ay-kohl','may-zon','ah-mee','trah-vy','ahr-zhahn','tahn',"oh-zhoor-dwee",'duh-man','lahng','vwah-yahzh','mar-shay','ay-day','ay-too-dyay','fah-mee','mah-tan','nwee','veel','pay-ee','ahn-truh-preez','byoo-roh','or-dee-nah-tuhr','tay-lay-fon','gahr','ah-ay-roh-por','oh-tel','res-toh-rahn','med-san','oh-pee-tal','med-ee-kah-mahn','gohsh','drwaht','bon','moh-vay'],
+  it:['chow','grah-tsee-eh','see','noh','ah-kwah','chee-boh','lee-broh','skwoh-lah','kah-zah','ah-mee-koh','lah-voh-roh','deh-nah-roh','tem-poh','oh-jee','doh-mah-nee','leen-gwah','vyah-joh','mehr-kah-toh','eye-oo-tah-reh','stoo-dyah-reh','fah-mee-lyah','maht-tee-nah','not-teh','cheet-tah','pah-eh-zeh','ah-zee-en-dah','oof-fee-choh','kom-pyoo-ter','teh-leh-foh-noh','stah-tsee-oh-neh','ah-eh-roh-por-toh','oh-tel','rees-toh-rahn-teh','meh-dee-koh','oh-speh-dah-leh','meh-dee-chee-nah','see-nees-trah','des-trah','bwoh-noh','kaht-tee-voh'],
+  es:['oh-lah','grah-syahs','see','noh','ah-gwah','koh-mee-dah','lee-broh','es-kweh-lah','kah-sah','ah-mee-goh','trah-bah-hoh','dee-neh-roh','tyem-poh','oy','mahn-yah-nah','ee-dyoh-mah','vyah-heh','mehr-kah-doh','ah-yoo-dar','es-too-dyar','fah-mee-lyah','mahn-yah-nah','noh-cheh','syoo-dahd','pah-ees','em-preh-sah','oh-fee-see-nah','kom-poo-tah-doh-rah','teh-leh-foh-noh','es-tah-syohn','ah-eh-roh-pwehr-toh','oh-tel','res-tow-rahn-teh','meh-dee-koh','oh-spee-tal','meh-dee-see-nah','ees-kyehr-dah','deh-reh-chah','bweh-noh','mah-loh'],
+  de:['hah-loh','dahn-kuh','yah','nine','vah-ser','es-sen','bookh','shoo-luh','house','froynt','ar-bite','gelt','tsite','hoy-tuh','mor-gen','shprah-khuh','rye-zuh','markt','hel-fen','lehr-nen','fah-mee-lee-uh','mor-gen','nahkht','shtaht','lahnt','feer-mah','byoo-roh','kom-pyoo-ter','teh-leh-fohn','bahn-hohf','floog-hah-fen','hoh-tel','res-toh-rahnt','ahrtst','krahn-ken-house','meh-dee-tseen','links','rekhts','goot','shlekht'],
+  ar:['mar-ha-ba','shuk-ran','na-am','laa','maa','ta-aam','ki-taab','mad-ra-sa','bayt','sa-deeq','a-mal','maal','waqt','al-yawm','gha-dan','lu-gha','sa-far','sooq','yu-saa-id','yad-rus','aa-i-la','sa-baah','layl','ma-dee-na','ba-lad','sha-ri-ka','mak-tab','haa-soob','haa-tif','ma-hat-ta','ma-taar','fun-duq','mat-am','ta-beeb','mus-tash-fa','da-waa','ya-saar','ya-meen','jay-yid','say-yi'],
+  th:['sa-wat-dee','khop-khun','chai','mai','naam','aa-haan','nang-seu','rong-rian','baan','pheuan','ngaan','ngoen','we-laa','wan-nee','phrung-nee','phaa-saa','kaan-dern-thaang','ta-laat','chuai','rian','khrop-khrua','ton-chao','klaang-khuen','mueang','pra-thet','bo-ri-sat','sam-nak-ngaan','khom-phiu-ter','tho-ra-sap','sa-thaa-nee','sa-naam-bin','rong-raem','raan-aa-haan','mor','rong-pha-yaa-baan','yaa','saai','khwaa','dee','mai-dee'],
+  vi:['sin chow','gahm un','vung','khong','nook','doh an','sack','truong hok','nya','ban','kong vyek','tyen','thoy zian','hom nay','ngay my','ngon ngu','zoo lik','cho','zoop duh','hok','za dinh','buoy sang','ban dem','thanh foh','kwok za','kong ty','van fong','may tinh','dien thoai','nya ga','san bay','khach san','nya hang','bak si','benh vien','thuok','trai','fai','tot','sow'],
+  zh:['nee how','shyeh-shyeh','shr','boo','shway','shr-woo','shoo','shweh-shyao','jya','peng-yo','gong-zuo','chyen','shr-jyen','jin-tyen','ming-tyen','yu-yen','lyu-shing','shr-chang','bang-joo','shweh-shee','jya-ren','zao-shang','wan-shang','cheng-shr','gwo-jya','gong-suh','ban-gong-shr','dyen-nao','dyen-hwa','cheh-jan','jee-chang','jyo-dyen','tsan-ting','yee-sheng','yee-ywen','yao','zwo','yo','hao','hwai'],
+  ko:['an-nyong-ha-se-yo','kam-sa-ham-ni-da','ne','a-ni-yo','mul','eum-shik','chaek','hak-gyo','jip','chin-gu','il','don','shi-gan','o-neul','nae-il','eo-neo','yeo-haeng','shi-jang','dop-da','gong-bu-ha-da','ga-jok','a-chim','bam','do-si','na-ra','hoe-sa','sa-mu-sil','keom-pyu-teo','jeon-hwa','yeok','gong-hang','ho-tel','shik-dang','ui-sa','byeong-won','yak','oen-jjok','o-reun-jjok','jot-da','na-ppeu-da'],
+  bn:['no-mosh-kar','dhon-no-bad','hya','na','pa-ni','kha-bar','boi','skool','ba-ri','bon-dhu','kaj','ta-ka','sho-moy','aj','a-ga-mi-kal','bha-sha','bhro-mon','ba-zar','sha-haj-jo ko-ra','po-ra-sho-na ko-ra','po-ri-bar','sho-kal','rat','sho-hor','desh','kom-pa-ni','of-fis','kom-piu-tar','fon','ste-shon','bi-man-bon-dor','ho-tel','res-to-ra','dak-tar','hash-pa-tal','o-shudh','bam','dan','bha-lo','kha-rap'],
+  my:['min-ga-la-ba','jeh-zoo-tin-ba-deh','ho-keh','ma-hote-boo','yay','a-sa-a-sa','sa-oke','kyaung','ain','tha-nge-jin','a-lote','ngwe','a-chain','dee-nay','ma-net-hpyan','ba-tha-za-ga','kha-yee-thwa-chin','zay','ku-nyi-theh','lay-la-theh','mi-tha-zu','ma-net','nya','myo','naing-ngan','kom-pa-ni','yone','kon-pyu-ta','phone','bu-ta-yone','lay-zate','ho-tel','sa-thauk-sai','sa-ya-wun','say-yone','say','beh','nya','kaung-thaw','ma-kaung-thaw'],
+  si:['aa-yu-bo-wan','sthoo-thi','ow','nae-hae','ja-la-ya','aa-ha-ra','po-tha','paa-sa-la','ge-da-ra','mi-thu-ra','wae-da','mu-dal','kaa-la-ya','a-da','he-ta','bhaa-shaa-wa','ga-ma-na','we-lan-da-pola','u-daw ki-ree-ma','i-ge-nee-ma','paw-la','u-dae-sa-na','raa-three-ya','na-ga-ra-ya','ra-ta','sa-maa-ga-ma','kaar-yaa-la-ya','pa-ri-ga-na-ka-ya','du-ra-ka-tha-na-ya','dum-ri-ya stha-na-ya','gu-wan-tho-tu-pa-la','ho-ta-la-ya','aa-pa-na-shaa-laa-wa','waid-ya-wa-ra-ya','ro-ha-la','ow-sha-da','wa-ma','da-ku-na','hon-da','na-ra-ka'],
+  ta:['va-na-kam','nan-dri','aam','illai','than-neer','u-na-vu','puth-tha-gam','pal-li','vee-du','nan-bar','ve-lai','pa-nam','ne-ram','in-dru','naa-lai','mo-zhi','pa-ya-nam','san-dhai','u-da-vu-thal','pa-dith-thal','ku-dum-bam','kaa-lai','i-ra-vu','na-ga-ram','naa-du','ni-ru-va-nam','a-lu-va-la-gam','ka-ni-ni','tho-lai-pe-si','ni-lai-yam','vi-maa-na ni-lai-yam','ho-tel','u-na-va-gam','ma-ruth-thu-var','ma-ruth-thu-va-ma-nai','ma-run-thu','i-da-thu','va-la-thu','nal-la','ket-ta'],
+  hi:['na-mas-te','dhan-ya-vaad','haan','na-heen','paa-nee','bho-jan','ki-taab','skool','ghar','dost','kaam','pai-sa','sa-may','aaj','kal','bhaa-sha','yaa-tra','baa-zaar','ma-dad kar-na','padh-na','pa-ri-vaar','su-bah','raat','sha-har','desh','kam-pa-nee','kaar-yaa-lay','kam-pyoo-tar','phone','sta-tion','ha-waa-ee ad-da','ho-tel','res-to-ran','dok-tar','as-pa-taal','da-vaa','baa-yaan','daa-yaan','ach-cha','bu-ra'],
+  ne:['na-mas-te','dhan-ya-baad','ho','ho-i-na','paa-nee','khaa-naa','ki-taab','vid-yaa-la-ya','ghar','saa-thee','kaam','pai-saa','sa-may','aaj','bho-li','bhaa-shaa','yaa-traa','ba-zaar','mad-dat gar-nu','padh-nu','pa-ri-waar','bi-haan','raat','sha-har','desh','kam-pa-nee','kaar-yaa-la-ya','kam-pyu-tar','phone','ste-shan','vi-maan-sthal','ho-tel','res-tu-rent','dak-tar','as-pa-taal','au-sha-dhi','baa-yaan','daa-yaan','raam-ro','na-raam-ro'],
+});
+
+const SPANISH_EXTENDED_WORDS = [
+  ['reunión','reh-oo-nyon'], ['correo electrónico','koh-rreh-oh eh-lek-troh-nee-koh'], ['pedido','peh-dee-doh'], ['precio','preh-syoh'], ['abrir','ah-breer'],
+  ['cerrar','seh-rrahr'], ['comprar','kohm-prahr'], ['vender','ben-dehr'], ['trabajar','trah-bah-hahr'], ['plan','plahn'],
+  ['ayudar','ah-yoo-dahr'], ['llamar','yah-mahr'], ['enviar','en-byahr'], ['nombre','nohm-breh'], ['pagar','pah-gahr'],
+  ['solicitar','soh-lee-see-tahr'], ['organizar','or-gah-nee-sahr'], ['asistir','ah-sees-teer'], ['presupuesto','preh-soo-pweh-stoh'], ['cancelar','kahn-seh-lahr'],
+  ['confirmar','kohn-feer-mahr'], ['contactar','kohn-tahk-tahr'], ['entregar','en-treh-gahr'], ['descuento','des-kwen-toh'], ['documento','doh-koo-men-toh'],
+  ['horario','oh-rah-ryoh'], ['cliente','klyen-teh'], ['recibo','reh-see-boh'], ['sucursal','soo-koor-sahl'], ['salario','sah-lah-ryoh'],
+  ['empleado','em-pleh-ah-doh'], ['equipo','eh-kee-poh'], ['estimar','es-tee-mahr'], ['expandir','eks-pahn-deer'], ['extender','eks-ten-dehr'],
+  ['flexible','flek-see-bleh'], ['contratar','kohn-trah-tahr'], ['mejorar','meh-hoh-rahr'], ['aumentar','ow-men-tahr'], ['entrevista','en-treh-bees-tah'],
+  ['factura','fahk-too-rah'], ['gestionar','hes-tyoh-nahr'], ['notificar','noh-tee-fee-kahr'], ['ofrecer','oh-freh-sehr'], ['proporcionar','proh-por-syoh-nahr'],
+  ['recibir','reh-see-beer'], ['lograr','loh-grahr'], ['adecuado','ah-deh-kwah-doh'], ['anunciar','ah-noon-syahr'], ['autorizar','ow-toh-ree-sahr'],
+  ['fecha límite','feh-chah lee-mee-teh'], ['rechazar','reh-chah-sahr'], ['eficiente','eh-fee-syen-teh'], ['evaluar','eh-bah-loo-ahr'], ['generar','heh-neh-rahr'],
+  ['implementar','eem-pleh-men-tahr'], ['reembolsar','reh-em-bol-sahr'], ['proveedor','proh-beh-eh-dor'], ['garantía','gah-rahn-tee-ah'], ['envío','en-bee-oh'],
+  ['negociar','neh-goh-syahr'], ['objetivo','ob-heh-tee-boh'], ['oportunidad','oh-por-too-nee-dahd'], ['posponer','pohs-poh-nehr'], ['prioridad','pree-oh-ree-dahd'],
+  ['ascender','ah-sen-dehr'], ['propuesta','proh-pweh-stah'], ['requerir','reh-keh-reer'], ['ingresos','een-greh-sohs'], ['productivo','proh-dook-tee-boh'],
+  ['contribuir','kohn-tree-boo-eer'], ['colaborar','koh-lah-boh-rahr'], ['compensar','kohm-pen-sahr'], ['cumplir','koom-pleer'], ['realizar','rreh-ah-lee-sahr'],
+  ['subcontratar','soob-kohn-trah-tahr'], ['inventario','een-ben-tah-ryoh'], ['consecuencia','kohn-seh-kwen-syah'], ['enfoque','en-foh-keh'], ['queja','keh-hah'],
+  ['optimizar','op-tee-mee-sahr'], ['responsabilidad','rres-pon-sah-bee-lee-dahd'], ['clientela','klyen-teh-lah'], ['rotación','rroh-tah-syohn'], ['respaldar','rres-pahl-dahr'],
+  ['adquisición','ahd-kee-see-syohn'], ['asignar','ah-seeg-nahr'], ['ambiguo','ahm-bee-gwoh'], ['referencia','rreh-feh-ren-syah'], ['contingencia','kohn-teen-hen-syah'],
+  ['agotar','ah-goh-tahr'], ['discrepancia','dees-kreh-pahn-syah'], ['fiscal','fees-kahl'], ['fluctuar','flook-too-ahr'], ['aprovechar','ah-proh-beh-chahr'],
+  ['mitigar','mee-tee-gahr'], ['obsoleto','ob-soh-leh-toh'], ['paradigma','pah-rah-deeg-mah'], ['adquisiciones','ahd-kee-see-syoh-nes'], ['conciliar','kohn-see-lyahr'],
+  ['reestructurar','rreh-es-trook-too-rahr'], ['examinar','eks-ah-mee-nahr'], ['estipular','es-tee-poo-lahr'], ['subsidiaria','soob-see-dyah-ryah'], ['viable','bee-ah-bleh'],
+  ['gasto','gahs-toh'], ['desinvertir','des-een-behr-teer'], ['acumularse','ah-koo-moo-lahr-seh'], ['depreciarse','deh-preh-syahr-seh'], ['indemnizar','een-dem-nee-sahr'],
+  ['fusionar','foo-syoh-nahr'], ['arbitrar','ahr-bee-trahr'], ['burocracia','boo-roh-krah-syah'], ['capitalizar','kah-pee-tah-lee-sahr'], ['enumerar','eh-noo-meh-rahr'],
+  ['ratificar','rrah-tee-fee-kahr'], ['eludir','eh-loo-deer'], ['impedir','eem-peh-deer'], ['agravar','ah-grah-bahr'], ['agilizar','ah-hee-lee-sahr'],
+  ['inaugurar','ee-now-goo-rahr'], ['tangible','tahn-hee-bleh'], ['trayectoria','trah-yehk-toh-ryah'], ['unánime','oo-nah-nee-meh'], ['proporcional','proh-por-syoh-nahl'],
+  ['superficial','soo-pehr-fee-syahl'], ['vindicar','been-dee-kahr'], ['urgente','oor-hen-teh'], ['oneroso','oh-neh-roh-soh'], ['inclinación','een-klee-nah-syohn'],
+];
+
+const SPANISH_EXTENDED_VOCAB = VOCAB_DB.map((item, idx) => {
+  const [word, pron] = SPANISH_EXTENDED_WORDS[idx];
+  return {
+    id: `es${String(idx + 1).padStart(3, '0')}`,
+    lv: item.lv,
+    word,
+    pron,
+    jp: item.jp,
+    ex: `${word} (${pron}) = ${item.jp}`,
+  };
+});
+
+export const MULTI_GRAMMAR_DB = {
+  es: [
+    {id:'esg001',lv:1,q:'Yo _____ agua.',choices:['bebe','bebo','bebes','beben'],ans:1,exp:'Yo + 動詞現在形 → bebo'},
+    {id:'esg002',lv:1,q:'Ella _____ en la oficina.',choices:['trabajo','trabajas','trabaja','trabajan'],ans:2,exp:'Ella + 動詞現在形 → trabaja'},
+    {id:'esg003',lv:1,q:'Nosotros _____ estudiantes.',choices:['soy','eres','somos','son'],ans:2,exp:'Nosotros + ser → somos'},
+    {id:'esg004',lv:2,q:'El libro está _____ la mesa.',choices:['en','de','por','para'],ans:0,exp:'場所は en を使う'},
+    {id:'esg005',lv:2,q:'Voy _____ la estación.',choices:['a','de','con','sin'],ans:0,exp:'行き先は ir a + 場所'},
+    {id:'esg006',lv:2,q:'Tengo _____ reunión mañana.',choices:['un','una','unos','unas'],ans:1,exp:'reunión は女性名詞 → una'},
+    {id:'esg007',lv:3,q:'¿_____ cuesta este producto?',choices:['Quién','Cuánto','Dónde','Cuál'],ans:1,exp:'値段を尋ねる → cuánto cuesta'},
+    {id:'esg008',lv:3,q:'No _____ dinero suficiente.',choices:['tengo','tienes','tiene','tenemos'],ans:0,exp:'主語 Yo が省略 → tengo'},
+    {id:'esg009',lv:3,q:'El cliente _____ el documento.',choices:['recibí','recibiste','recibió','recibimos'],ans:2,exp:'El cliente + 点過去 → recibió'},
+    {id:'esg010',lv:4,q:'Estamos _____ el informe.',choices:['preparar','prepara','preparando','preparado'],ans:2,exp:'estar + gerundio → preparando'},
+    {id:'esg011',lv:4,q:'Quiero _____ una reserva.',choices:['hacer','hago','hice','haciendo'],ans:0,exp:'querer + 不定詞 → hacer'},
+    {id:'esg012',lv:4,q:'La factura fue _____ ayer.',choices:['enviar','envía','enviada','enviando'],ans:2,exp:'受動態 fue + 過去分詞 → enviada'},
+    {id:'esg013',lv:5,q:'Si tengo tiempo, _____ al mercado.',choices:['voy','fui','iba','iría'],ans:0,exp:'現実条件 si + 現在, 現在/未来相当'},
+    {id:'esg014',lv:5,q:'Me gustaría _____ con el gerente.',choices:['hablar','hablo','hablé','hablando'],ans:0,exp:'gustaría + 不定詞'},
+    {id:'esg015',lv:5,q:'Hemos _____ el presupuesto.',choices:['revisar','revisado','revisa','revisando'],ans:1,exp:'現在完了 haber + 過去分詞'},
+    {id:'esg016',lv:6,q:'Es importante que usted _____ el contrato.',choices:['lee','lea','leyó','leer'],ans:1,exp:'重要性・要望の que 節 → 接続法 lea'},
+    {id:'esg017',lv:6,q:'Buscamos una solución que _____ eficiente.',choices:['es','sea','ser','fue'],ans:1,exp:'不特定の対象 → 接続法 sea'},
+    {id:'esg018',lv:6,q:'El informe debe _____ antes del viernes.',choices:['entregar','entrega','ser entregado','entregando'],ans:2,exp:'debe ser + 過去分詞'},
+    {id:'esg019',lv:7,q:'Aunque _____ caro, lo compraremos.',choices:['es','sea','fue','ser'],ans:1,exp:'仮定・譲歩の aunque → 接続法 sea'},
+    {id:'esg020',lv:7,q:'Había _____ muchos cambios.',choices:['haber','había','habido','hay'],ans:2,exp:'過去完了 había + participio → habido'},
+    {id:'esg021',lv:7,q:'El proyecto se _____ el próximo mes.',choices:['lanzará','lanzó','lanza','lanzando'],ans:0,exp:'未来形 → se lanzará'},
+    {id:'esg022',lv:8,q:'Si hubiéramos sabido, _____ antes.',choices:['actuamos','actuaríamos','habríamos actuado','actuaremos'],ans:2,exp:'過去反実仮想 → habríamos + participio'},
+    {id:'esg023',lv:8,q:'La empresa está considerando _____ la filial.',choices:['vender','vende','vendió','vendida'],ans:0,exp:'considerar + 不定詞/名詞的用法'},
+    {id:'esg024',lv:8,q:'Se requiere que todos _____ presentes.',choices:['están','estén','estar','estuvieron'],ans:1,exp:'要求 se requiere que → 接続法 estén'},
+    {id:'esg025',lv:9,q:'No creo que la propuesta _____ viable.',choices:['es','sea','fue','será'],ans:1,exp:'否定の creer que → 接続法 sea'},
+    {id:'esg026',lv:9,q:'El contrato estipula que el proveedor _____ responsable.',choices:['será','sea','fue','siendo'],ans:0,exp:'契約条項の確定事項 → 未来 será'},
+    {id:'esg027',lv:9,q:'Tras _____ los datos, encontramos un error.',choices:['revisar','revisa','revisó','revisando'],ans:0,exp:'tras + 不定詞'},
+    {id:'esg028',lv:10,q:'De haberse aprobado, el plan _____ beneficios.',choices:['generaría','generó','genera','generar'],ans:0,exp:'条件を含む高度表現 → condicional generaría'},
+    {id:'esg029',lv:10,q:'La decisión fue tomada por unanimidad, _____ todos estaban de acuerdo.',choices:['lo que indica que','cuyo','quien','donde'],ans:0,exp:'文全体を受ける関係表現 → lo que indica que'},
+    {id:'esg030',lv:10,q:'El informe, _____ fue revisado ayer, contiene cifras clave.',choices:['que','quien','cuyo','donde'],ans:0,exp:'先行詞 informe を受ける関係代名詞 → que'},
+  ],
+};
+
+export const MULTI_VOCAB_DB = Object.fromEntries(
+  Object.entries(BASIC_WORDS_BY_LANGUAGE).map(([code, words]) => [
+    code,
+    words.map((word, idx) => ({
+      id: `${code}${String(idx + 1).padStart(3, '0')}`,
+      lv: Math.min(10, Math.floor(idx / 2) + 1),
+      word,
+      pron: BASIC_PRON_BY_LANGUAGE[code]?.[idx] || word,
+      jp: BASIC_MEANINGS[idx][1],
+      ex: `${word}${BASIC_PRON_BY_LANGUAGE[code]?.[idx] && BASIC_PRON_BY_LANGUAGE[code][idx] !== word ? ` (${BASIC_PRON_BY_LANGUAGE[code][idx]})` : ''} = ${BASIC_MEANINGS[idx][1]}`,
+    })),
+  ]),
+);
+
+MULTI_VOCAB_DB.es = SPANISH_EXTENDED_VOCAB;

@@ -1,5 +1,5 @@
 /* =====================================================
-   えいごドラクエ — app.js   完全版
+   LANGUAGE QUEST — app.js   完全版
    単語/文法/タイピング/リスニング/スピーキング
    EXP・レベル・称号・コンボ・敵撃破演出
 ===================================================== */
@@ -9,7 +9,9 @@ import {
   ITEM_DB, LEVEL_TABLE, TITLE_DEFS, EXP_BASE, GOLD_BASE,
   comboMult, getLvRow, getNextLvRow, toeicLabel,
 } from './shared/gameData.js';
-import { VOCAB_DB, GRAMMAR_DB } from './shared/questionData.js';
+import {
+  VOCAB_DB, GRAMMAR_DB, LANGUAGE_OPTIONS, LANGUAGE_PROFILES, MULTI_GRAMMAR_DB, MULTI_VOCAB_DB,
+} from './shared/questionData.js';
 
 /* ══════════════════════════════════════════════════
    0. バックエンドAPI（ログイン時のみ使用。未ログインはゲストモードでローカル動作）
@@ -18,6 +20,7 @@ const API_BASE = import.meta.env.DEV
   ? 'http://localhost:3001/api'
   : 'https://english-quest-26nu.onrender.com/api';
 let authToken = localStorage.getItem('eigoDQ_token') || null;
+let selectedLanguage = localStorage.getItem('languageQuest_language') || 'en';
 
 async function apiFetch(path, opts = {}) {
   const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
@@ -325,6 +328,112 @@ const shuffle = arr => {
   return a;
 };
 
+function currentLanguage() {
+  return LANGUAGE_OPTIONS.find(lang => lang.code === selectedLanguage) || LANGUAGE_OPTIONS[0];
+}
+
+function currentVocabDB() {
+  return selectedLanguage === 'en' ? VOCAB_DB : (MULTI_VOCAB_DB[selectedLanguage] || VOCAB_DB);
+}
+
+function currentGrammarDB() {
+  return selectedLanguage === 'en' ? GRAMMAR_DB : (MULTI_GRAMMAR_DB[selectedLanguage] || []);
+}
+
+function languageWordLabel() {
+  return currentLanguage().label;
+}
+
+function wordWithPron(item) {
+  return item.pron && selectedLanguage !== 'en' ? `${item.word}（${item.pron}）` : item.word;
+}
+
+function difficultyLabel(lv) {
+  return selectedLanguage === 'en' ? toeicLabel(lv) : `Lv.${lv}`;
+}
+
+function renderLanguageProfile() {
+  const el = $('language-profile');
+  if (!el) return;
+  const lang = currentLanguage();
+  const profile = LANGUAGE_PROFILES[lang.code];
+  if (!profile) {
+    el.innerHTML = '';
+    return;
+  }
+  el.innerHTML = `
+    <div class="language-profile-title">📚 ${lang.label}（${lang.native}）</div>
+    <div class="language-profile-grid">
+      <div>
+        <span class="language-profile-label">使われる国・地域</span>
+        <p>${profile.countries}</p>
+      </div>
+      <div>
+        <span class="language-profile-label">話者数</span>
+        <p>${profile.speakers}</p>
+      </div>
+    </div>
+    <p class="language-profile-note">${profile.note}</p>
+  `;
+}
+
+function populateLanguageSelect() {
+  const select = $('language-select');
+  if (!select) return;
+  select.innerHTML = '';
+  LANGUAGE_OPTIONS.forEach(lang => {
+    const opt = document.createElement('option');
+    opt.value = lang.code;
+    opt.textContent = `${lang.label}（${lang.native}）`;
+    select.appendChild(opt);
+  });
+  select.value = selectedLanguage;
+}
+
+function refreshLanguageText() {
+  const lang = currentLanguage();
+  if ($('title-language-copy')) $('title-language-copy').textContent = '言語習得への旅';
+  if ($('field-msg-text')) {
+    $('field-msg-text').textContent = `どこへ　むかうか？　まおうをたおすには　${lang.label}のちからが　ひつようだ！`;
+  }
+  if ($('typing-input')) $('typing-input').placeholder = `${lang.label}でうってね（Enterでかいとう）`;
+  refreshLevelOptions();
+}
+
+function refreshLevelOptions() {
+  const select = $('level-select');
+  if (!select) return;
+  const options = [
+    ['auto', 'おまかせ（勇者レベルに連動）', 'おまかせ（ゆうしゃレベルに連動）'],
+    ['1', 'Lv.1（TOEIC300）', 'Lv.1（入門）'],
+    ['2', 'Lv.2（TOEIC400）', 'Lv.2（基礎）'],
+    ['3', 'Lv.3（TOEIC500）', 'Lv.3（初級）'],
+    ['4', 'Lv.4（TOEIC600）', 'Lv.4（初中級）'],
+    ['5', 'Lv.5（TOEIC700）', 'Lv.5（中級）'],
+    ['6', 'Lv.6（TOEIC730）', 'Lv.6（中上級）'],
+    ['7', 'Lv.7（TOEIC800）', 'Lv.7（上級）'],
+    ['8', 'Lv.8（TOEIC860）', 'Lv.8（実践）'],
+    ['9', 'Lv.9（TOEIC900）', 'Lv.9（熟練）'],
+    ['10', 'Lv.10（TOEIC990）', 'Lv.10（達人）'],
+    ['all', 'ぜんぶ（ランダム混合）', 'ぜんぶ（ランダム混合）'],
+  ];
+  const currentValue = select.value || 'auto';
+  select.innerHTML = '';
+  options.forEach(([value, enText, otherText]) => {
+    const opt = document.createElement('option');
+    opt.value = value;
+    opt.textContent = selectedLanguage === 'en' ? enText : otherText;
+    select.appendChild(opt);
+  });
+  select.value = currentValue;
+}
+
+function setLanguage(code) {
+  selectedLanguage = LANGUAGE_OPTIONS.some(lang => lang.code === code) ? code : 'en';
+  localStorage.setItem('languageQuest_language', selectedLanguage);
+  refreshLanguageText();
+}
+
 // level-select の値（'auto' | 'all' | '1'〜'10'）を実際のティア（'all' か 1〜10の数値）に解決する
 // 'auto' は勇者の現在レベルに連動させる（敵の強さ・問題レベルが自動で上がる）
 function resolveLevelSelection(rawValue) {
@@ -517,9 +626,9 @@ function buildVocabQ(item, pool) {
   const all = shuffle([item.jp, ...dummies]);
   return {
     id: item.id, type:'vocab',
-    qText: `「 ${item.word} 」の いみは？`,
+    qText: `「 ${wordWithPron(item)} 」の いみは？`,
     choices: all, ans: all.indexOf(item.jp),
-    detail: `例文: ${item.ex}`,
+    detail: item.ex ? `例: ${item.ex}` : `正解: ${item.word}（${item.jp}）`,
   };
 }
 
@@ -535,9 +644,9 @@ function buildGrammarQ(item) {
 function buildTypingQ(item) {
   return {
     id: item.id, type:'typing',
-    qText: `「${item.jp}」を えいごで うとう！`,
+    qText: `「${item.jp}」を ${languageWordLabel()}で うとう！`,
     ans: item.word.toLowerCase(),
-    detail: `例文: ${item.ex}`,
+    detail: item.ex ? `例: ${item.ex}` : `正解: ${item.word}`,
   };
 }
 
@@ -547,71 +656,79 @@ function buildListeningQ(item, pool) {
   const all = shuffle([item.word, ...dummies]);
   return {
     id: item.id, type:'listening',
-    qText: '🔊 きこえた えいごの たんごは どれ？',
+    qText: `🔊 きこえた ${languageWordLabel()}の ことばは どれ？`,
     speakWord: item.word,
     choices: all, ans: all.indexOf(item.word),
-    detail: `正解: ${item.word}（${item.jp}）`,
+    detail: `正解: ${wordWithPron(item)}（${item.jp}）`,
   };
 }
 
-// スピーキング用（日本語を見て英語を発音）
+// スピーキング用（日本語を見て学習中の言語を発音）
 function buildSpeakingQ(item) {
   return {
     id: item.id, type:'speaking',
-    qText: `次の えいごを はっわしよう`,
+    qText: `次の ${languageWordLabel()}を はつおんしよう`,
     speakWord: item.word,
-    targetText: item.word,
+    targetText: wordWithPron(item),
     ans: item.word.toLowerCase(),
-    detail: `正解: ${item.word}（${item.jp}）`,
+    detail: `正解: ${wordWithPron(item)}（${item.jp}）`,
   };
 }
 
 function buildQuestions(mode, level, count) {
-  const vPool = filterLevel(VOCAB_DB, level);
-  const gPool = filterLevel(GRAMMAR_DB, level);
+  const vocabDB = currentVocabDB();
+  const grammarDB = currentGrammarDB();
+  const vPool = filterLevel(vocabDB, level);
+  const gPool = filterLevel(grammarDB, level);
+  const activeVPool = vPool.length ? vPool : vocabDB;
   let questions = [];
 
   if (mode === 'vocab') {
-    const pool = weightedPool(vPool);
+    const pool = weightedPool(activeVPool);
     const seen = new Set();
     for (const item of pool) {
-      if (!seen.has(item.id)) { seen.add(item.id); questions.push(buildVocabQ(item, vPool)); }
+      if (!seen.has(item.id)) { seen.add(item.id); questions.push(buildVocabQ(item, activeVPool)); }
       if (questions.length >= count) break;
     }
   } else if (mode === 'grammar') {
-    const pool = weightedPool(gPool);
-    const seen = new Set();
-    for (const item of pool) {
-      if (!seen.has(item.id)) { seen.add(item.id); questions.push(buildGrammarQ(item)); }
-      if (questions.length >= count) break;
+    if (gPool.length) {
+      const pool = weightedPool(gPool);
+      const seen = new Set();
+      for (const item of pool) {
+        if (!seen.has(item.id)) { seen.add(item.id); questions.push(buildGrammarQ(item)); }
+        if (questions.length >= count) break;
+      }
+    } else {
+      return buildQuestions('vocab', level, count);
     }
   } else if (mode === 'typing') {
-    const pool = weightedPool(vPool);
+    const pool = weightedPool(activeVPool);
     const seen = new Set();
     for (const item of pool) {
       if (!seen.has(item.id)) { seen.add(item.id); questions.push(buildTypingQ(item)); }
       if (questions.length >= count) break;
     }
   } else if (mode === 'listening') {
-    const pool = weightedPool(vPool);
+    const pool = weightedPool(activeVPool);
     const seen = new Set();
     for (const item of pool) {
-      if (!seen.has(item.id)) { seen.add(item.id); questions.push(buildListeningQ(item, vPool)); }
+      if (!seen.has(item.id)) { seen.add(item.id); questions.push(buildListeningQ(item, activeVPool)); }
       if (questions.length >= count) break;
     }
   } else if (mode === 'speaking') {
-    const pool = weightedPool(vPool);
+    const pool = weightedPool(activeVPool);
     const seen = new Set();
     for (const item of pool) {
       if (!seen.has(item.id)) { seen.add(item.id); questions.push(buildSpeakingQ(item)); }
       if (questions.length >= count) break;
     }
   } else if (mode === 'weak') {
-    const allPool = [...VOCAB_DB, ...GRAMMAR_DB];
+    const allPool = [...vocabDB, ...grammarDB];
     const filtered = filterLevel(allPool, level);
-    let weak = weakItems(filtered);
+    const activeFiltered = filtered.length ? filtered : allPool;
+    let weak = weakItems(activeFiltered);
     if (weak.length < count) {
-      const extra = shuffle(filtered.filter(i => !answerStats[i.id]?.attempts));
+      const extra = shuffle(activeFiltered.filter(i => !answerStats[i.id]?.attempts));
       weak = [...weak, ...extra];
     }
     const seen = new Set();
@@ -619,7 +736,7 @@ function buildQuestions(mode, level, count) {
       if (seen.has(item.id)) continue;
       seen.add(item.id);
       if (item.choices) questions.push(buildGrammarQ(item));
-      else questions.push(buildVocabQ(item, vPool.length ? vPool : VOCAB_DB));
+      else questions.push(buildVocabQ(item, activeVPool));
       if (questions.length >= count) break;
     }
   }
@@ -647,7 +764,7 @@ function speak(text, onEnd) {
   if (!window.speechSynthesis) { if (onEnd) onEnd(); return; }
   window.speechSynthesis.cancel();
   const utter = new SpeechSynthesisUtterance(text);
-  utter.lang  = 'en-US';
+  utter.lang  = currentLanguage().speechLang;
   utter.rate  = 0.85;
   utter.pitch = 1.0;
   if (onEnd) utter.onend = onEnd;
@@ -664,7 +781,7 @@ function initRecognition() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) return null;
   const r = new SR();
-  r.lang        = 'en-US';
+  r.lang        = currentLanguage().speechLang;
   r.interimResults = false;
   r.maxAlternatives = 3;
   return r;
@@ -772,7 +889,7 @@ function setupBattleScreenUI(enemy) {
 function startFocusedBattle(item) {
   stopSpeechAll();
   const mode = item.category === 'grammar' ? 'grammar' : 'vocab';
-  const q    = item.category === 'grammar' ? buildGrammarQ(item) : buildVocabQ(item, VOCAB_DB);
+  const q    = item.category === 'grammar' ? buildGrammarQ(item) : buildVocabQ(item, currentVocabDB());
   const enemy = pickEnemy(item.lv);
 
   battle = {
@@ -1056,7 +1173,7 @@ function showResult() {
 
   let title = '', msg = '';
   if (rate === 100) { title='かんぺきしょうり！'; msg='まおうもたじたじ！すべてのもんだいをせいかい！'; }
-  else if (rate >= 80) { title='だいしょうり！'; msg='すばらしい！えいごのちからがぐんぐんのびている！'; }
+  else if (rate >= 80) { title='だいしょうり！'; msg=`すばらしい！${languageWordLabel()}のちからがぐんぐんのびている！`; }
   else if (rate >= 60) { title='しょうり！'; msg='よくたたかった！にがてなもんだいをもう一度れんしゅうしよう！'; }
   else if (rate >= 40) { title='ひきわけ…'; msg='もう少し！あきらめずにもう一度ちょうせん！'; }
   else { title='ざんねん…'; msg='じゅんびがたりなかった…よわてき集中でれんしゅうしよう！'; }
@@ -1491,9 +1608,24 @@ function goToField() {
 
 // フィールドのコマンド選択（アイコン接触／ボタンクリック共通の入り口）
 function enterCommand(mode) {
-  if (mode === 'inn') goToInn();
+  if (mode === 'inn' || mode === 'review') goToInn();
   else if (mode === 'world') goToWorld();
   else startBattle(mode);
+}
+
+let commandPage = 1;
+const COMMAND_PAGE_MAX = 2;
+
+function showCommandPage(page) {
+  commandPage = page < 1 ? COMMAND_PAGE_MAX : page > COMMAND_PAGE_MAX ? 1 : page;
+  const commandWindow = $('command-window');
+  const pageIndicator = $('command-page-indicator');
+  if (commandWindow) commandWindow.dataset.page = String(commandPage);
+  if (pageIndicator) pageIndicator.textContent = `${commandPage}/${COMMAND_PAGE_MAX}`;
+}
+
+function nextCommandPage() {
+  showCommandPage(commandPage + 1);
 }
 
 /* ══════════════════════════════════════════════════
@@ -1603,6 +1735,7 @@ async function goToInn() {
   stopSpeechAll();
   showScreen('screen-inn');
   playFieldBGM();
+  renderLanguageProfile();
   renderInnList(currentInnFilter);
 
   // 休憩してHPを全回復
@@ -1640,8 +1773,8 @@ function renderInnList(filter) {
   };
 
   let items = [
-    ...VOCAB_DB.map(it => ({ ...it, category: 'vocab' })),
-    ...GRAMMAR_DB.map(it => ({ ...it, category: 'grammar' })),
+    ...currentVocabDB().map(it => ({ ...it, category: 'vocab' })),
+    ...currentGrammarDB().map(it => ({ ...it, category: 'grammar' })),
   ];
 
   if (filter === 'vocab')        items = items.filter(it => it.category === 'vocab');
@@ -1664,6 +1797,7 @@ function renderInnList(filter) {
 
     const mainHtml = item.category === 'vocab'
       ? `<div class="inn-item-word">${item.word}</div>
+         ${item.pron && selectedLanguage !== 'en' ? `<div class="inn-item-pron">${item.pron}</div>` : ''}
          <div class="inn-item-jp">${item.jp}</div>
          <div class="inn-item-ex">${item.ex}</div>`
       : `<div class="inn-item-q">${item.q}</div>
@@ -1676,7 +1810,7 @@ function renderInnList(filter) {
     row.innerHTML = `
       <div class="inn-item-main">${mainHtml}</div>
       <div class="inn-item-side">
-        <span class="inn-tier-badge">${toeicLabel(item.lv)}</span>
+        <span class="inn-tier-badge">${difficultyLabel(item.lv)}</span>
         <span class="inn-rate ${rateClass}">${rateText}</span>
         ${weak ? '<span class="inn-weak-badge">🔥 にがて</span>' : ''}
         ${weak ? '<button type="button" class="dq-btn dq-btn-blue inn-train-btn">とっくん</button>' : ''}
@@ -1695,6 +1829,14 @@ function renderInnList(filter) {
    23. イベントリスナー
 ══════════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', () => {
+  populateLanguageSelect();
+  refreshLanguageText();
+
+  $('language-select')?.addEventListener('change', e => {
+    setLanguage(e.target.value);
+    renderLanguageProfile();
+    renderInnList(currentInnFilter);
+  });
 
   /* ── セッション復元（トークンがあれば自動ログイン） ── */
   tryRestoreSession().then(restored => {
@@ -1744,6 +1886,9 @@ document.addEventListener('DOMContentLoaded', () => {
   $('logout-btn')?.addEventListener('click', logout);
 
   /* ── コマンドボタン（モード選択） ── */
+  $('command-page-btn')?.addEventListener('click', nextCommandPage);
+  showCommandPage(1);
+
   document.querySelectorAll('.dq-cmd-btn').forEach(btn => {
     btn.addEventListener('click', () => enterCommand(btn.dataset.mode));
   });

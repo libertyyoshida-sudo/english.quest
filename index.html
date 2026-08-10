@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>えいご　クエスト</title>
+  <title>Language Quest</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -98,9 +98,9 @@
     <section id="screen-title" class="screen active">
       <div class="title-screen">
         <div class="title-logo">
-          <div class="title-logo-sub">えいご</div>
-          <div class="title-logo-main">DRAGON QUEST</div>
-          <div class="title-logo-sub">英語習得への旅</div>
+          <div class="title-logo-sub">ことばの冒険</div>
+          <div class="title-logo-main">LANGUAGE QUEST</div>
+          <div class="title-logo-sub" id="title-language-copy">言語習得への旅</div>
         </div>
         <div class="title-hero-art">🐉</div>
 
@@ -130,7 +130,7 @@
 
       <!-- メッセージウィンドウ -->
       <div class="dq-window msg-window" id="field-msg">
-        <p id="field-msg-text">どこへ　むかうか？　まおうをたおすには　えいごのちからが　ひつようだ！</p>
+        <p id="field-msg-text">どこへ　むかうか？　まおうをたおすには　ことばのちからが　ひつようだ！</p>
       </div>
 
       <!-- コマンドウィンドウ（モード選択） -->
@@ -152,6 +152,9 @@
             <div class="field-icon" data-mode="speaking"  style="left:50%;top:88%;">
               <span class="field-icon-emoji">🎤</span><span class="field-icon-label">スピーキング道場</span>
             </div>
+            <div class="field-icon" data-mode="review"    style="left:32%;top:52%;">
+              <span class="field-icon-emoji">📚</span><span class="field-icon-label">まなびの図書館</span>
+            </div>
             <div class="field-icon" data-mode="weak"      style="left:84%;top:78%;">
               <span class="field-icon-emoji">🔥</span><span class="field-icon-label">よわてき集中</span>
             </div>
@@ -172,37 +175,44 @@
           <div class="field-hint">矢印キー / WASD / 十字ボタン / フリック操作で うごいて アイコンに ふれよう！</div>
         </div>
 
-        <div class="dq-window command-window">
-          <div class="cmd-title">▶ コマンド</div>
-          <button class="dq-cmd-btn" data-mode="vocab">
+        <div class="dq-window command-window" id="command-window" data-page="1">
+          <button class="cmd-title cmd-page-btn" id="command-page-btn" type="button">
+            <span>▶ コマンド</span>
+            <span class="cmd-page-indicator" id="command-page-indicator">1/2</span>
+          </button>
+          <button class="dq-cmd-btn" data-mode="vocab" data-command-page="1">
             <span class="cmd-icon">⚔️</span> たんごバトル
             <span class="cmd-exp">+10EXP</span>
           </button>
-          <button class="dq-cmd-btn" data-mode="grammar">
+          <button class="dq-cmd-btn" data-mode="grammar" data-command-page="1">
             <span class="cmd-icon">🪄</span> まほうぶんぽう
             <span class="cmd-exp">+15EXP</span>
           </button>
-          <button class="dq-cmd-btn" data-mode="typing">
+          <button class="dq-cmd-btn" data-mode="typing" data-command-page="1">
             <span class="cmd-icon">🗡️</span> タイピング修行
             <span class="cmd-exp">+12EXP</span>
           </button>
-          <button class="dq-cmd-btn" data-mode="listening">
+          <button class="dq-cmd-btn" data-mode="listening" data-command-page="1">
             <span class="cmd-icon">👂</span> リスニング訓練
             <span class="cmd-exp">+18EXP</span>
           </button>
-          <button class="dq-cmd-btn" data-mode="speaking">
+          <button class="dq-cmd-btn" data-mode="speaking" data-command-page="1">
             <span class="cmd-icon">🎤</span> スピーキング道場
             <span class="cmd-exp">+20EXP</span>
           </button>
-          <button class="dq-cmd-btn" data-mode="weak">
+          <button class="dq-cmd-btn" data-mode="weak" data-command-page="2">
             <span class="cmd-icon">🔥</span> よわてき集中
             <span class="cmd-exp">+25EXP</span>
           </button>
-          <button class="dq-cmd-btn" data-mode="inn">
-            <span class="cmd-icon">🏨</span> やどや（よむ・やすむ）
+          <button class="dq-cmd-btn" data-mode="review" data-command-page="2">
+            <span class="cmd-icon">📚</span> まなびの図書館
+            <span class="cmd-exp">よみ返し</span>
+          </button>
+          <button class="dq-cmd-btn" data-mode="inn" data-command-page="2">
+            <span class="cmd-icon">🏨</span> やどや
             <span class="cmd-exp">HP回復</span>
           </button>
-          <button class="dq-cmd-btn" data-mode="world">
+          <button class="dq-cmd-btn" data-mode="world" data-command-page="2">
             <span class="cmd-icon">🗺️</span> まちの外へ（せかいマップ）
             <span class="cmd-exp">ランダムせんとう</span>
           </button>
@@ -211,6 +221,10 @@
 
       <!-- 設定 -->
       <div class="dq-window setting-window">
+        <span class="setting-row-item">
+          <label class="dq-label">学習言語</label>
+          <select id="language-select" class="dq-select"></select>
+        </span>
         <span class="setting-row-item">
           <label class="dq-label">難易度</label>
           <select id="level-select" class="dq-select">
@@ -298,6 +312,7 @@
         <button class="dq-btn dq-btn-red inn-filter-btn" data-filter="weak">🔥 にがて</button>
       </div>
 
+      <div class="dq-window language-profile-window" id="language-profile"></div>
       <div class="inn-list" id="inn-list"></div>
     </section>
 
@@ -376,7 +391,7 @@
         <!-- タイピング入力 -->
         <div id="typing-wrap" class="typing-wrap hidden">
           <input id="typing-input" class="dq-input" type="text"
-                 placeholder="えいごでうってね（Enterでかいとう）" autocomplete="off" spellcheck="false" />
+                 placeholder="学習中のことばでうってね（Enterでかいとう）" autocomplete="off" spellcheck="false" />
         </div>
 
         <!-- スピーキング用 -->

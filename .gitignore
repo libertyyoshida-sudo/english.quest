@@ -6,3 +6,4 @@ dist/
 .env.*.local
 server/prisma/dev.db
 server/prisma/dev.db-journal
+.tmp-chrome*/

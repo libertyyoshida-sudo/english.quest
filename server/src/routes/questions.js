@@ -6,10 +6,19 @@ const router = Router();
 // 問題一覧・難易度指定検索
 router.get('/', async (req, res) => {
   try {
-    const { level, category, count } = req.query;
+    const { language = 'en', level, category, count } = req.query;
     const where = {};
     if (level && level !== 'all') where.level = level;
     if (category) where.category = category;
+    if (language && language !== 'en') {
+      where.id = { startsWith: String(language) };
+    } else if (category === 'grammar') {
+      where.id = { startsWith: 'g' };
+    } else if (category === 'vocab') {
+      where.id = { startsWith: 'v' };
+    } else {
+      where.OR = [{ id: { startsWith: 'v' } }, { id: { startsWith: 'g' } }];
+    }
 
     let questions = await prisma.question.findMany({ where });
 

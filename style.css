@@ -1,6 +1,6 @@
 /* =====================================================
-   えいごドラクエ — style.css
-   ドラゴンクエスト風 RPG デザイン
+   LANGUAGE QUEST — style.css
+   レトロRPG デザイン
 ===================================================== */
 
 /* ---------- フォント & リセット ---------- */
@@ -166,7 +166,7 @@ body {
 .exp-text { color: var(--dq-exp); font-size: .72rem; flex-shrink: 0; min-width: 70px; text-align: right; }
 
 /* ==========================================
-   共通ウィンドウ枠（ドラクエ風）
+   共通ウィンドウ枠（レトロRPG風）
 ========================================== */
 .dq-window {
   background: var(--dq-win-bg);
@@ -188,6 +188,29 @@ body {
 .screen { display: none; }
 .screen.active { display: block; animation: screen-in .25s ease; }
 @keyframes screen-in { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+@media (min-width: 641px) {
+  body { overflow-y: hidden; }
+
+  .dq-header { min-height: 54px; }
+
+  .dq-main {
+    height: calc(100svh - 78px);
+    max-width: min(1120px, 100vw);
+    padding: 10px 12px 14px;
+    overflow: hidden;
+  }
+
+  .screen.active {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .dq-window {
+    padding: 10px 14px;
+    margin-bottom: 10px;
+  }
+}
 
 /* ==========================================
    タイトル画面
@@ -365,6 +388,23 @@ body {
 
 .command-window { display: flex; flex-direction: column; gap: 4px; }
 .cmd-title { color: var(--dq-yellow); font-size: .85rem; margin-bottom: 6px; }
+.cmd-page-btn {
+  background: transparent;
+  border: 0;
+  font-family: var(--font-dq);
+  cursor: pointer;
+  text-align: left;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0;
+}
+.cmd-page-btn:hover { color: var(--dq-gold); }
+.cmd-page-indicator { color: var(--dq-blue-l); font-size: .72rem; }
+.command-window[data-page="1"] .dq-cmd-btn[data-command-page="2"],
+.command-window[data-page="2"] .dq-cmd-btn[data-command-page="1"] {
+  display: none;
+}
 
 .dq-cmd-btn {
   background: var(--dq-dark);
@@ -457,8 +497,12 @@ body {
   top: 96px;
   right: 10px;
   z-index: 200;
-  font-size: .72rem;
-  padding: 7px 12px;
+  width: auto;
+  max-width: max-content;
+  line-height: 1;
+  font-size: .62rem;
+  padding: 5px 8px;
+  letter-spacing: 0;
 }
 
 /* 進捗 */
@@ -657,6 +701,7 @@ body {
 
   /* やどや */
   .inn-filter-btn { font-size: .7rem; padding: 5px 10px; }
+  .language-profile-grid { grid-template-columns: 1fr; }
   .inn-item { flex-direction: column; align-items: stretch; gap: 6px; padding: 8px 10px; }
   .inn-item-side { flex-direction: row; align-items: center; justify-content: space-between; }
   .inn-list { max-height: 65vh; }
@@ -773,6 +818,36 @@ body {
 .inn-filter-btn { font-size: .78rem; padding: 6px 14px; opacity: .6; }
 .inn-filter-btn.active { opacity: 1; box-shadow: 0 0 8px var(--dq-gold); }
 
+.language-profile-window {
+  margin-bottom: 10px;
+}
+.language-profile-title {
+  color: var(--dq-yellow);
+  font-size: .9rem;
+  margin-bottom: 8px;
+}
+.language-profile-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.language-profile-label {
+  display: block;
+  color: var(--dq-blue-l);
+  font-size: .72rem;
+  margin-bottom: 3px;
+}
+.language-profile-window p {
+  color: var(--dq-white);
+  font-size: .78rem;
+  line-height: 1.55;
+  margin: 0;
+}
+.language-profile-note {
+  color: var(--dq-gray) !important;
+  margin-top: 8px !important;
+}
+
 .inn-list {
   display: flex; flex-direction: column; gap: 8px;
   max-height: 60vh; overflow-y: auto;
@@ -789,6 +864,7 @@ body {
 
 .inn-item-main { min-width: 0; flex: 1; }
 .inn-item-word { color: var(--dq-gold); font-size: .95rem; }
+.inn-item-pron { color: var(--dq-blue-l); font-size: .74rem; margin-top: 2px; overflow-wrap: anywhere; }
 .inn-item-q    { color: var(--dq-white); font-size: .88rem; line-height: 1.5; }
 .inn-item-jp   { color: var(--dq-blue-l); font-size: .8rem; margin-top: 2px; }
 .inn-item-ex   { color: var(--dq-gray); font-size: .74rem; margin-top: 2px; line-height: 1.5; }
@@ -814,3 +890,213 @@ body {
 .inv-equipped { color: var(--dq-gold); font-size: .72rem; }
 .inv-stat { font-size: .72rem; color: var(--dq-green); min-width: 70px; text-align: right; }
 .inv-btn  { font-size: .72rem; padding: 4px 10px; flex-shrink: 0; }
+
+@media (min-width: 641px) {
+  .title-screen {
+    min-height: 100%;
+    gap: 10px;
+  }
+
+  .title-hero-art { font-size: clamp(3rem, 8vh, 4.4rem); }
+  .title-start-btn { padding: 10px 32px; }
+
+  #screen-field.active {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    gap: 10px;
+  }
+
+  #screen-field .msg-window,
+  #screen-field .field-layout {
+    grid-column: 1 / -1;
+  }
+
+  #screen-field .msg-window p {
+    font-size: .86rem;
+    line-height: 1.55;
+  }
+
+  .field-layout {
+    grid-template-columns: minmax(0, 1.1fr) minmax(260px, .9fr);
+    gap: 10px;
+    margin-bottom: 0;
+    min-height: 0;
+  }
+
+  .field-map {
+    gap: 6px;
+    padding: 10px;
+    min-height: 0;
+  }
+
+  .field-canvas {
+    aspect-ratio: 16 / 9;
+    max-height: min(32vh, 300px);
+  }
+
+  .field-dpad { display: none; }
+  .field-hint { font-size: .62rem; }
+  .field-icon-emoji { font-size: 1.35rem; }
+  .world-boss-icon .field-icon-emoji { font-size: 1.5rem; }
+
+  .command-window { gap: 3px; }
+  .cmd-title { margin-bottom: 3px; }
+  .dq-cmd-btn {
+    min-height: 0;
+    padding: 5px 9px;
+    font-size: .75rem;
+    line-height: 1.25;
+  }
+
+  .setting-window,
+  .status-window,
+  .title-list-window,
+  .item-window {
+    margin-bottom: 0;
+    min-width: 0;
+  }
+
+  .setting-window {
+    align-content: flex-start;
+    gap: 8px;
+  }
+
+  .setting-row-item {
+    width: 100%;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .dq-select { width: 100%; font-size: .72rem; padding: 4px 6px; }
+  .status-grid { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+  .si-icon { font-size: 1rem; }
+  .si-val { font-size: 1rem; }
+  .si-lbl { font-size: .58rem; }
+  .title-badges,
+  .inventory-scroll {
+    max-height: 96px;
+    overflow-y: auto;
+  }
+
+  .equipment-display {
+    padding: 6px 8px;
+    gap: 2px;
+    margin-bottom: 6px;
+  }
+
+  .equip-row,
+  .inv-row { font-size: .72rem; }
+
+  #screen-world.active,
+  #screen-inn.active,
+  #screen-result.active,
+  #screen-battle.active {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  #screen-battle.active {
+    position: relative;
+    padding-top: 0;
+  }
+
+  #screen-world .field-map {
+    flex: 1;
+    min-height: 0;
+  }
+
+  #world-canvas {
+    flex: 1;
+    aspect-ratio: auto;
+    max-height: none;
+  }
+
+  .inn-back-btn { margin-bottom: 8px; padding: 6px 12px; }
+  #screen-inn .msg-window p,
+  #screen-world .msg-window p {
+    font-size: .82rem;
+    line-height: 1.5;
+  }
+  .language-profile-window {
+    padding: 8px 12px;
+    margin-bottom: 8px;
+  }
+  .language-profile-title { font-size: .8rem; margin-bottom: 5px; }
+  .language-profile-grid { gap: 8px; }
+  .language-profile-label { font-size: .64rem; }
+  .language-profile-window p { font-size: .68rem; line-height: 1.35; }
+  .language-profile-note { margin-top: 5px !important; }
+  .inn-filter-row { margin-bottom: 8px; }
+  .inn-list {
+    flex: 1;
+    max-height: none;
+    min-height: 0;
+  }
+
+  .battle-enemy-area {
+    padding: 8px 0 7px;
+    margin-bottom: 8px;
+  }
+
+  .enemy-sprite { font-size: clamp(2.8rem, 10vh, 4.4rem); }
+  .enemy-name-plate { margin-top: 3px; }
+  .enemy-hp-bar-wrap { margin-top: 5px; height: 8px; }
+  .battle-flee-btn {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    right: auto;
+    font-size: .56rem;
+    padding: 4px 7px;
+    opacity: .86;
+  }
+  .battle-progress { margin-bottom: 6px; }
+  .question-window {
+    min-height: 0;
+    margin-bottom: 8px;
+  }
+  .question-text {
+    font-size: clamp(.95rem, 2.2vh, 1.15rem);
+    line-height: 1.55;
+  }
+  .choices-wrap {
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .dq-choice {
+    padding: 8px 10px;
+    font-size: .82rem;
+    line-height: 1.3;
+  }
+  .battle-msg-window {
+    margin-top: auto;
+    margin-bottom: 0;
+  }
+  .battle-msg-text {
+    font-size: .84rem;
+    line-height: 1.55;
+    margin-bottom: 6px;
+  }
+  .battle-exp-gain {
+    font-size: .76rem;
+    min-height: 16px;
+    margin-bottom: 8px;
+  }
+
+  .result-window {
+    flex: 1;
+    min-height: 0;
+    padding: 16px 20px;
+    overflow: hidden;
+  }
+  .result-title { margin-bottom: 8px; }
+  .result-hero { font-size: 2.8rem; margin-bottom: 6px; }
+  .rs-big { font-size: 2.3rem; }
+  .result-rate { font-size: 1.25rem; margin-bottom: 6px; }
+  .result-msg { margin: 6px 0 10px; line-height: 1.45; }
+  .wrong-wrap { padding-top: 10px; margin-bottom: 10px; }
+  .wrong-list { max-height: 18vh; }
+}
