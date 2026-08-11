@@ -11,6 +11,7 @@ import {
 } from './shared/gameData.js';
 import {
   VOCAB_DB, GRAMMAR_DB, LANGUAGE_OPTIONS, LANGUAGE_PROFILES, MULTI_GRAMMAR_DB, MULTI_VOCAB_DB,
+  PHRASE_DB, MULTI_PHRASE_DB, PHRASE_CATEGORIES,
 } from './shared/questionData.js';
 
 /* ══════════════════════════════════════════════════
@@ -344,10 +345,16 @@ function currentGrammarDB() {
     || (selectedLanguage === 'en' ? GRAMMAR_DB : (MULTI_GRAMMAR_DB[selectedLanguage] || []));
 }
 
+function currentPhraseDB() {
+  return questionDataCache[selectedLanguage]?.phrase
+    || (selectedLanguage === 'en' ? PHRASE_DB : (MULTI_PHRASE_DB[selectedLanguage] || PHRASE_DB));
+}
+
 function cacheQuestionData(language, questions) {
   questionDataCache[language] = {
     vocab: questions.filter(q => q.category === 'vocab'),
     grammar: questions.filter(q => q.category === 'grammar'),
+    phrase: questions.filter(q => q.category === 'phrase'),
   };
 }
 
@@ -686,6 +693,19 @@ function buildVocabQ(item, pool) {
   };
 }
 
+function buildPhraseQ(item, pool) {
+  const dummies = shuffle(pool.filter(p=>p.id!==item.id)).slice(0,3).map(p=>p.jp);
+  const all = shuffle([item.jp, ...dummies]);
+  const situationLabel = PHRASE_CATEGORIES.find(c => c.code === item.situation)?.label || '';
+  const phraseText = item.pron ? `${item.phrase}（${item.pron}）` : item.phrase;
+  return {
+    id: item.id, type:'phrase',
+    qText: `${situationLabel ? `【${situationLabel}】` : ''}「${phraseText}」の いみは？`,
+    choices: all, ans: all.indexOf(item.jp),
+    detail: `正解: ${phraseText} = ${item.jp}`,
+  };
+}
+
 function buildGrammarQ(item) {
   return {
     id: item.id, type:'grammar',
@@ -774,6 +794,16 @@ function buildQuestions(mode, level, count) {
     const seen = new Set();
     for (const item of pool) {
       if (!seen.has(item.id)) { seen.add(item.id); questions.push(buildSpeakingQ(item)); }
+      if (questions.length >= count) break;
+    }
+  } else if (mode === 'phrase') {
+    const phraseDB = currentPhraseDB();
+    const pPool = filterLevel(phraseDB, level);
+    const activePPool = pPool.length ? pPool : phraseDB;
+    const pool = weightedPool(activePPool);
+    const seen = new Set();
+    for (const item of pool) {
+      if (!seen.has(item.id)) { seen.add(item.id); questions.push(buildPhraseQ(item, activePPool)); }
       if (questions.length >= count) break;
     }
   } else if (mode === 'weak') {
@@ -943,8 +973,10 @@ function setupBattleScreenUI(enemy) {
 // やどやの「とっくん」ボタンから、にがてな1問だけを集中して練習する
 function startFocusedBattle(item) {
   stopSpeechAll();
-  const mode = item.category === 'grammar' ? 'grammar' : 'vocab';
-  const q    = item.category === 'grammar' ? buildGrammarQ(item) : buildVocabQ(item, currentVocabDB());
+  const mode = item.category === 'grammar' ? 'grammar' : item.category === 'phrase' ? 'phrase' : 'vocab';
+  const q     = item.category === 'grammar' ? buildGrammarQ(item)
+              : item.category === 'phrase'  ? buildPhraseQ(item, currentPhraseDB())
+              : buildVocabQ(item, currentVocabDB());
   const enemy = pickEnemy(item.lv);
 
   battle = {
@@ -1833,10 +1865,12 @@ function renderInnList(filter) {
   let items = [
     ...currentVocabDB().map(it => ({ ...it, category: 'vocab' })),
     ...currentGrammarDB().map(it => ({ ...it, category: 'grammar' })),
+    ...currentPhraseDB().map(it => ({ ...it, category: 'phrase' })),
   ];
 
   if (filter === 'vocab')        items = items.filter(it => it.category === 'vocab');
   else if (filter === 'grammar') items = items.filter(it => it.category === 'grammar');
+  else if (filter === 'phrase')  items = items.filter(it => it.category === 'phrase');
   else if (filter === 'weak')    items = items.filter(isWeak);
 
   container.innerHTML = '';
@@ -1853,14 +1887,23 @@ function renderInnList(filter) {
     const row = document.createElement('div');
     row.className = 'inn-item' + (weak ? ' inn-item-weak' : '');
 
-    const mainHtml = item.category === 'vocab'
-      ? `<div class="inn-item-word">${item.word}</div>
+    let mainHtml;
+    if (item.category === 'vocab') {
+      mainHtml = `<div class="inn-item-word">${item.word}</div>
          ${item.pron && selectedLanguage !== 'en' ? `<div class="inn-item-pron">${item.pron}</div>` : ''}
          <div class="inn-item-jp">${item.jp}</div>
-         <div class="inn-item-ex">${item.ex}</div>`
-      : `<div class="inn-item-q">${item.q}</div>
+         <div class="inn-item-ex">${item.ex}</div>`;
+    } else if (item.category === 'phrase') {
+      const situationLabel = PHRASE_CATEGORIES.find(c => c.code === item.situation);
+      mainHtml = `${situationLabel ? `<div class="inn-item-situation">${situationLabel.icon} ${situationLabel.label}</div>` : ''}
+         <div class="inn-item-word">${item.phrase}</div>
+         ${item.pron ? `<div class="inn-item-pron">${item.pron}</div>` : ''}
+         <div class="inn-item-jp">${item.jp}</div>`;
+    } else {
+      mainHtml = `<div class="inn-item-q">${item.q}</div>
          <div class="inn-item-jp">こたえ: ${item.choices[item.ans]}</div>
          <div class="inn-item-ex">${item.exp}</div>`;
+    }
 
     const rateText  = rate === null ? 'みがくしゅう' : `${rate}%（${r.correct}/${r.attempts}）`;
     const rateClass = rate === null ? 'inn-rate-none' : rate >= 80 ? 'inn-rate-good' : rate >= 50 ? 'inn-rate-mid' : 'inn-rate-bad';

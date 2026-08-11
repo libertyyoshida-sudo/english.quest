@@ -17,6 +17,19 @@ function toClientQuestion(question) {
     };
   }
 
+  if (question.category === 'phrase') {
+    const meta = question.choicesJson ? JSON.parse(question.choicesJson) : {};
+    return {
+      id: question.id,
+      category: 'phrase',
+      lv: Number(question.level),
+      situation: meta.situation || 'greeting',
+      phrase: question.word,
+      pron: question.pronunciation || undefined,
+      jp: question.japanese,
+    };
+  }
+
   return {
     id: question.id,
     category: 'vocab',
