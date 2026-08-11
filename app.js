@@ -380,14 +380,33 @@ function renderLanguageProfile() {
 function populateLanguageSelect() {
   const select = $('language-select');
   if (!select) return;
+  const search = $('language-search');
+  const query = search?.value.trim().toLowerCase() || '';
   select.innerHTML = '';
-  LANGUAGE_OPTIONS.forEach(lang => {
+  const languages = LANGUAGE_OPTIONS.filter(lang => {
+    if (!query) return true;
+    return [lang.code, lang.label, lang.native, lang.status, ...(lang.aliases || [])]
+      .filter(Boolean)
+      .some(value => String(value).toLowerCase().includes(query));
+  });
+
+  languages.forEach(lang => {
     const opt = document.createElement('option');
     opt.value = lang.code;
-    opt.textContent = `${lang.label}（${lang.native}）`;
+    opt.textContent = `${lang.label}（${lang.native}）${lang.status ? ` - ${lang.status}` : ''}`;
     select.appendChild(opt);
   });
-  select.value = selectedLanguage;
+  if (languages.some(lang => lang.code === selectedLanguage)) {
+    select.value = selectedLanguage;
+  } else if (languages.length > 0) {
+    select.value = languages[0].code;
+  } else {
+    const opt = document.createElement('option');
+    opt.value = selectedLanguage;
+    opt.textContent = '該当する言語がありません';
+    opt.disabled = true;
+    select.appendChild(opt);
+  }
 }
 
 function refreshLanguageText() {
@@ -432,6 +451,7 @@ function setLanguage(code) {
   selectedLanguage = LANGUAGE_OPTIONS.some(lang => lang.code === code) ? code : 'en';
   localStorage.setItem('languageQuest_language', selectedLanguage);
   refreshLanguageText();
+  populateLanguageSelect();
 }
 
 // level-select の値（'auto' | 'all' | '1'〜'10'）を実際のティア（'all' か 1〜10の数値）に解決する
@@ -1833,9 +1853,14 @@ document.addEventListener('DOMContentLoaded', () => {
   refreshLanguageText();
 
   $('language-select')?.addEventListener('change', e => {
+    if (e.target.selectedOptions[0]?.disabled) return;
     setLanguage(e.target.value);
     renderLanguageProfile();
     renderInnList(currentInnFilter);
+  });
+
+  $('language-search')?.addEventListener('input', () => {
+    populateLanguageSelect();
   });
 
   /* ── セッション復元（トークンがあれば自動ログイン） ── */

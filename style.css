@@ -430,6 +430,9 @@ body {
   color: var(--dq-white); font-family: var(--font-dq); font-size: .82rem;
   padding: 5px 10px; cursor: pointer;
 }
+.language-search {
+  cursor: text;
+}
 .dq-select:focus { outline: none; border-color: var(--dq-gold); }
 
 .status-window .status-title,
