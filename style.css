@@ -911,6 +911,10 @@ body {
 .inn-rate-mid  { color: var(--dq-yellow); }
 .inn-rate-bad  { color: var(--dq-red); }
 .inn-weak-badge { font-size: .7rem; color: var(--dq-red); white-space: nowrap; }
+.inn-status-badge { font-size: .7rem; white-space: nowrap; }
+.inn-status-new      { color: var(--dq-gold); }
+.inn-status-low      { color: var(--dq-yellow); }
+.inn-status-mastered { color: var(--dq-green); }
 .inn-train-btn { font-size: .7rem; padding: 5px 10px; }
 .inv-icon { font-size: 1.1rem; flex-shrink: 0; }
 .inv-name { flex: 1; color: var(--dq-white); }
@@ -934,8 +938,9 @@ body {
 
 .status-lang-card {
   background: var(--dq-win-bg); border: 2px solid #333366;
-  padding: 12px 14px;
+  padding: 12px 14px; cursor: pointer;
 }
+.status-lang-card:hover { border-color: var(--dq-blue-l); }
 .status-lang-card.status-lang-mastered { border-color: var(--dq-gold); }
 
 .status-lang-head {
@@ -964,7 +969,8 @@ body {
 .status-lang-stat-val { display: block; color: var(--dq-white); font-size: .92rem; }
 .status-lang-stat-lbl { display: block; color: var(--dq-gray); font-size: .66rem; margin-top: 2px; }
 
-.status-lang-actions { display: flex; justify-content: flex-end; }
+.status-lang-actions { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+.status-lang-detail-btn,
 .status-lang-train-btn { font-size: .74rem; padding: 6px 14px; }
 .status-lang-note { color: var(--dq-gray); font-size: .74rem; margin-top: 8px; text-align: center; }
 

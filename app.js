@@ -291,7 +291,7 @@ const P = {
   languages: {},  // 言語コード → {totalExp, level, currentHp}
 };
 const answerStats = {};  // id → {attempts, correct}
-const languageHistory = {};  // 言語コード → {totalAnswers, totalCorrect, weakCount}（サーバー集計、ログイン時のみ）
+const languageHistory = {};  // 言語コード → {totalAnswers, totalCorrect}（サーバー集計、ログイン時のみ。にがて等の内訳はclassifyItem()でクライアント側集計）
 
 function getRecord(id) {
   if (!answerStats[id]) answerStats[id] = { attempts:0, correct:0 };
@@ -536,11 +536,46 @@ function weightedPool(pool) {
   }));
 }
 
+// 科学的な学習分類：未学習→練習不足→にがて→ふつう→マスター済み の5段階
+// （新しい項目を優先し、複数回の正解を経てはじめて「習得」とみなす間隔反復の考え方にもとづく）
+function classifyItem(item) {
+  const r = answerStats[item.id];
+  if (!r || r.attempts === 0) return 'new';
+  if (r.attempts < 3) return 'low';
+  const acc = r.correct / r.attempts;
+  if (acc < 0.6) return 'weak';
+  if (acc >= 0.85) return 'mastered';
+  return 'mid';
+}
+
 function weakItems(pool) {
-  return pool.filter(item => {
-    const r = answerStats[item.id];
-    return r && r.attempts >= 2 && r.correct/r.attempts < 0.6;
-  });
+  return pool.filter(item => classifyItem(item) === 'weak');
+}
+
+// スマート学習：未学習・練習不足・にがてな項目を優先的に出題する重み付きシャッフル
+// （マスター済みの項目もごく低頻度で混ぜ、間隔反復による定着を図る）
+function smartPool(pool) {
+  return shuffle(pool.flatMap(item => {
+    switch (classifyItem(item)) {
+      case 'new':      return [item,item,item,item,item];
+      case 'low':      return [item,item,item,item];
+      case 'weak':     return [item,item,item];
+      case 'mid':      return [item,item];
+      default:         return [item];
+    }
+  }));
+}
+
+// 言語コードを指定して単語/文法/フレーズDBを取得（ステータス画面で選択中以外の言語も集計するため、
+// currentXxxDB() と違い selectedLanguage やサーバーキャッシュに依存しない）
+function vocabDBFor(code) {
+  return code === 'en' ? VOCAB_DB : (MULTI_VOCAB_DB[code] || VOCAB_DB);
+}
+function grammarDBFor(code) {
+  return code === 'en' ? GRAMMAR_DB : (MULTI_GRAMMAR_DB[code] || []);
+}
+function phraseDBFor(code) {
+  return code === 'en' ? PHRASE_DB : (MULTI_PHRASE_DB[code] || PHRASE_DB);
 }
 
 function showScreen(id) {
@@ -842,6 +877,21 @@ function buildQuestions(mode, level, count) {
       if (seen.has(item.id)) continue;
       seen.add(item.id);
       if (item.choices) questions.push(buildGrammarQ(item));
+      else questions.push(buildVocabQ(item, activeVPool));
+      if (questions.length >= count) break;
+    }
+  } else if (mode === 'smart') {
+    const phraseDB = currentPhraseDB();
+    const allPool = [...vocabDB, ...grammarDB, ...phraseDB];
+    const filtered = filterLevel(allPool, level);
+    const activeFiltered = filtered.length ? filtered : allPool;
+    const pool = smartPool(activeFiltered);
+    const seen = new Set();
+    for (const item of pool) {
+      if (seen.has(item.id)) continue;
+      seen.add(item.id);
+      if (item.situation) questions.push(buildPhraseQ(item, phraseDB));
+      else if (item.choices) questions.push(buildGrammarQ(item));
       else questions.push(buildVocabQ(item, activeVPool));
       if (questions.length >= count) break;
     }
@@ -1892,11 +1942,6 @@ function renderInnList(filter) {
   const container = $('inn-list');
   if (!container) return;
 
-  const isWeak = item => {
-    const r = answerStats[item.id];
-    return !!r && r.attempts >= 2 && r.correct / r.attempts < 0.6;
-  };
-
   let items = [
     ...currentVocabDB().map(it => ({ ...it, category: 'vocab' })),
     ...currentGrammarDB().map(it => ({ ...it, category: 'grammar' })),
@@ -1906,7 +1951,7 @@ function renderInnList(filter) {
   if (filter === 'vocab')        items = items.filter(it => it.category === 'vocab');
   else if (filter === 'grammar') items = items.filter(it => it.category === 'grammar');
   else if (filter === 'phrase')  items = items.filter(it => it.category === 'phrase');
-  else if (filter === 'weak')    items = items.filter(isWeak);
+  else if (['new','low','weak','mastered'].includes(filter)) items = items.filter(it => classifyItem(it) === filter);
 
   container.innerHTML = '';
   if (items.length === 0) {
@@ -1914,10 +1959,19 @@ function renderInnList(filter) {
     return;
   }
 
+  const CLASS_BADGE = {
+    new:      '<span class="inn-status-badge inn-status-new">🆕 未学習</span>',
+    low:      '<span class="inn-status-badge inn-status-low">📖 練習不足</span>',
+    weak:     '<span class="inn-weak-badge">🔥 にがて</span>',
+    mastered: '<span class="inn-status-badge inn-status-mastered">✅ マスター</span>',
+  };
+
   items.forEach(item => {
     const r = answerStats[item.id];
     const rate = r && r.attempts > 0 ? Math.round((r.correct / r.attempts) * 100) : null;
-    const weak = isWeak(item);
+    const cls = classifyItem(item);
+    const weak = cls === 'weak';
+    const trainable = cls === 'new' || cls === 'low' || cls === 'weak';
 
     const row = document.createElement('div');
     row.className = 'inn-item' + (weak ? ' inn-item-weak' : '');
@@ -1951,12 +2005,12 @@ function renderInnList(filter) {
       <div class="inn-item-side">
         <span class="inn-tier-badge">${difficultyLabel(item.lv)}</span>
         <span class="inn-rate ${rateClass}">${rateText}</span>
-        ${weak ? '<span class="inn-weak-badge">🔥 にがて</span>' : ''}
-        ${weak ? '<button type="button" class="dq-btn dq-btn-blue inn-train-btn">とっくん</button>' : ''}
+        ${cls !== 'mid' ? CLASS_BADGE[cls] : ''}
+        ${trainable ? '<button type="button" class="dq-btn dq-btn-blue inn-train-btn">とっくん</button>' : ''}
       </div>
     `;
 
-    if (weak) {
+    if (trainable) {
       row.querySelector('.inn-train-btn')?.addEventListener('click', () => startFocusedBattle(item));
     }
 
@@ -2008,15 +2062,23 @@ function renderStatusScreen() {
     const cur = lp.totalExp - row.exp;
     const need = next ? next.exp - row.exp : 9999;
     const pct = next ? Math.min(100, Math.round(cur / need * 100)) : 100;
-    const hist = authToken ? (languageHistory[code] || { totalAnswers: 0, totalCorrect: 0, weakCount: 0 }) : (() => {
-      const pool = [...currentVocabDB(), ...currentGrammarDB(), ...currentPhraseDB()];
+
+    // 出題数・正答率（サーバー集計があればそれを、ゲストはローカルのanswerStatsから算出）
+    const hist = authToken ? (languageHistory[code] || { totalAnswers: 0, totalCorrect: 0 }) : (() => {
+      const pool = [...vocabDBFor(code), ...grammarDBFor(code), ...phraseDBFor(code)];
       let total = 0, correct = 0;
       pool.forEach(it => { const r = answerStats[it.id]; if (r) { total += r.attempts; correct += r.correct; } });
-      return { totalAnswers: total, totalCorrect: correct, weakCount: weakItems(pool).length };
+      return { totalAnswers: total, totalCorrect: correct };
     })();
     const rate = hist.totalAnswers > 0 ? Math.round(hist.totalCorrect / hist.totalAnswers * 100) : null;
+
+    // 未学習・練習不足・にがて・マスター済みの内訳（全言語共通・selectedLanguageに依存しない集計）
+    const pool = [...vocabDBFor(code), ...grammarDBFor(code), ...phraseDBFor(code)];
+    const counts = { new: 0, low: 0, weak: 0, mid: 0, mastered: 0 };
+    pool.forEach(it => { counts[classifyItem(it)]++; });
+
     const mastered = row.lv >= 10;
-    return { code, lang, row, pct, cur, need, next, hist, rate, mastered };
+    return { code, lang, row, pct, cur, need, next, hist, rate, counts, mastered };
   }).sort((a, b) => b.row.lv - a.row.lv || b.cur - a.cur);
 
   if (summaryEl) {
@@ -2030,7 +2092,7 @@ function renderStatusScreen() {
   }
 
   listEl.innerHTML = '';
-  rows.forEach(({ code, lang, row, pct, cur, need, next, hist, rate, mastered }) => {
+  rows.forEach(({ code, lang, row, pct, hist, rate, counts, mastered }) => {
     const card = document.createElement('div');
     card.className = 'status-lang-card' + (mastered ? ' status-lang-mastered' : '');
     const rateText = rate === null ? 'みがくしゅう' : `${rate}%`;
@@ -2045,19 +2107,28 @@ function renderStatusScreen() {
       <div class="status-lang-stats">
         <div class="status-lang-stat"><span class="status-lang-stat-val">${hist.totalAnswers}</span><span class="status-lang-stat-lbl">出題数</span></div>
         <div class="status-lang-stat"><span class="status-lang-stat-val">${rateText}</span><span class="status-lang-stat-lbl">正答率</span></div>
-        <div class="status-lang-stat"><span class="status-lang-stat-val">${hist.weakCount}</span><span class="status-lang-stat-lbl">🔥 にがて</span></div>
+        <div class="status-lang-stat"><span class="status-lang-stat-val">${counts.weak}</span><span class="status-lang-stat-lbl">🔥 にがて</span></div>
+        <div class="status-lang-stat"><span class="status-lang-stat-val">${counts.new}</span><span class="status-lang-stat-lbl">🆕 未学習</span></div>
+        <div class="status-lang-stat"><span class="status-lang-stat-val">${counts.low}</span><span class="status-lang-stat-lbl">📖 練習不足</span></div>
+        <div class="status-lang-stat"><span class="status-lang-stat-val">${counts.mastered}</span><span class="status-lang-stat-lbl">✅ マスター単語</span></div>
       </div>
       <div class="status-lang-actions">
-        ${hist.weakCount > 0 ? '<button type="button" class="dq-btn dq-btn-red status-lang-train-btn">🔥 よわてき集中でとっくん</button>' : ''}
+        <button type="button" class="dq-btn status-lang-detail-btn">📖 くわしく見る</button>
+        <button type="button" class="dq-btn dq-btn-gold status-lang-train-btn">🧠 スマート学習</button>
       </div>
     `;
-    if (hist.weakCount > 0) {
-      card.querySelector('.status-lang-train-btn')?.addEventListener('click', async () => {
-        setLanguage(code);
-        await ensureLanguageQuestionData();
-        startBattle('weak');
-      });
-    }
+    card.querySelector('.status-lang-detail-btn')?.addEventListener('click', ev => {
+      ev.stopPropagation();
+      setLanguage(code);
+      goToInn();
+    });
+    card.querySelector('.status-lang-train-btn')?.addEventListener('click', async ev => {
+      ev.stopPropagation();
+      setLanguage(code);
+      await ensureLanguageQuestionData();
+      startBattle('smart');
+    });
+    card.addEventListener('click', () => { setLanguage(code); goToInn(); });
     listEl.appendChild(card);
   });
 
