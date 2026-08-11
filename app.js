@@ -408,6 +408,9 @@ function difficultyLabel(lv) {
   return selectedLanguage === 'en' ? toeicLabel(lv) : `Lv.${lv}`;
 }
 
+// やどやの言語紹介カードは既定で折りたたみ、開閉状態はセッション中は維持する
+let languageProfileExpanded = false;
+
 function renderLanguageProfile() {
   const el = $('language-profile');
   if (!el) return;
@@ -418,19 +421,28 @@ function renderLanguageProfile() {
     return;
   }
   el.innerHTML = `
-    <div class="language-profile-title">📚 ${lang.label}（${lang.native}）</div>
-    <div class="language-profile-grid">
-      <div>
-        <span class="language-profile-label">使われる国・地域</span>
-        <p>${profile.countries}</p>
+    <button type="button" class="language-profile-toggle">
+      <span class="language-profile-title">📚 ${lang.label}（${lang.native}）</span>
+      <span class="language-profile-toggle-icon">${languageProfileExpanded ? '▲ 閉じる' : '▼ くわしく'}</span>
+    </button>
+    <div class="language-profile-detail${languageProfileExpanded ? '' : ' hidden'}">
+      <div class="language-profile-grid">
+        <div>
+          <span class="language-profile-label">使われる国・地域</span>
+          <p>${profile.countries}</p>
+        </div>
+        <div>
+          <span class="language-profile-label">話者数</span>
+          <p>${profile.speakers}</p>
+        </div>
       </div>
-      <div>
-        <span class="language-profile-label">話者数</span>
-        <p>${profile.speakers}</p>
-      </div>
+      <p class="language-profile-note">${profile.note}</p>
     </div>
-    <p class="language-profile-note">${profile.note}</p>
   `;
+  el.querySelector('.language-profile-toggle')?.addEventListener('click', () => {
+    languageProfileExpanded = !languageProfileExpanded;
+    renderLanguageProfile();
+  });
 }
 
 function populateLanguageSelect() {

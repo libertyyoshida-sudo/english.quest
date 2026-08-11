@@ -828,23 +828,35 @@ body {
    やどや（読み返し・HP回復・にがて特訓）
 ========================================== */
 /* バトル画面の固定フリーボタンとは違い、通常フローに配置して他要素との重なりを防ぐ */
-.inn-back-btn { display: inline-block; margin-bottom: 10px; font-size: .78rem; padding: 7px 14px; }
+.inn-back-btn { display: inline-block; margin-bottom: 8px; font-size: .78rem; padding: 6px 14px; }
 
 .inn-filter-row {
-  display: flex; gap: 8px; flex-wrap: wrap;
-  margin-bottom: 10px;
+  display: flex; gap: 6px; flex-wrap: wrap;
+  margin-bottom: 8px;
 }
-.inn-filter-btn { font-size: .78rem; padding: 6px 14px; opacity: .6; }
+.inn-filter-btn { font-size: .76rem; padding: 5px 12px; opacity: .6; }
 .inn-filter-btn.active { opacity: 1; box-shadow: 0 0 8px var(--dq-gold); }
 
+#screen-inn .msg-window { padding: 8px 14px; margin-bottom: 8px; }
+#screen-inn .msg-window p { font-size: .82rem; line-height: 1.5; margin: 0; }
+
 .language-profile-window {
-  margin-bottom: 10px;
+  padding: 8px 14px;
+  margin-bottom: 8px;
 }
+.language-profile-toggle {
+  width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  background: none; border: 0; padding: 0; margin: 0; cursor: pointer;
+  font-family: var(--font-dq); text-align: left;
+}
+.language-profile-toggle:hover .language-profile-title { color: var(--dq-gold); }
+.language-profile-toggle-icon { color: var(--dq-blue-l); font-size: .72rem; flex-shrink: 0; }
 .language-profile-title {
   color: var(--dq-yellow);
   font-size: .9rem;
-  margin-bottom: 8px;
+  margin: 0;
 }
+.language-profile-detail { margin-top: 10px; }
 .language-profile-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
