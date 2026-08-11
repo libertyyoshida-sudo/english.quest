@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Language Quest</title>
-  <script type="module" crossorigin src="./assets/index-CtZOf_Cz.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-B3bOQ66g.css">
+  <script type="module" crossorigin src="./assets/index-D9W4s0OE.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-D_GgjWnc.css">
 </head>
 <body>
 
@@ -77,16 +77,13 @@
       <button id="bgm-toggle" class="bgm-toggle-btn" title="BGMオン/オフ">🔔</button>
       <button id="logout-btn" class="bgm-toggle-btn hidden" title="ログアウト">🚪</button>
     </div>
-  </header>
 
-  <!-- EXPバー -->
-  <div class="exp-bar-wrap">
-    <div class="exp-bar-inner">
+    <div class="hdr-exp-row">
       <span class="exp-label">EXP</span>
       <div class="exp-track"><div class="exp-fill" id="exp-fill"></div></div>
       <span class="exp-text" id="exp-text">0/100</span>
     </div>
-  </div>
+  </header>
 
   <!-- ══════════════════════════════════════
        メインコンテンツ
@@ -132,6 +129,7 @@
       <!-- メッセージウィンドウ -->
       <div class="dq-window msg-window" id="field-msg">
         <p id="field-msg-text">どこへ　むかうか？　まおうをたおすには　ことばのちからが　ひつようだ！</p>
+        <button type="button" id="field-msg-close" class="msg-window-close" aria-label="メッセージを閉じる">✕</button>
       </div>
 
       <!-- コマンドウィンドウ（モード選択） -->
@@ -164,9 +162,6 @@
             </div>
             <div class="field-icon" data-mode="inn"       style="left:68%;top:50%;">
               <span class="field-icon-emoji">🏨</span><span class="field-icon-label">やどや</span>
-            </div>
-            <div class="field-icon" data-mode="status"    style="left:50%;top:62%;">
-              <span class="field-icon-emoji">📊</span><span class="field-icon-label">ステータス</span>
             </div>
             <div class="field-icon field-icon-exit" data-mode="world" style="left:96%;top:50%;">
               <span class="field-icon-emoji">🗺️</span><span class="field-icon-label">まちの外へ</span>
@@ -227,10 +222,6 @@
             <span class="cmd-icon">🏨</span> やどや
             <span class="cmd-exp">HP回復</span>
           </button>
-          <button class="dq-cmd-btn" data-mode="status" data-command-page="2">
-            <span class="cmd-icon">📊</span> ステータス
-            <span class="cmd-exp">学習履歴</span>
-          </button>
           <button class="dq-cmd-btn" data-mode="world" data-command-page="2">
             <span class="cmd-icon">🗺️</span> まちの外へ（せかいマップ）
             <span class="cmd-exp">ランダムせんとう</span>
@@ -273,9 +264,9 @@
         </span>
       </div>
 
-      <!-- ステータスウィンドウ -->
-      <div class="dq-window status-window">
-        <div class="status-title">▶ ぼうけんのきろく</div>
+      <!-- ステータスウィンドウ（クリックで詳細なステータス画面へ） -->
+      <div class="dq-window status-window" id="status-window-btn" role="button" tabindex="0">
+        <div class="status-title">▶ ぼうけんのきろく <span class="status-window-hint">（タップでくわしく）</span></div>
         <div class="status-grid">
           <div class="status-item"><span class="si-icon">⚔️</span><span class="si-val" id="st-answers">0</span><span class="si-lbl">たたかった数</span></div>
           <div class="status-item"><span class="si-icon">✨</span><span class="si-val" id="st-correct">0</span><span class="si-lbl">かった数</span></div>
@@ -324,6 +315,7 @@
 
       <div class="dq-window msg-window" id="status-msg">
         <p id="status-msg-text">ぼうけんのしょに、これまでの あゆみが きろくされている。</p>
+        <button type="button" id="status-msg-close" class="msg-window-close" aria-label="メッセージを閉じる">✕</button>
       </div>
 
       <div class="dq-window status-summary-window" id="status-summary"></div>
@@ -364,6 +356,7 @@
 
       <div class="dq-window msg-window" id="world-msg">
         <p id="world-msg-text">まちの外は きけんな せかいだ。あるいていると まものが とつぜん あらわれる…！　★の場所には つよい ぬしが すんでいる。</p>
+        <button type="button" id="world-msg-close" class="msg-window-close" aria-label="メッセージを閉じる">✕</button>
       </div>
 
       <div class="field-map">
