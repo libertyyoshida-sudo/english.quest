@@ -1964,6 +1964,7 @@ async function goToInn() {
   if (msgEl) {
     msgEl.textContent = 'やどやの おばあさんが うたを うたってくれた。HPが ぜんかいふく した！';
   }
+  $('inn-msg')?.classList.remove('hidden');
 }
 
 function renderInnList(filter) {
@@ -2267,6 +2268,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.inn-filter-btn').forEach(btn => {
     btn.addEventListener('click', () => renderInnList(btn.dataset.filter));
   });
+  $('inn-msg-close')?.addEventListener('click', () => $('inn-msg')?.classList.add('hidden'));
 
   /* ── 選択肢ボタン ── */
   document.querySelectorAll('.dq-choice').forEach(btn => {

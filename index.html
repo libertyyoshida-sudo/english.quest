@@ -334,10 +334,9 @@
          やどや（単語・文法の読み返し／HP回復／にがて特訓）
     ──────────────────────────────── -->
     <section id="screen-inn" class="screen">
-      <button id="inn-flee-btn" class="dq-btn dq-btn-blue inn-back-btn" type="button">◀ まちへもどる</button>
-
       <div class="dq-window msg-window" id="inn-msg">
         <p id="inn-msg-text">やどやの　おばあさんが　むかえてくれた。「ここで　むかしの　たんごや　ぶんぽうを　よみかえすと　こころも　からだも　やすまるじゃろう」</p>
+        <button type="button" id="inn-msg-close" class="msg-window-close" aria-label="メッセージを閉じる">✕</button>
       </div>
 
       <div class="inn-filter-row">
@@ -349,6 +348,7 @@
         <button class="dq-btn inn-filter-btn" data-filter="low">📖 練習不足</button>
         <button class="dq-btn dq-btn-red inn-filter-btn" data-filter="weak">🔥 にがて</button>
         <button class="dq-btn inn-filter-btn" data-filter="mastered">✅ マスター</button>
+        <button id="inn-flee-btn" class="dq-btn dq-btn-blue inn-back-btn" type="button">◀ まちへ</button>
       </div>
 
       <div class="dq-window language-profile-window" id="language-profile"></div>

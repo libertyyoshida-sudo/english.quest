@@ -829,6 +829,7 @@ body {
 ========================================== */
 /* バトル画面の固定フリーボタンとは違い、通常フローに配置して他要素との重なりを防ぐ */
 .inn-back-btn { display: inline-block; margin-bottom: 8px; font-size: .78rem; padding: 6px 14px; }
+.inn-filter-row .inn-back-btn { display: inline-flex; margin-bottom: 0; font-size: .76rem; padding: 5px 12px; }
 
 .inn-filter-row {
   display: flex; gap: 6px; flex-wrap: wrap;
@@ -838,7 +839,14 @@ body {
 .inn-filter-btn.active { opacity: 1; box-shadow: 0 0 8px var(--dq-gold); }
 
 #screen-inn .msg-window { padding: 8px 14px; margin-bottom: 8px; }
-#screen-inn .msg-window p { font-size: .82rem; line-height: 1.5; margin: 0; }
+#screen-inn .msg-window p { font-size: .82rem; line-height: 1.5; margin: 0; padding-right: 26px; }
+
+.msg-window-close {
+  position: absolute; top: 6px; right: 8px;
+  background: none; border: 0; color: var(--dq-blue-l);
+  font-size: .9rem; line-height: 1; padding: 4px; cursor: pointer;
+}
+.msg-window-close:hover { color: var(--dq-gold); }
 
 .language-profile-window {
   padding: 8px 14px;
