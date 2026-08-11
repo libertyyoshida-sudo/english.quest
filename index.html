@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Language Quest</title>
-  <script type="module" crossorigin src="./assets/index-HNFL5XqK.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-B0NyIpJ1.css">
+  <script type="module" crossorigin src="./assets/index-CtZOf_Cz.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-B3bOQ66g.css">
 </head>
 <body>
 
@@ -335,10 +335,9 @@
          やどや（単語・文法の読み返し／HP回復／にがて特訓）
     ──────────────────────────────── -->
     <section id="screen-inn" class="screen">
-      <button id="inn-flee-btn" class="dq-btn dq-btn-blue inn-back-btn" type="button">◀ まちへもどる</button>
-
       <div class="dq-window msg-window" id="inn-msg">
         <p id="inn-msg-text">やどやの　おばあさんが　むかえてくれた。「ここで　むかしの　たんごや　ぶんぽうを　よみかえすと　こころも　からだも　やすまるじゃろう」</p>
+        <button type="button" id="inn-msg-close" class="msg-window-close" aria-label="メッセージを閉じる">✕</button>
       </div>
 
       <div class="inn-filter-row">
@@ -350,6 +349,7 @@
         <button class="dq-btn inn-filter-btn" data-filter="low">📖 練習不足</button>
         <button class="dq-btn dq-btn-red inn-filter-btn" data-filter="weak">🔥 にがて</button>
         <button class="dq-btn inn-filter-btn" data-filter="mastered">✅ マスター</button>
+        <button id="inn-flee-btn" class="dq-btn dq-btn-blue inn-back-btn" type="button">◀ まちへ</button>
       </div>
 
       <div class="dq-window language-profile-window" id="language-profile"></div>
