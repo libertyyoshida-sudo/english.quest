@@ -42,15 +42,18 @@ model PlayerProfile {
 
 model Question {
   id              String      @id
+  language        String      @default("en")
   category        String
   level           String
   word            String
   japanese        String
+  pronunciation   String?
   exampleSentence String?
   choicesJson     String?
   createdAt       DateTime    @default(now())
   answerLogs      AnswerLog[]
 
+  @@index([language, category, level])
   @@index([category, level])
 }
 

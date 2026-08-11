@@ -5,28 +5,67 @@ import {
 
 const prisma = new PrismaClient();
 
+async function upsertVocab(item, language) {
+  await prisma.question.upsert({
+    where: { id: item.id },
+    update: {
+      language,
+      category: 'vocab',
+      level: String(item.lv),
+      word: item.word,
+      japanese: item.jp,
+      pronunciation: item.pron || null,
+      exampleSentence: item.ex,
+      choicesJson: null,
+    },
+    create: {
+      id: item.id,
+      language,
+      category: 'vocab',
+      level: String(item.lv),
+      word: item.word,
+      japanese: item.jp,
+      pronunciation: item.pron || null,
+      exampleSentence: item.ex,
+      choicesJson: null,
+    },
+  });
+}
+
+async function upsertGrammar(item, language) {
+  const choicesJson = JSON.stringify({ choices: item.choices, ans: item.ans, exp: item.exp });
+
+  await prisma.question.upsert({
+    where: { id: item.id },
+    update: {
+      language,
+      category: 'grammar',
+      level: String(item.lv),
+      word: item.q,
+      japanese: item.choices[item.ans],
+      pronunciation: null,
+      exampleSentence: null,
+      choicesJson,
+    },
+    create: {
+      id: item.id,
+      language,
+      category: 'grammar',
+      level: String(item.lv),
+      word: item.q,
+      japanese: item.choices[item.ans],
+      pronunciation: null,
+      exampleSentence: null,
+      choicesJson,
+    },
+  });
+}
+
 async function main() {
   console.log('Seeding database with questions...');
 
   for (const item of VOCAB_DB) {
-    await prisma.question.upsert({
-      where: { id: item.id },
-      update: {
-        category: 'vocab',
-        level: String(item.lv),
-        word: item.word,
-        japanese: item.jp,
-        exampleSentence: item.ex,
-      },
-      create: {
-        id: item.id,
-        category: 'vocab',
-        level: String(item.lv),
-        word: item.word,
-        japanese: item.jp,
-        exampleSentence: item.ex,
-      },
-    });
+    await upsertVocab(item, 'en');
   }
 
   let multiVocabCount = 0;
@@ -34,47 +73,12 @@ async function main() {
     const items = MULTI_VOCAB_DB[lang.code] || [];
     for (const item of items) {
       multiVocabCount++;
-      await prisma.question.upsert({
-        where: { id: item.id },
-        update: {
-          category: 'vocab',
-          level: String(item.lv),
-          word: item.word,
-          japanese: item.jp,
-          exampleSentence: item.ex,
-        },
-        create: {
-          id: item.id,
-          category: 'vocab',
-          level: String(item.lv),
-          word: item.word,
-          japanese: item.jp,
-          exampleSentence: item.ex,
-        },
-      });
+      await upsertVocab(item, lang.code);
     }
   }
 
   for (const item of GRAMMAR_DB) {
-    const choicesJson = JSON.stringify({ choices: item.choices, ans: item.ans, exp: item.exp });
-    await prisma.question.upsert({
-      where: { id: item.id },
-      update: {
-        category: 'grammar',
-        level: String(item.lv),
-        word: item.q,
-        japanese: item.choices[item.ans],
-        choicesJson,
-      },
-      create: {
-        id: item.id,
-        category: 'grammar',
-        level: String(item.lv),
-        word: item.q,
-        japanese: item.choices[item.ans],
-        choicesJson,
-      },
-    });
+    await upsertGrammar(item, 'en');
   }
 
   let multiGrammarCount = 0;
@@ -82,25 +86,7 @@ async function main() {
     const items = MULTI_GRAMMAR_DB[lang.code] || [];
     for (const item of items) {
       multiGrammarCount++;
-      const choicesJson = JSON.stringify({ choices: item.choices, ans: item.ans, exp: item.exp });
-      await prisma.question.upsert({
-        where: { id: item.id },
-        update: {
-          category: 'grammar',
-          level: String(item.lv),
-          word: item.q,
-          japanese: item.choices[item.ans],
-          choicesJson,
-        },
-        create: {
-          id: item.id,
-          category: 'grammar',
-          level: String(item.lv),
-          word: item.q,
-          japanese: item.choices[item.ans],
-          choicesJson,
-        },
-      });
+      await upsertGrammar(item, lang.code);
     }
   }
 

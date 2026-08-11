@@ -21,6 +21,8 @@ const API_BASE = import.meta.env.DEV
   : 'https://english-quest-26nu.onrender.com/api';
 let authToken = localStorage.getItem('eigoDQ_token') || null;
 let selectedLanguage = localStorage.getItem('languageQuest_language') || 'en';
+const questionDataCache = {};
+const questionDataLoading = {};
 
 async function apiFetch(path, opts = {}) {
   const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
@@ -333,11 +335,43 @@ function currentLanguage() {
 }
 
 function currentVocabDB() {
-  return selectedLanguage === 'en' ? VOCAB_DB : (MULTI_VOCAB_DB[selectedLanguage] || VOCAB_DB);
+  return questionDataCache[selectedLanguage]?.vocab
+    || (selectedLanguage === 'en' ? VOCAB_DB : (MULTI_VOCAB_DB[selectedLanguage] || VOCAB_DB));
 }
 
 function currentGrammarDB() {
-  return selectedLanguage === 'en' ? GRAMMAR_DB : (MULTI_GRAMMAR_DB[selectedLanguage] || []);
+  return questionDataCache[selectedLanguage]?.grammar
+    || (selectedLanguage === 'en' ? GRAMMAR_DB : (MULTI_GRAMMAR_DB[selectedLanguage] || []));
+}
+
+function cacheQuestionData(language, questions) {
+  questionDataCache[language] = {
+    vocab: questions.filter(q => q.category === 'vocab'),
+    grammar: questions.filter(q => q.category === 'grammar'),
+  };
+}
+
+async function ensureLanguageQuestionData(language = selectedLanguage) {
+  if (questionDataCache[language]) return questionDataCache[language];
+  if (questionDataLoading[language]) return questionDataLoading[language];
+
+  questionDataLoading[language] = apiFetch(`/questions?language=${encodeURIComponent(language)}&count=all`)
+    .then(questions => {
+      if (!Array.isArray(questions) || questions.length === 0) {
+        throw new Error('empty question dataset');
+      }
+      cacheQuestionData(language, questions);
+      return questionDataCache[language];
+    })
+    .catch(err => {
+      console.warn('DB問題データの取得に失敗したため、ローカルデータを使用します。', err);
+      return null;
+    })
+    .finally(() => {
+      delete questionDataLoading[language];
+    });
+
+  return questionDataLoading[language];
 }
 
 function languageWordLabel() {
@@ -865,7 +899,8 @@ let battle = {
 /* ══════════════════════════════════════════════════
    17. バトル開始 & レンダリング
 ══════════════════════════════════════════════════ */
-function startBattle(mode) {
+async function startBattle(mode) {
+  await ensureLanguageQuestionData();
   const level = resolveLevelSelection($('level-select').value);
   const count = parseInt($('count-select').value, 10);
   const qs    = buildQuestions(mode, level, count);
@@ -1684,7 +1719,8 @@ function randomEncounterMode() {
 }
 
 // せかいマップをうろついていると発生するランダムせんとう。難易度は勇者のレベルに自動連動する
-function triggerRandomEncounter() {
+async function triggerRandomEncounter() {
+  await ensureLanguageQuestionData();
   const mode  = randomEncounterMode();
   const tier  = getLvRow(P.totalExp).lv;
   const qs    = buildQuestions(mode, tier, 4);
@@ -1719,10 +1755,11 @@ function buildBossQuestions(tier, count) {
   return shuffle(qs);
 }
 
-function enterBossZone(bossId) {
+async function enterBossZone(bossId) {
   const boss = WORLD_BOSSES[bossId];
   if (!boss) return;
   stopSpeechAll();
+  await ensureLanguageQuestionData();
 
   const qs = buildBossQuestions(boss.tier, boss.count);
   if (qs.length === 0) {
@@ -1755,6 +1792,7 @@ async function goToInn() {
   stopSpeechAll();
   showScreen('screen-inn');
   playFieldBGM();
+  await ensureLanguageQuestionData();
   renderLanguageProfile();
   renderInnList(currentInnFilter);
 
@@ -1855,8 +1893,10 @@ document.addEventListener('DOMContentLoaded', () => {
   $('language-select')?.addEventListener('change', e => {
     if (e.target.selectedOptions[0]?.disabled) return;
     setLanguage(e.target.value);
-    renderLanguageProfile();
-    renderInnList(currentInnFilter);
+    ensureLanguageQuestionData().then(() => {
+      renderLanguageProfile();
+      renderInnList(currentInnFilter);
+    });
   });
 
   $('language-search')?.addEventListener('input', () => {

@@ -3,30 +3,43 @@ import { prisma } from '../db.js';
 
 const router = Router();
 
-// 問題一覧・難易度指定検索
+function toClientQuestion(question) {
+  if (question.category === 'grammar') {
+    const meta = question.choicesJson ? JSON.parse(question.choicesJson) : {};
+    return {
+      id: question.id,
+      category: 'grammar',
+      lv: Number(question.level),
+      q: question.word,
+      choices: meta.choices || [],
+      ans: meta.ans ?? 0,
+      exp: meta.exp || question.exampleSentence || '',
+    };
+  }
+
+  return {
+    id: question.id,
+    category: 'vocab',
+    lv: Number(question.level),
+    word: question.word,
+    pron: question.pronunciation || undefined,
+    jp: question.japanese,
+    ex: question.exampleSentence || '',
+  };
+}
+
 router.get('/', async (req, res) => {
   try {
     const { language = 'en', level, category, count } = req.query;
-    const where = {};
-    if (level && level !== 'all') where.level = level;
-    if (category) where.category = category;
-    if (language && language !== 'en') {
-      where.id = { startsWith: String(language) };
-    } else if (category === 'grammar') {
-      where.id = { startsWith: 'g' };
-    } else if (category === 'vocab') {
-      where.id = { startsWith: 'v' };
-    } else {
-      where.OR = [{ id: { startsWith: 'v' } }, { id: { startsWith: 'g' } }];
-    }
+    const where = { language: String(language) };
+    if (level && level !== 'all') where.level = String(level);
+    if (category) where.category = String(category);
 
     let questions = await prisma.question.findMany({ where });
-
-    // シャッフル
     questions = questions.sort(() => Math.random() - 0.5);
 
-    const limit = count ? parseInt(count, 10) : 10;
-    res.json(questions.slice(0, limit));
+    const limit = count === 'all' ? questions.length : (count ? parseInt(count, 10) : 10);
+    res.json(questions.slice(0, limit).map(toClientQuestion));
   } catch (error) {
     console.error('Questions fetch error:', error);
     res.status(500).json({ error: '問題データの取得に失敗しました。' });
