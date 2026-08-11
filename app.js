@@ -45,6 +45,7 @@ function applyProfile(profile) {
   P.speakCorrect  = profile.speakCorrect;
   P.equipment.weapon = ITEM_DB[profile.equippedWeaponId] || ITEM_DB.w1;
   P.equipment.armor  = ITEM_DB[profile.equippedArmorId]  || ITEM_DB.a1;
+  P.equipment.title  = profile.equippedTitleId ? (TITLE_DEFS.find(t => t.id === profile.equippedTitleId) || null) : null;
 }
 
 // サーバーから受け取った LanguageProfile（言語ごとのレベル/EXP/HP）を P.languages に反映
@@ -286,7 +287,7 @@ const P = {
   maxCombo: 0, hasPerfect: false,
   titles: new Set(),
   inventory: [],
-  equipment: { weapon: ITEM_DB.w1, armor: ITEM_DB.a1 },
+  equipment: { weapon: ITEM_DB.w1, armor: ITEM_DB.a1, title: null },
   activeEffects: [],
   languages: {},  // 言語コード → {totalExp, level, currentHp}
 };
@@ -654,7 +655,7 @@ function gainGold(mode, combo) {
 function triggerLevelUp(row) {
   langState().currentHp = row.hp;
   const next = getNextLvRow(row.lv);
-  $('lu-hero').textContent = row.hero;
+  updateHeroSprite('lu-hero', row);
   $('lu-lv').textContent   = `Lv. ${row.lv}`;
   $('lu-name').textContent = row.name;
   $('lu-stats').textContent =
@@ -678,6 +679,20 @@ function refreshExpBar() {
   if (text) text.textContent = next ? `${cur}/${need}` : 'MAX';
 }
 
+// レベル（見た目のベース絵文字）に、装備中の武器・防具・称号のアイコンを重ねて
+// キャラクターの見た目を合成する。ヘッダー・フィールド・せかいマップ・レベルアップ・
+// リザルトの全ての勇者スプライトで共通利用する
+function updateHeroSprite(elId, row) {
+  const el = $(elId);
+  if (!el) return;
+  const { weapon, armor, title } = P.equipment;
+  el.innerHTML =
+    `<span class="hero-sprite-base">${row.hero}</span>` +
+    (title  ? `<span class="hero-sprite-badge hero-sprite-title" title="${title.name}">${title.icon}</span>` : '') +
+    (weapon ? `<span class="hero-sprite-badge hero-sprite-weapon" title="${weapon.name}">${weapon.icon}</span>` : '') +
+    (armor  ? `<span class="hero-sprite-badge hero-sprite-armor" title="${armor.name}">${armor.icon}</span>` : '');
+}
+
 function refreshHeader() {
   const lang = langState();
   const row = getLvRow(lang.totalExp);
@@ -685,7 +700,9 @@ function refreshHeader() {
   if (lang.currentHp === undefined || lang.currentHp > maxHp) {
     lang.currentHp = maxHp;
   }
-  if ($('hdr-hero'))  $('hdr-hero').textContent  = row.hero;
+  updateHeroSprite('hdr-hero', row);
+  updateHeroSprite('field-hero', row);
+  updateHeroSprite('world-hero', row);
   if ($('hdr-lv'))    $('hdr-lv').textContent    = row.lv;
   if ($('hdr-title')) $('hdr-title').textContent = row.name;
   if ($('hdr-hp'))    $('hdr-hp').textContent    = `${lang.currentHp}/${maxHp}`;
@@ -714,10 +731,30 @@ function renderTitleBadges() {
   for (const tid of P.titles) {
     const def = TITLE_DEFS.find(t => t.id === tid);
     if (!def) continue;
+    const equipped = P.equipment.title?.id === tid;
     const chip = document.createElement('span');
-    chip.className   = 'badge-chip';
+    chip.className   = 'badge-chip' + (equipped ? ' badge-equipped' : '');
+    chip.title        = 'タップして見た目に反映（もう一度タップで解除）';
     chip.textContent = `${def.icon} ${def.name}`;
+    if (equipped) chip.insertAdjacentHTML('beforeend', '<span class="badge-equipped-mark">✓装備中</span>');
+    chip.addEventListener('click', () => equipTitle(tid));
     container.appendChild(chip);
+  }
+}
+
+// 称号タップで見た目に反映／もう一度タップで解除
+async function equipTitle(titleId) {
+  const alreadyEquipped = P.equipment.title?.id === titleId;
+  const newId = alreadyEquipped ? null : titleId;
+  P.equipment.title = newId ? TITLE_DEFS.find(t => t.id === newId) || null : null;
+  renderTitleBadges();
+  refreshHeader();
+  if (authToken) {
+    try {
+      await apiFetch('/player/equip', { method: 'POST', body: JSON.stringify({ type: 'title', itemId: newId }) });
+    } catch (err) {
+      console.error('称号の同期に失敗しました:', err);
+    }
   }
 }
 
@@ -1369,7 +1406,7 @@ function showResult() {
   $('res-gold').textContent    = `+${battle.goldGained}`;
 
   const row = getLvRow(langState().totalExp);
-  $('result-hero').textContent = row.hero;
+  updateHeroSprite('result-hero', row);
 
   let title = '', msg = '';
   if (rate === 100) { title='かんぺきしょうり！'; msg='まおうもたじたじ！すべてのもんだいをせいかい！'; }
@@ -1464,16 +1501,26 @@ function showItemDropOverlay(item) {
   overlay.classList.remove('hidden');
 }
 
-function equipItem(itemIdx) {
+async function equipItem(itemIdx) {
   const item = P.inventory[itemIdx];
   if (!item) return;
   if (item.type === 'weapon') {
     P.equipment.weapon = item;
   } else if (item.type === 'armor') {
     P.equipment.armor = item;
+  } else {
+    return;
   }
   refreshEquipmentDisplay();
   renderInventoryWindow();
+  refreshHeader();
+  if (authToken) {
+    try {
+      await apiFetch('/player/equip', { method: 'POST', body: JSON.stringify({ type: item.type, itemId: item.id }) });
+    } catch (err) {
+      console.error('装備の同期に失敗しました:', err);
+    }
+  }
 }
 
 function useItem(itemIdx) {

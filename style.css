@@ -97,7 +97,7 @@ body {
   to   { text-shadow: 0 0 20px var(--dq-gold), 0 0 40px #ff990066; }
 }
 
-.levelup-hero { font-size: 3.5rem; margin: 8px 0; animation: hero-bounce 1s ease infinite alternate; }
+.levelup-hero { position: relative; display: inline-block; font-size: 3.5rem; margin: 8px 0; animation: hero-bounce 1s ease infinite alternate; }
 @keyframes hero-bounce { from { transform: translateY(0); } to { transform: translateY(-10px); } }
 
 .levelup-lv   { font-size: 2.4rem; color: var(--dq-yellow); font-weight: bold; letter-spacing: .1em; }
@@ -121,7 +121,7 @@ body {
 }
 
 .hdr-hero-block { display: flex; align-items: center; gap: 8px; flex-shrink: 0; white-space: nowrap; }
-.hdr-hero-icon  { font-size: 2.2rem; animation: hero-idle 3s ease-in-out infinite; flex-shrink: 0; }
+.hdr-hero-icon  { position: relative; display: inline-block; font-size: 2.2rem; animation: hero-idle 3s ease-in-out infinite; flex-shrink: 0; }
 @keyframes hero-idle { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
 
 .hdr-name  { font-size: .8rem; color: var(--dq-yellow); white-space: nowrap; }
@@ -453,7 +453,24 @@ body {
   background: #1a1a40; border: 2px solid var(--dq-win-bd);
   padding: 4px 10px; font-size: .75rem; color: var(--dq-yellow);
   display: flex; align-items: center; gap: 4px;
+  cursor: pointer;
 }
+.badge-chip:hover { border-color: var(--dq-gold); }
+.badge-chip.badge-equipped { border-color: var(--dq-gold); box-shadow: 0 0 8px var(--dq-gold); }
+.badge-equipped-mark { font-size: .68rem; color: var(--dq-gold); margin-left: 2px; }
+
+/* キャラクターの見た目（レベル/装備/称号を1つの絵文字スプライトに合成） */
+.hero-sprite-base { display: inline-block; }
+.hero-sprite-badge {
+  position: absolute;
+  font-size: .48em;
+  line-height: 1;
+  filter: drop-shadow(0 1px 1px #000);
+  pointer-events: none;
+}
+.hero-sprite-title  { top: -.3em; left: 50%; transform: translateX(-50%); }
+.hero-sprite-weapon { bottom: -.05em; right: -.4em; }
+.hero-sprite-armor  { bottom: -.05em; left: -.4em; }
 
 /* ==========================================
    バトル画面
@@ -615,7 +632,7 @@ body {
   font-size: 1.4rem; color: var(--dq-gold); letter-spacing: .1em;
   margin-bottom: 14px; text-shadow: 0 0 12px var(--dq-gold);
 }
-.result-hero { font-size: 3.5rem; margin-bottom: 12px; animation: hero-bounce 1s ease infinite alternate; }
+.result-hero { position: relative; display: inline-block; font-size: 3.5rem; margin-bottom: 12px; animation: hero-bounce 1s ease infinite alternate; }
 .result-score-row { display: flex; align-items: baseline; justify-content: center; gap: 6px; margin-bottom: 6px; }
 .rs-big  { font-size: 3rem; color: var(--dq-yellow); }
 .rs-sep  { font-size: 1.8rem; color: var(--dq-gray); }
@@ -1089,7 +1106,7 @@ body {
   .si-lbl { font-size: .58rem; }
   .title-badges,
   .inventory-scroll {
-    max-height: 96px;
+    max-height: 148px;
     overflow-y: auto;
   }
 

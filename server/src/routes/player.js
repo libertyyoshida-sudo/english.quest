@@ -65,10 +65,10 @@ router.get('/profile', authenticateToken, async (req, res) => {
   }
 });
 
-// 装備変更
+// 装備変更（見た目に反映される武器・防具・称号）
 router.post('/equip', authenticateToken, async (req, res) => {
   try {
-    const { itemId, type } = req.body; // type: 'weapon' | 'armor'
+    const { itemId, type } = req.body; // type: 'weapon' | 'armor' | 'title'
     const profile = await prisma.playerProfile.findUnique({ where: { userId: req.user.userId } });
 
     if (!profile) return res.status(404).json({ error: 'プロファイルが見つかりません。' });
@@ -76,6 +76,16 @@ router.post('/equip', authenticateToken, async (req, res) => {
     const data = {};
     if (type === 'weapon') data.equippedWeaponId = itemId;
     if (type === 'armor') data.equippedArmorId = itemId;
+    if (type === 'title') {
+      // itemId が null なら称号を外す。null 以外は未獲得の称号を装備できないよう所持確認する
+      if (itemId) {
+        const owned = await prisma.userTitle.findUnique({
+          where: { userId_titleId: { userId: req.user.userId, titleId: itemId } },
+        });
+        if (!owned) return res.status(400).json({ error: 'まだ獲得していない称号です。' });
+      }
+      data.equippedTitleId = itemId || null;
+    }
 
     const updated = await prisma.playerProfile.update({
       where: { userId: req.user.userId },

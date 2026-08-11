@@ -38,6 +38,7 @@ model PlayerProfile {
   speakCorrect     Int      @default(0)
   equippedWeaponId String?  @default("w1")
   equippedArmorId  String?  @default("a1")
+  equippedTitleId  String?
   updatedAt        DateTime @updatedAt
 }
 
