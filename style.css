@@ -112,11 +112,11 @@ body {
    ヘッダー（ステータスバー）
 ========================================== */
 .dq-header {
-  position: sticky; top: 0; z-index: 100;
+  position: sticky; top: 0; z-index: 100; flex-shrink: 0;
   background: var(--dq-navy);
   border-bottom: 3px solid var(--dq-win-bd);
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 8px 16px; gap: 12px;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  padding: 8px 16px 6px; gap: 4px 12px;
   white-space: nowrap;
 }
 
@@ -143,18 +143,16 @@ body {
 .hdr-stat { font-size: .78rem; display: flex; align-items: center; gap: 3px; white-space: nowrap; }
 .hdr-stat-icon { font-size: .9rem; flex-shrink: 0; }
 
-/* EXPバー */
-.exp-bar-wrap {
-  background: var(--dq-dark);
-  border-bottom: 2px solid var(--dq-win-bd);
-  padding: 4px 16px 6px;
+/* EXPバー（ヘッダー内、Lv/HPと同じブロックの2段目に表示） */
+.hdr-exp-row {
+  flex: 1 1 100%;
+  display: flex; align-items: center; gap: 8px;
 }
-.exp-bar-inner { display: flex; align-items: center; gap: 8px; max-width: 760px; margin: 0 auto; }
-.exp-label { color: var(--dq-exp); font-size: .72rem; flex-shrink: 0; }
+.exp-label { color: var(--dq-exp); font-size: .68rem; flex-shrink: 0; }
 .exp-track {
-  flex: 1; height: 12px;
+  flex: 1; height: 8px;
   background: #111133;
-  border: 2px solid var(--dq-gray);
+  border: 1px solid var(--dq-gray);
   overflow: hidden;
 }
 .exp-fill {
@@ -163,7 +161,7 @@ body {
   transition: width .7s ease;
   box-shadow: 0 0 6px var(--dq-exp);
 }
-.exp-text { color: var(--dq-exp); font-size: .72rem; flex-shrink: 0; min-width: 70px; text-align: right; }
+.exp-text { color: var(--dq-exp); font-size: .68rem; flex-shrink: 0; min-width: 60px; text-align: right; }
 
 /* ==========================================
    共通ウィンドウ枠（レトロRPG風）
@@ -190,12 +188,12 @@ body {
 @keyframes screen-in { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 
 @media (min-width: 641px) {
-  body { overflow-y: hidden; }
+  body { overflow-y: hidden; display: flex; flex-direction: column; height: 100svh; }
 
   .dq-header { min-height: 54px; }
 
   .dq-main {
-    height: calc(100svh - 78px);
+    flex: 1; min-height: 0;
     max-width: min(1120px, 100vw);
     padding: 10px 12px 14px;
     overflow: hidden;
@@ -277,7 +275,7 @@ body {
 /* ==========================================
    フィールド画面
 ========================================== */
-.msg-window p { font-size: .95rem; line-height: 1.9; color: var(--dq-white); }
+.msg-window p { font-size: .95rem; line-height: 1.9; color: var(--dq-white); padding-right: 26px; }
 
 .field-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
 
@@ -437,6 +435,11 @@ body {
 
 .status-window .status-title,
 .title-list-window .status-title { color: var(--dq-yellow); font-size: .85rem; margin-bottom: 10px; }
+
+#status-window-btn { cursor: pointer; transition: transform .1s; }
+#status-window-btn:hover { box-shadow: var(--win-shadow), 0 0 10px var(--dq-gold); }
+#status-window-btn:active { transform: scale(.98); }
+.status-window-hint { color: var(--dq-blue-l); font-size: .7rem; }
 
 .status-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
 .status-item { text-align: center; }
@@ -1050,8 +1053,8 @@ body {
   .field-icon-emoji { font-size: 1.35rem; }
   .world-boss-icon .field-icon-emoji { font-size: 1.5rem; }
 
-  .command-window { gap: 3px; }
-  .cmd-title { margin-bottom: 3px; }
+  .command-window { gap: 3px; min-height: 0; overflow-y: auto; }
+  .cmd-title { margin-bottom: 3px; flex-shrink: 0; }
   .dq-cmd-btn {
     min-height: 0;
     padding: 5px 9px;

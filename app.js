@@ -2269,6 +2269,15 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.addEventListener('click', () => renderInnList(btn.dataset.filter));
   });
   $('inn-msg-close')?.addEventListener('click', () => $('inn-msg')?.classList.add('hidden'));
+  $('field-msg-close')?.addEventListener('click', () => $('field-msg')?.classList.add('hidden'));
+  $('world-msg-close')?.addEventListener('click', () => $('world-msg')?.classList.add('hidden'));
+  $('status-msg-close')?.addEventListener('click', () => $('status-msg')?.classList.add('hidden'));
+
+  /* ── 「ぼうけんのきろく」ボックスをタップでステータス画面へ ── */
+  $('status-window-btn')?.addEventListener('click', goToStatus);
+  $('status-window-btn')?.addEventListener('keydown', ev => {
+    if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); goToStatus(); }
+  });
 
   /* ── 選択肢ボタン ── */
   document.querySelectorAll('.dq-choice').forEach(btn => {
