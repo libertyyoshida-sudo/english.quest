@@ -918,6 +918,56 @@ body {
 .inv-stat { font-size: .72rem; color: var(--dq-green); min-width: 70px; text-align: right; }
 .inv-btn  { font-size: .72rem; padding: 4px 10px; flex-shrink: 0; }
 
+/* ステータス画面（言語ごとの学習履歴） */
+.status-summary-window {
+  margin-bottom: 10px;
+  color: var(--dq-white);
+  font-size: .82rem;
+  text-align: center;
+}
+.status-lang-list {
+  display: flex; flex-direction: column; gap: 10px;
+  max-height: 66vh; overflow-y: auto;
+  padding-right: 4px;
+}
+.status-lang-empty { font-size: .85rem; color: var(--dq-gray); text-align: center; padding: 24px 12px; }
+
+.status-lang-card {
+  background: var(--dq-win-bg); border: 2px solid #333366;
+  padding: 12px 14px;
+}
+.status-lang-card.status-lang-mastered { border-color: var(--dq-gold); }
+
+.status-lang-head {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.status-lang-hero { font-size: 1.6rem; }
+.status-lang-name { color: var(--dq-yellow); font-size: .95rem; flex: 1; min-width: 100px; }
+.status-lang-lv { color: var(--dq-gold); font-size: .85rem; white-space: nowrap; }
+.status-lang-master-badge {
+  color: var(--dq-gold); font-size: .72rem; white-space: nowrap;
+  border: 1px solid var(--dq-gold); padding: 2px 8px; border-radius: 3px;
+}
+
+.status-lang-expbar-track {
+  background: #0a0a20; border: 1px solid var(--dq-blue);
+  height: 10px; margin-bottom: 8px; overflow: hidden;
+}
+.status-lang-expbar-fill { background: var(--dq-green); height: 100%; }
+
+.status-lang-stats {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+  margin-bottom: 8px;
+}
+.status-lang-stat { text-align: center; }
+.status-lang-stat-val { display: block; color: var(--dq-white); font-size: .92rem; }
+.status-lang-stat-lbl { display: block; color: var(--dq-gray); font-size: .66rem; margin-top: 2px; }
+
+.status-lang-actions { display: flex; justify-content: flex-end; }
+.status-lang-train-btn { font-size: .74rem; padding: 6px 14px; }
+.status-lang-note { color: var(--dq-gray); font-size: .74rem; margin-top: 8px; text-align: center; }
+
 @media (min-width: 641px) {
   .title-screen {
     min-height: 100%;

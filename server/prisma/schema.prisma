@@ -9,15 +9,16 @@ generator client {
 }
 
 model User {
-  id           String         @id @default(uuid())
-  username     String         @unique
-  passwordHash String
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  profile      PlayerProfile?
-  answerLogs   AnswerLog[]
-  userItems    UserItem[]
-  userTitles   UserTitle[]
+  id               String            @id @default(uuid())
+  username         String            @unique
+  passwordHash     String
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  profile          PlayerProfile?
+  answerLogs       AnswerLog[]
+  userItems        UserItem[]
+  userTitles       UserTitle[]
+  languageProfiles LanguageProfile[]
 }
 
 model PlayerProfile {
@@ -38,6 +39,19 @@ model PlayerProfile {
   equippedWeaponId String?  @default("w1")
   equippedArmorId  String?  @default("a1")
   updatedAt        DateTime @updatedAt
+}
+
+model LanguageProfile {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  language  String
+  totalExp  Int      @default(0)
+  level     Int      @default(1)
+  currentHp Int      @default(20)
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, language])
 }
 
 model Question {

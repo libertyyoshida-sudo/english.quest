@@ -14,10 +14,12 @@ router.get('/profile', authenticateToken, async (req, res) => {
         profile: true,
         userItems: true,
         userTitles: true,
+        languageProfiles: true,
         answerLogs: {
           select: {
             questionId: true,
             isCorrect: true,
+            question: { select: { language: true } },
           },
         },
       },
@@ -35,10 +37,28 @@ router.get('/profile', authenticateToken, async (req, res) => {
       if (log.isCorrect) answerStats[log.questionId].correct++;
     }
 
+    // 言語ごとの学習履歴（出題数・正答数・にがて数）
+    const languageHistory = {};
+    for (const log of user.answerLogs) {
+      const lang = log.question?.language || 'en';
+      if (!languageHistory[lang]) languageHistory[lang] = { totalAnswers: 0, totalCorrect: 0, weakCount: 0 };
+      languageHistory[lang].totalAnswers++;
+      if (log.isCorrect) languageHistory[lang].totalCorrect++;
+    }
+    for (const [id, stat] of Object.entries(answerStats)) {
+      if (stat.attempts >= 2 && stat.correct / stat.attempts < 0.6) {
+        const log = user.answerLogs.find(l => l.questionId === id);
+        const lang = log?.question?.language || 'en';
+        if (languageHistory[lang]) languageHistory[lang].weakCount++;
+      }
+    }
+
     res.json({
       profile: user.profile,
       items: user.userItems,
       titles: user.userTitles,
+      languageProfiles: user.languageProfiles,
+      languageHistory,
       answerStats,
     });
   } catch (error) {
@@ -73,16 +93,22 @@ router.post('/equip', authenticateToken, async (req, res) => {
 // やどやで休憩：HPを現在レベルの最大値まで全回復
 router.post('/rest', authenticateToken, async (req, res) => {
   try {
-    const profile = await prisma.playerProfile.findUnique({ where: { userId: req.user.userId } });
-    if (!profile) return res.status(404).json({ error: 'プロファイルが見つかりません。' });
+    const userId = req.user.userId;
+    const lang = req.body.language || 'en';
 
-    const maxHp = getLvRow(profile.totalExp).hp;
-    const updated = await prisma.playerProfile.update({
-      where: { userId: req.user.userId },
+    const langProfile = await prisma.languageProfile.upsert({
+      where: { userId_language: { userId, language: lang } },
+      create: { userId, language: lang },
+      update: {},
+    });
+
+    const maxHp = getLvRow(langProfile.totalExp).hp;
+    const updatedLangProfile = await prisma.languageProfile.update({
+      where: { userId_language: { userId, language: lang } },
       data: { currentHp: maxHp },
     });
 
-    res.json({ profile: updated });
+    res.json({ languageProfile: updatedLangProfile });
   } catch (error) {
     console.error('Rest error:', error);
     res.status(500).json({ error: '休憩処理に失敗しました。' });

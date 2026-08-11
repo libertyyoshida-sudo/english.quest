@@ -34,12 +34,9 @@ async function apiFetch(path, opts = {}) {
   return data;
 }
 
-// サーバーから受け取った PlayerProfile を P に反映
+// サーバーから受け取った PlayerProfile（アカウント全体で共有の項目）を P に反映
 function applyProfile(profile) {
-  P.totalExp      = profile.totalExp;
   P.gold          = profile.gold;
-  P.lv            = profile.level;
-  P.currentHp     = profile.currentHp;
   P.maxCombo      = profile.maxCombo;
   P.hasPerfect    = profile.hasPerfect;
   P.totalAnswers  = profile.totalAnswers;
@@ -50,13 +47,29 @@ function applyProfile(profile) {
   P.equipment.armor  = ITEM_DB[profile.equippedArmorId]  || ITEM_DB.a1;
 }
 
-// ログイン直後・再開時にプロファイル全体（称号・回答統計を含む）を取得して反映
+// サーバーから受け取った LanguageProfile（言語ごとのレベル/EXP/HP）を P.languages に反映
+function applyLanguageProfile(language, lp) {
+  P.languages[language] = { totalExp: lp.totalExp, level: lp.level, currentHp: lp.currentHp };
+}
+
+// 未初期化の言語は初回アクセス時にデフォルト値で作成して返す
+function langState(code = selectedLanguage) {
+  if (!P.languages[code]) {
+    P.languages[code] = { totalExp: 0, level: 1, currentHp: getLvRow(0).hp };
+  }
+  return P.languages[code];
+}
+
+// ログイン直後・再開時にプロファイル全体（称号・回答統計・言語別レベルを含む）を取得して反映
 async function loadFullProfile() {
   const data = await apiFetch('/player/profile');
   applyProfile(data.profile);
   P.titles = new Set((data.titles || []).map(t => t.titleId));
   for (const k in answerStats) delete answerStats[k];
   Object.assign(answerStats, data.answerStats || {});
+  for (const k in languageHistory) delete languageHistory[k];
+  Object.assign(languageHistory, data.languageHistory || {});
+  (data.languageProfiles || []).forEach(lp => applyLanguageProfile(lp.language, lp));
 }
 
 async function tryRestoreSession() {
@@ -267,17 +280,18 @@ function playSoundItem() {
    4. プレイヤー状態
 ══════════════════════════════════════════════════ */
 const P = {
-  totalExp: 0, gold: 0,
+  gold: 0,
   totalAnswers: 0, totalCorrect: 0,
   listenCorrect: 0, speakCorrect: 0,
-  maxCombo: 0, hasPerfect: false, lv: 1,
-  currentHp: 20,
+  maxCombo: 0, hasPerfect: false,
   titles: new Set(),
   inventory: [],
   equipment: { weapon: ITEM_DB.w1, armor: ITEM_DB.a1 },
   activeEffects: [],
+  languages: {},  // 言語コード → {totalExp, level, currentHp}
 };
 const answerStats = {};  // id → {attempts, correct}
+const languageHistory = {};  // 言語コード → {totalAnswers, totalCorrect, weakCount}（サーバー集計、ログイン時のみ）
 
 function getRecord(id) {
   if (!answerStats[id]) answerStats[id] = { attempts:0, correct:0 };
@@ -306,7 +320,7 @@ const ENEMIES = [
 ];
 // tier: 'all' か 1〜10。問題のティア（TOEICレベル）と同じ数値で敵の強さを決める
 function pickEnemy(tier) {
-  const baseTier = tier === 'all' ? getLvRow(P.totalExp).lv : tier;
+  const baseTier = tier === 'all' ? getLvRow(langState().totalExp).lv : tier;
   const spread = Math.floor(Math.random() * 3) - 1; // -1〜+1でばらつきを持たせる
   const idx = Math.min(9, Math.max(0, baseTier - 1 + spread));
   return ENEMIES[idx];
@@ -493,13 +507,15 @@ function setLanguage(code) {
   localStorage.setItem('languageQuest_language', selectedLanguage);
   refreshLanguageText();
   populateLanguageSelect();
+  refreshHeader();
+  refreshExpBar();
 }
 
 // level-select の値（'auto' | 'all' | '1'〜'10'）を実際のティア（'all' か 1〜10の数値）に解決する
 // 'auto' は勇者の現在レベルに連動させる（敵の強さ・問題レベルが自動で上がる）
 function resolveLevelSelection(rawValue) {
   if (rawValue === 'all') return 'all';
-  if (rawValue === 'auto') return getLvRow(P.totalExp).lv;
+  if (rawValue === 'auto') return getLvRow(langState().totalExp).lv;
   return parseInt(rawValue, 10);
 }
 
@@ -546,10 +562,11 @@ function gainExp(mode, combo) {
   const expEff = P.activeEffects.find(e => e.effect === 'expBoost');
   if (expEff) consumMul = expEff.value;
   const gained  = Math.round(base * combMul * weapMul * consumMul);
-  const prevRow = getLvRow(P.totalExp);
-  P.totalExp   += gained;
-  const newRow  = getLvRow(P.totalExp);
-  P.lv          = newRow.lv;
+  const lang    = langState();
+  const prevRow = getLvRow(lang.totalExp);
+  lang.totalExp += gained;
+  const newRow  = getLvRow(lang.totalExp);
+  lang.level     = newRow.lv;
   if (newRow.lv > prevRow.lv) {
     setTimeout(() => triggerLevelUp(newRow), 500);
     playSoundLevelUp();
@@ -567,7 +584,7 @@ function gainGold(mode, combo) {
 }
 
 function triggerLevelUp(row) {
-  P.currentHp = row.hp;
+  langState().currentHp = row.hp;
   const next = getNextLvRow(row.lv);
   $('lu-hero').textContent = row.hero;
   $('lu-lv').textContent   = `Lv. ${row.lv}`;
@@ -582,9 +599,9 @@ function triggerLevelUp(row) {
    10. UI更新
 ══════════════════════════════════════════════════ */
 function refreshExpBar() {
-  const row  = getLvRow(P.totalExp);
+  const row  = getLvRow(langState().totalExp);
   const next = getNextLvRow(row.lv);
-  const cur  = P.totalExp - row.exp;
+  const cur  = langState().totalExp - row.exp;
   const need = next ? next.exp - row.exp : 9999;
   const pct  = next ? Math.min(100, Math.round(cur/need*100)) : 100;
   const fill = $('exp-fill');
@@ -594,15 +611,16 @@ function refreshExpBar() {
 }
 
 function refreshHeader() {
-  const row = getLvRow(P.totalExp);
+  const lang = langState();
+  const row = getLvRow(lang.totalExp);
   const maxHp = row.hp;
-  if (P.currentHp === undefined || P.currentHp > maxHp) {
-    P.currentHp = maxHp;
+  if (lang.currentHp === undefined || lang.currentHp > maxHp) {
+    lang.currentHp = maxHp;
   }
   if ($('hdr-hero'))  $('hdr-hero').textContent  = row.hero;
   if ($('hdr-lv'))    $('hdr-lv').textContent    = row.lv;
   if ($('hdr-title')) $('hdr-title').textContent = row.name;
-  if ($('hdr-hp'))    $('hdr-hp').textContent    = `${P.currentHp}/${maxHp}`;
+  if ($('hdr-hp'))    $('hdr-hp').textContent    = `${lang.currentHp}/${maxHp}`;
   if ($('hdr-mp'))    $('hdr-mp').textContent    = row.mp;
   if ($('hdr-gold'))  $('hdr-gold').textContent  = P.gold;
 }
@@ -639,8 +657,9 @@ function renderTitleBadges() {
    11. 称号チェック
 ══════════════════════════════════════════════════ */
 function checkTitles() {
+  const snapshot = { ...P, lv: langState().level };
   for (const def of TITLE_DEFS) {
-    if (!P.titles.has(def.id) && def.check(P)) {
+    if (!P.titles.has(def.id) && def.check(snapshot)) {
       setTimeout(() => showUnlockedTitle(def), 800);
       break;
     }
@@ -1084,10 +1103,11 @@ function localAnswerUpdate(q, ok) {
     } else {
       battle.combo = 0;
     }
-    const maxHp = getLvRow(P.totalExp).hp;
+    const lang = langState();
+    const maxHp = getLvRow(lang.totalExp).hp;
     damage = Math.max(5, Math.round(maxHp * 0.2));
-    if (P.currentHp === undefined) P.currentHp = maxHp;
-    P.currentHp = Math.max(0, P.currentHp - damage);
+    if (lang.currentHp === undefined) lang.currentHp = maxHp;
+    lang.currentHp = Math.max(0, lang.currentHp - damage);
     refreshHeader();
   }
 
@@ -1140,9 +1160,10 @@ async function handleAnswer(userAns, userText) {
         : String(q.choices?.[userAns] ?? '');
       const result = await apiFetch('/battle/answer', {
         method: 'POST',
-        body: JSON.stringify({ questionId: q.id, isCorrect: ok, mode: battle.mode, userAnswer: answerPayload }),
+        body: JSON.stringify({ questionId: q.id, isCorrect: ok, mode: battle.mode, userAnswer: answerPayload, language: selectedLanguage }),
       });
       applyProfile(result.profile);
+      applyLanguageProfile(selectedLanguage, result.languageProfile);
       battle.combo = result.combo;
       expGot  = result.expGain;
       goldGot = result.goldGain;
@@ -1150,7 +1171,7 @@ async function handleAnswer(userAns, userText) {
       refreshHeader();
       refreshExpBar();
       if (result.leveledUp) {
-        setTimeout(() => triggerLevelUp(getLvRow(P.totalExp)), 500);
+        setTimeout(() => triggerLevelUp(getLvRow(langState().totalExp)), 500);
         playSoundLevelUp();
       }
       if (result.unlockedTitles?.length) {
@@ -1197,8 +1218,8 @@ async function handleAnswer(userAns, userText) {
                  : '';
     msg = `${q.type==='speaking' ? '🎤 うまく はっわできた！' : '⚔️ せいかい！　モンスターにダメージ！'}${combos ? '\n' + combos : ''}`;
   } else {
-    const row = getLvRow(P.totalExp);
-    msg = `💀 まちがい… プレイヤーに ${damage} ダメージ！ (HP:${P.currentHp}/${row.hp})\nせいかいは「${q.type==='typing'||q.type==='speaking' ? q.ans : q.choices[q.ans]}」`;
+    const row = getLvRow(langState().totalExp);
+    msg = `💀 まちがい… プレイヤーに ${damage} ダメージ！ (HP:${langState().currentHp}/${row.hp})\nせいかいは「${q.type==='typing'||q.type==='speaking' ? q.ans : q.choices[q.ans]}」`;
   }
 
   $('battle-msg-text').innerHTML  = msg.replace(/\n/g,'<br>');
@@ -1264,7 +1285,7 @@ function showResult() {
   $('res-exp').textContent     = `+${battle.expGained}`;
   $('res-gold').textContent    = `+${battle.goldGained}`;
 
-  const row = getLvRow(P.totalExp);
+  const row = getLvRow(langState().totalExp);
   $('result-hero').textContent = row.hero;
 
   let title = '', msg = '';
@@ -1689,9 +1710,10 @@ function stopSpeechAll() {
 
 function goToField() {
   stopSpeechAll();
-  const row = getLvRow(P.totalExp);
-  if (P.currentHp === undefined || P.currentHp <= 0) {
-    P.currentHp = row.hp; // 宿屋でHP全回復
+  const lang = langState();
+  const row = getLvRow(lang.totalExp);
+  if (lang.currentHp === undefined || lang.currentHp <= 0) {
+    lang.currentHp = row.hp; // 宿屋でHP全回復
   }
   showScreen('screen-field');
   refreshHeader();
@@ -1706,6 +1728,7 @@ function goToField() {
 function enterCommand(mode) {
   if (mode === 'inn' || mode === 'review') goToInn();
   else if (mode === 'world') goToWorld();
+  else if (mode === 'status') goToStatus();
   else startBattle(mode);
 }
 
@@ -1763,7 +1786,7 @@ function randomEncounterMode() {
 async function triggerRandomEncounter() {
   await ensureLanguageQuestionData();
   const mode  = randomEncounterMode();
-  const tier  = getLvRow(P.totalExp).lv;
+  const tier  = getLvRow(langState().totalExp).lv;
   const qs    = buildQuestions(mode, tier, 4);
   if (qs.length === 0) return;
 
@@ -1840,14 +1863,17 @@ async function goToInn() {
   // 休憩してHPを全回復
   if (authToken) {
     try {
-      const result = await apiFetch('/player/rest', { method: 'POST' });
-      applyProfile(result.profile);
+      const result = await apiFetch('/player/rest', {
+        method: 'POST',
+        body: JSON.stringify({ language: selectedLanguage }),
+      });
+      applyLanguageProfile(selectedLanguage, result.languageProfile);
     } catch (err) {
       console.error('休憩の同期に失敗しました。ローカルのみ回復します:', err);
-      P.currentHp = getLvRow(P.totalExp).hp;
+      langState().currentHp = getLvRow(langState().totalExp).hp;
     }
   } else {
-    P.currentHp = getLvRow(P.totalExp).hp;
+    langState().currentHp = getLvRow(langState().totalExp).hp;
   }
   refreshHeader();
 
@@ -1946,6 +1972,101 @@ function renderInnList(filter) {
 }
 
 /* ══════════════════════════════════════════════════
+   ステータス：言語ごとの学習履歴・レベル・マスター状況
+══════════════════════════════════════════════════ */
+async function goToStatus() {
+  stopSpeechAll();
+  showScreen('screen-status');
+  playFieldBGM();
+  if (authToken) {
+    try { await loadFullProfile(); } catch (err) { console.error('ステータスの最新化に失敗しました:', err); }
+  }
+  renderStatusScreen();
+}
+
+function renderStatusScreen() {
+  const summaryEl = $('status-summary');
+  const listEl = $('status-lang-list');
+  if (!listEl) return;
+
+  let codes;
+  if (authToken) {
+    codes = Array.from(new Set([
+      ...Object.keys(languageHistory),
+      ...Object.keys(P.languages).filter(c => P.languages[c].totalExp > 0),
+      selectedLanguage,
+    ]));
+  } else {
+    codes = [selectedLanguage];
+  }
+
+  const rows = codes.map(code => {
+    const lang = LANGUAGE_OPTIONS.find(l => l.code === code);
+    const lp = langState(code);
+    const row = getLvRow(lp.totalExp);
+    const next = getNextLvRow(row.lv);
+    const cur = lp.totalExp - row.exp;
+    const need = next ? next.exp - row.exp : 9999;
+    const pct = next ? Math.min(100, Math.round(cur / need * 100)) : 100;
+    const hist = authToken ? (languageHistory[code] || { totalAnswers: 0, totalCorrect: 0, weakCount: 0 }) : (() => {
+      const pool = [...currentVocabDB(), ...currentGrammarDB(), ...currentPhraseDB()];
+      let total = 0, correct = 0;
+      pool.forEach(it => { const r = answerStats[it.id]; if (r) { total += r.attempts; correct += r.correct; } });
+      return { totalAnswers: total, totalCorrect: correct, weakCount: weakItems(pool).length };
+    })();
+    const rate = hist.totalAnswers > 0 ? Math.round(hist.totalCorrect / hist.totalAnswers * 100) : null;
+    const mastered = row.lv >= 10;
+    return { code, lang, row, pct, cur, need, next, hist, rate, mastered };
+  }).sort((a, b) => b.row.lv - a.row.lv || b.cur - a.cur);
+
+  if (summaryEl) {
+    const masteredCount = rows.filter(r => r.mastered).length;
+    summaryEl.innerHTML = `▶ マスターした言語: <b>${masteredCount}</b> / 学習中の言語: <b>${rows.length}</b>`;
+  }
+
+  if (rows.length === 0) {
+    listEl.innerHTML = '<p class="status-lang-empty">まだ ぼうけんの きろくが ない。フィールドで たたかって みよう！</p>';
+    return;
+  }
+
+  listEl.innerHTML = '';
+  rows.forEach(({ code, lang, row, pct, cur, need, next, hist, rate, mastered }) => {
+    const card = document.createElement('div');
+    card.className = 'status-lang-card' + (mastered ? ' status-lang-mastered' : '');
+    const rateText = rate === null ? 'みがくしゅう' : `${rate}%`;
+    card.innerHTML = `
+      <div class="status-lang-head">
+        <span class="status-lang-hero">${row.hero}</span>
+        <span class="status-lang-name">${lang ? `${lang.label}（${lang.native}）` : code}</span>
+        <span class="status-lang-lv">Lv.${row.lv} ${row.name}</span>
+        ${mastered ? '<span class="status-lang-master-badge">👑 マスター</span>' : ''}
+      </div>
+      <div class="status-lang-expbar-track"><div class="status-lang-expbar-fill" style="width:${pct}%;"></div></div>
+      <div class="status-lang-stats">
+        <div class="status-lang-stat"><span class="status-lang-stat-val">${hist.totalAnswers}</span><span class="status-lang-stat-lbl">出題数</span></div>
+        <div class="status-lang-stat"><span class="status-lang-stat-val">${rateText}</span><span class="status-lang-stat-lbl">正答率</span></div>
+        <div class="status-lang-stat"><span class="status-lang-stat-val">${hist.weakCount}</span><span class="status-lang-stat-lbl">🔥 にがて</span></div>
+      </div>
+      <div class="status-lang-actions">
+        ${hist.weakCount > 0 ? '<button type="button" class="dq-btn dq-btn-red status-lang-train-btn">🔥 よわてき集中でとっくん</button>' : ''}
+      </div>
+    `;
+    if (hist.weakCount > 0) {
+      card.querySelector('.status-lang-train-btn')?.addEventListener('click', async () => {
+        setLanguage(code);
+        await ensureLanguageQuestionData();
+        startBattle('weak');
+      });
+    }
+    listEl.appendChild(card);
+  });
+
+  if (!authToken) {
+    listEl.insertAdjacentHTML('beforeend', '<p class="status-lang-note">ログインすると すべての言語の学習履歴が きろくされ、ここに表示されるようになる。</p>');
+  }
+}
+
+/* ══════════════════════════════════════════════════
    23. イベントリスナー
 ══════════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', () => {
@@ -2029,6 +2150,7 @@ document.addEventListener('DOMContentLoaded', () => {
   $('battle-flee-btn')?.addEventListener('click', goToField);
   $('inn-flee-btn')?.addEventListener('click', goToField);
   $('world-back-btn')?.addEventListener('click', goToField);
+  $('status-back-btn')?.addEventListener('click', goToField);
 
   /* ── やどやフィルタータブ ── */
   document.querySelectorAll('.inn-filter-btn').forEach(btn => {

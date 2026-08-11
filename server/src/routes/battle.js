@@ -27,11 +27,18 @@ async function checkAndAwardTitles(userId, snapshot) {
 // 回答の記録・判定・進捗更新
 router.post('/answer', authenticateToken, async (req, res) => {
   try {
-    const { questionId, isCorrect, mode, userAnswer } = req.body;
+    const { questionId, isCorrect, mode, userAnswer, language } = req.body;
     const userId = req.user.userId;
+    const lang = language || 'en';
 
     const profile = await prisma.playerProfile.findUnique({ where: { userId } });
     if (!profile) return res.status(404).json({ error: 'プロファイルが見つかりません。' });
+
+    const langProfile = await prisma.languageProfile.upsert({
+      where: { userId_language: { userId, language: lang } },
+      create: { userId, language: lang },
+      update: {},
+    });
 
     await prisma.answerLog.create({
       data: {
@@ -43,7 +50,8 @@ router.post('/answer', authenticateToken, async (req, res) => {
       },
     });
 
-    let { totalExp, gold, currentHp, maxCombo, currentCombo, totalAnswers, totalCorrect, listenCorrect, speakCorrect } = profile;
+    let { gold, maxCombo, currentCombo, totalAnswers, totalCorrect, listenCorrect, speakCorrect } = profile;
+    let { totalExp, currentHp } = langProfile;
     let expGain = 0;
     let goldGain = 0;
     let hpChange = 0;
@@ -74,17 +82,19 @@ router.post('/answer', authenticateToken, async (req, res) => {
     }
 
     const newLevel = getLvRow(totalExp).lv;
-    const leveledUp = newLevel > profile.level;
+    const leveledUp = newLevel > langProfile.level;
     // レベルアップした瞬間はHPを新レベルの最大値まで回復する（フロントの演出と一致させる）
     if (leveledUp) currentHp = getLvRow(totalExp).hp;
+
+    const updatedLangProfile = await prisma.languageProfile.update({
+      where: { userId_language: { userId, language: lang } },
+      data: { totalExp, level: newLevel, currentHp },
+    });
 
     const updatedProfile = await prisma.playerProfile.update({
       where: { userId },
       data: {
-        totalExp,
-        level: newLevel,
         gold,
-        currentHp,
         maxCombo,
         currentCombo,
         totalAnswers,
@@ -114,6 +124,7 @@ router.post('/answer', authenticateToken, async (req, res) => {
       combo: currentCombo,
       unlockedTitles,
       profile: updatedProfile,
+      languageProfile: updatedLangProfile,
     });
   } catch (error) {
     console.error('Battle answer error:', error);

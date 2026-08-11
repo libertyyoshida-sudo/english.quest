@@ -164,6 +164,9 @@
             <div class="field-icon" data-mode="inn"       style="left:68%;top:50%;">
               <span class="field-icon-emoji">🏨</span><span class="field-icon-label">やどや</span>
             </div>
+            <div class="field-icon" data-mode="status"    style="left:50%;top:62%;">
+              <span class="field-icon-emoji">📊</span><span class="field-icon-label">ステータス</span>
+            </div>
             <div class="field-icon field-icon-exit" data-mode="world" style="left:96%;top:50%;">
               <span class="field-icon-emoji">🗺️</span><span class="field-icon-label">まちの外へ</span>
             </div>
@@ -218,6 +221,10 @@
           <button class="dq-cmd-btn" data-mode="inn" data-command-page="2">
             <span class="cmd-icon">🏨</span> やどや
             <span class="cmd-exp">HP回復</span>
+          </button>
+          <button class="dq-cmd-btn" data-mode="status" data-command-page="2">
+            <span class="cmd-icon">📊</span> ステータス
+            <span class="cmd-exp">学習履歴</span>
           </button>
           <button class="dq-cmd-btn" data-mode="world" data-command-page="2">
             <span class="cmd-icon">🗺️</span> まちの外へ（せかいマップ）
@@ -302,6 +309,21 @@
         </div>
       </div>
 
+    </section>
+
+    <!-- ────────────────────────────────
+         ステータス（言語ごとの学習履歴・レベル・マスター状況）
+    ──────────────────────────────── -->
+    <section id="screen-status" class="screen">
+      <button id="status-back-btn" class="dq-btn dq-btn-blue inn-back-btn" type="button">◀ まちへもどる</button>
+
+      <div class="dq-window msg-window" id="status-msg">
+        <p id="status-msg-text">ぼうけんのしょに、これまでの あゆみが きろくされている。</p>
+      </div>
+
+      <div class="dq-window status-summary-window" id="status-summary"></div>
+
+      <div class="status-lang-list" id="status-lang-list"></div>
     </section>
 
     <!-- ────────────────────────────────
