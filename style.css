@@ -674,6 +674,21 @@ body {
   /* バトル画面（問題・回答ページ）：スクロールなしで収まるよう全体を圧縮 */
   .dq-main { padding: 10px 10px 16px; }
 
+  .setting-window {
+    gap: 10px;
+  }
+  .setting-row-item {
+    width: 100%;
+    min-width: 0;
+    align-items: stretch;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .setting-row-item .dq-select {
+    width: 100%;
+    min-width: 0;
+  }
+
   .battle-enemy-area { padding: 6px 0 6px; margin-bottom: 6px; }
   .enemy-sprite { font-size: 2.4rem; }
   .enemy-name-plate { margin-top: 2px; gap: 6px; }
