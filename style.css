@@ -531,6 +531,7 @@ body {
   font-size: clamp(1rem, 3vw, 1.25rem);
   line-height: 1.8; color: var(--dq-white);
 }
+.question-speak-btn { font-size: .74rem; padding: 5px 12px; margin-top: 6px; }
 
 /* 選択肢 */
 .choices-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
@@ -882,7 +883,14 @@ body {
 
 .inn-item-main { min-width: 0; flex: 1; }
 .inn-item-situation { color: var(--dq-yellow); font-size: .68rem; margin-bottom: 2px; }
-.inn-item-word { color: var(--dq-gold); font-size: .95rem; }
+.inn-item-word { color: var(--dq-gold); font-size: .95rem; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.inn-speak-btn {
+  background: none; border: 1px solid var(--dq-blue); color: var(--dq-blue-l);
+  font-size: .8rem; line-height: 1; padding: 3px 6px; cursor: pointer;
+  border-radius: 3px; flex-shrink: 0;
+}
+.inn-speak-btn:hover { border-color: var(--dq-gold); color: var(--dq-gold); }
+.inn-speak-btn:active { transform: scale(0.92); }
 .inn-item-pron { color: var(--dq-blue-l); font-size: .74rem; margin-top: 2px; overflow-wrap: anywhere; }
 .inn-item-q    { color: var(--dq-white); font-size: .88rem; line-height: 1.5; }
 .inn-item-jp   { color: var(--dq-blue-l); font-size: .8rem; margin-top: 2px; }

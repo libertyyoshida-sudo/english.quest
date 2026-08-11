@@ -690,6 +690,7 @@ function buildVocabQ(item, pool) {
     qText: `「 ${wordWithPron(item)} 」の いみは？`,
     choices: all, ans: all.indexOf(item.jp),
     detail: item.ex ? `例: ${item.ex}` : `正解: ${item.word}（${item.jp}）`,
+    speakWord: item.word,
   };
 }
 
@@ -703,6 +704,7 @@ function buildPhraseQ(item, pool) {
     qText: `${situationLabel ? `【${situationLabel}】` : ''}「${phraseText}」の いみは？`,
     choices: all, ans: all.indexOf(item.jp),
     detail: `正解: ${phraseText} = ${item.jp}`,
+    speakWord: item.phrase,
   };
 }
 
@@ -721,6 +723,7 @@ function buildTypingQ(item) {
     qText: `「${item.jp}」を ${languageWordLabel()}で うとう！`,
     ans: item.word.toLowerCase(),
     detail: item.ex ? `例: ${item.ex}` : `正解: ${item.word}`,
+    speakWord: item.word,
   };
 }
 
@@ -1034,9 +1037,15 @@ function renderQuestion() {
     scheduleSpeech(() => speak(q.speakWord), 400);
 
   } else {
-    // vocab / grammar / weak(4択)
+    // vocab / grammar / weak / phrase(4択)
     $('choices-wrap').classList.remove('hidden');
     renderChoices(q);
+  }
+
+  // 単語・フレーズ・タイピングは手動読み上げボタンを表示（正解を声で確認したいときに使う）
+  const speakBtn = $('question-speak-btn');
+  if (speakBtn) {
+    speakBtn.classList.toggle('hidden', !q.speakWord);
   }
 
   battle.answered = false;
@@ -1888,15 +1897,18 @@ function renderInnList(filter) {
     row.className = 'inn-item' + (weak ? ' inn-item-weak' : '');
 
     let mainHtml;
+    let speakText = null;
     if (item.category === 'vocab') {
-      mainHtml = `<div class="inn-item-word">${item.word}</div>
+      speakText = item.word;
+      mainHtml = `<div class="inn-item-word">${item.word} <button type="button" class="inn-speak-btn" aria-label="読み上げ">🔊</button></div>
          ${item.pron && selectedLanguage !== 'en' ? `<div class="inn-item-pron">${item.pron}</div>` : ''}
          <div class="inn-item-jp">${item.jp}</div>
          <div class="inn-item-ex">${item.ex}</div>`;
     } else if (item.category === 'phrase') {
+      speakText = item.phrase;
       const situationLabel = PHRASE_CATEGORIES.find(c => c.code === item.situation);
       mainHtml = `${situationLabel ? `<div class="inn-item-situation">${situationLabel.icon} ${situationLabel.label}</div>` : ''}
-         <div class="inn-item-word">${item.phrase}</div>
+         <div class="inn-item-word">${item.phrase} <button type="button" class="inn-speak-btn" aria-label="読み上げ">🔊</button></div>
          ${item.pron ? `<div class="inn-item-pron">${item.pron}</div>` : ''}
          <div class="inn-item-jp">${item.jp}</div>`;
     } else {
@@ -1920,6 +1932,13 @@ function renderInnList(filter) {
 
     if (weak) {
       row.querySelector('.inn-train-btn')?.addEventListener('click', () => startFocusedBattle(item));
+    }
+
+    if (speakText) {
+      row.querySelector('.inn-speak-btn')?.addEventListener('click', ev => {
+        ev.stopPropagation();
+        speak(speakText);
+      });
     }
 
     container.appendChild(row);
@@ -2033,6 +2052,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* ── リスニング：もう一度きく ── */
   $('listen-play-btn')?.addEventListener('click', () => {
+    const q = battle.questions[battle.cur];
+    if (q?.speakWord) speak(q.speakWord);
+  });
+
+  /* ── たんご／フレーズ／タイピング：🔊きく ── */
+  $('question-speak-btn')?.addEventListener('click', () => {
     const q = battle.questions[battle.cur];
     if (q?.speakWord) speak(q.speakWord);
   });
