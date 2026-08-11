@@ -7,7 +7,7 @@
 
 import {
   ITEM_DB, LEVEL_TABLE, TITLE_DEFS, EXP_BASE, GOLD_BASE,
-  comboMult, getLvRow, getNextLvRow, toeicLabel,
+  comboMult, getLvRow, getNextLvRow, toeicLabel, retentionScore,
 } from './shared/gameData.js';
 import {
   VOCAB_DB, GRAMMAR_DB, LANGUAGE_OPTIONS, LANGUAGE_PROFILES, MULTI_GRAMMAR_DB, MULTI_VOCAB_DB,
@@ -290,17 +290,18 @@ const P = {
   activeEffects: [],
   languages: {},  // 言語コード → {totalExp, level, currentHp}
 };
-const answerStats = {};  // id → {attempts, correct}
+const answerStats = {};  // id → {attempts, correct, lastAnsweredAt}
 const languageHistory = {};  // 言語コード → {totalAnswers, totalCorrect}（サーバー集計、ログイン時のみ。にがて等の内訳はclassifyItem()でクライアント側集計）
 
 function getRecord(id) {
-  if (!answerStats[id]) answerStats[id] = { attempts:0, correct:0 };
+  if (!answerStats[id]) answerStats[id] = { attempts:0, correct:0, lastAnsweredAt: null };
   return answerStats[id];
 }
 function recordStat(id, ok) {
   const r = getRecord(id);
   r.attempts++;
   if (ok) r.correct++;
+  r.lastAnsweredAt = Date.now();
 }
 
 /* ══════════════════════════════════════════════════
@@ -542,10 +543,30 @@ function classifyItem(item) {
   const r = answerStats[item.id];
   if (!r || r.attempts === 0) return 'new';
   if (r.attempts < 3) return 'low';
-  const acc = r.correct / r.attempts;
+  const rawAcc = r.correct / r.attempts;
+  // 忘却曲線による定着度で正答率を割り引く。前回学習から時間が経つほど「マスター済み」から外れやすくなる
+  const decay = retentionScore(r) ?? 1;
+  const acc = rawAcc * decay;
   if (acc < 0.6) return 'weak';
   if (acc >= 0.85) return 'mastered';
   return 'mid';
+}
+
+// 表示用：0〜100の定着度（%）。未学習はnull
+function retentionPct(item) {
+  const r = answerStats[item.id];
+  const score = retentionScore(r);
+  return score === null ? null : Math.round(score * 100);
+}
+
+// 言語全体の総合定着度（%）：学習済み項目の定着度スコアの平均。学習済み項目が無ければnull
+function languageRetention(code) {
+  const pool = [...vocabDBFor(code), ...grammarDBFor(code), ...phraseDBFor(code)];
+  const scores = pool
+    .map(it => retentionScore(answerStats[it.id]))
+    .filter(s => s !== null);
+  if (scores.length === 0) return null;
+  return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length * 100);
 }
 
 function weakItems(pool) {
@@ -1999,12 +2020,15 @@ function renderInnList(filter) {
 
     const rateText  = rate === null ? 'みがくしゅう' : `${rate}%（${r.correct}/${r.attempts}）`;
     const rateClass = rate === null ? 'inn-rate-none' : rate >= 80 ? 'inn-rate-good' : rate >= 50 ? 'inn-rate-mid' : 'inn-rate-bad';
+    const retPct = retentionPct(item);
+    const retClass = retPct === null ? '' : retPct >= 80 ? 'inn-rate-good' : retPct >= 50 ? 'inn-rate-mid' : 'inn-rate-bad';
 
     row.innerHTML = `
       <div class="inn-item-main">${mainHtml}</div>
       <div class="inn-item-side">
         <span class="inn-tier-badge">${difficultyLabel(item.lv)}</span>
         <span class="inn-rate ${rateClass}">${rateText}</span>
+        ${retPct !== null ? `<span class="inn-retention ${retClass}">🧠 定着度${retPct}%</span>` : ''}
         ${cls !== 'mid' ? CLASS_BADGE[cls] : ''}
         ${trainable ? '<button type="button" class="dq-btn dq-btn-blue inn-train-btn">とっくん</button>' : ''}
       </div>
@@ -2076,9 +2100,10 @@ function renderStatusScreen() {
     const pool = [...vocabDBFor(code), ...grammarDBFor(code), ...phraseDBFor(code)];
     const counts = { new: 0, low: 0, weak: 0, mid: 0, mastered: 0 };
     pool.forEach(it => { counts[classifyItem(it)]++; });
+    const retentionPercent = languageRetention(code);
 
     const mastered = row.lv >= 10;
-    return { code, lang, row, pct, cur, need, next, hist, rate, counts, mastered };
+    return { code, lang, row, pct, cur, need, next, hist, rate, counts, retentionPercent, mastered };
   }).sort((a, b) => b.row.lv - a.row.lv || b.cur - a.cur);
 
   if (summaryEl) {
@@ -2092,10 +2117,12 @@ function renderStatusScreen() {
   }
 
   listEl.innerHTML = '';
-  rows.forEach(({ code, lang, row, pct, hist, rate, counts, mastered }) => {
+  rows.forEach(({ code, lang, row, pct, hist, rate, counts, retentionPercent, mastered }) => {
     const card = document.createElement('div');
     card.className = 'status-lang-card' + (mastered ? ' status-lang-mastered' : '');
     const rateText = rate === null ? 'みがくしゅう' : `${rate}%`;
+    const retText  = retentionPercent === null ? '―' : `${retentionPercent}%`;
+    const retClass = retentionPercent === null ? '' : retentionPercent >= 80 ? 'status-lang-ret-good' : retentionPercent >= 50 ? 'status-lang-ret-mid' : 'status-lang-ret-bad';
     card.innerHTML = `
       <div class="status-lang-head">
         <span class="status-lang-hero">${row.hero}</span>
@@ -2104,6 +2131,7 @@ function renderStatusScreen() {
         ${mastered ? '<span class="status-lang-master-badge">👑 マスター</span>' : ''}
       </div>
       <div class="status-lang-expbar-track"><div class="status-lang-expbar-fill" style="width:${pct}%;"></div></div>
+      <div class="status-lang-retention ${retClass}">🧠 総合定着度: <b>${retText}</b>${retentionPercent !== null ? '（忘却曲線で時間とともに低下します）' : ''}</div>
       <div class="status-lang-stats">
         <div class="status-lang-stat"><span class="status-lang-stat-val">${hist.totalAnswers}</span><span class="status-lang-stat-lbl">出題数</span></div>
         <div class="status-lang-stat"><span class="status-lang-stat-val">${rateText}</span><span class="status-lang-stat-lbl">正答率</span></div>

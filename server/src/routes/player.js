@@ -19,6 +19,7 @@ router.get('/profile', authenticateToken, async (req, res) => {
           select: {
             questionId: true,
             isCorrect: true,
+            createdAt: true,
             question: { select: { language: true } },
           },
         },
@@ -27,30 +28,27 @@ router.get('/profile', authenticateToken, async (req, res) => {
 
     if (!user) return res.status(404).json({ error: 'ユーザーが見つかりません。' });
 
-    // 回答統計の計算 (questionId -> { attempts, correct })
+    // 回答統計の計算 (questionId -> { attempts, correct, lastAnsweredAt })
+    // lastAnsweredAtは忘却曲線による定着度の推定にクライアント側で使用する
     const answerStats = {};
     for (const log of user.answerLogs) {
       if (!answerStats[log.questionId]) {
-        answerStats[log.questionId] = { attempts: 0, correct: 0 };
+        answerStats[log.questionId] = { attempts: 0, correct: 0, lastAnsweredAt: 0 };
       }
-      answerStats[log.questionId].attempts++;
-      if (log.isCorrect) answerStats[log.questionId].correct++;
+      const stat = answerStats[log.questionId];
+      stat.attempts++;
+      if (log.isCorrect) stat.correct++;
+      const t = new Date(log.createdAt).getTime();
+      if (t > stat.lastAnsweredAt) stat.lastAnsweredAt = t;
     }
 
-    // 言語ごとの学習履歴（出題数・正答数・にがて数）
+    // 言語ごとの学習履歴（出題数・正答数）。にがて等の内訳はクライアント側でclassifyItem()により算出する
     const languageHistory = {};
     for (const log of user.answerLogs) {
       const lang = log.question?.language || 'en';
-      if (!languageHistory[lang]) languageHistory[lang] = { totalAnswers: 0, totalCorrect: 0, weakCount: 0 };
+      if (!languageHistory[lang]) languageHistory[lang] = { totalAnswers: 0, totalCorrect: 0 };
       languageHistory[lang].totalAnswers++;
       if (log.isCorrect) languageHistory[lang].totalCorrect++;
-    }
-    for (const [id, stat] of Object.entries(answerStats)) {
-      if (stat.attempts >= 2 && stat.correct / stat.attempts < 0.6) {
-        const log = user.answerLogs.find(l => l.questionId === id);
-        const lang = log?.question?.language || 'en';
-        if (languageHistory[lang]) languageHistory[lang].weakCount++;
-      }
     }
 
     res.json({

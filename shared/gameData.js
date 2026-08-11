@@ -86,3 +86,28 @@ export function getLvRow(totalExp) {
 export function getNextLvRow(lv) {
   return LEVEL_TABLE.find(r => r.lv === lv + 1) || null;
 }
+
+/* ══════════════════════════════════════════════════
+   忘却曲線（エビングハウス）にもとづく定着度の推定
+   R(t) = e^(-t/S)  … t=最終回答からの経過日数、S=記憶の安定度（日）
+   Lv・EXPはゲームの累積実績として増える一方のまま保つが、
+   「定着度」はこの式で時間経過とともに下がる別指標として扱う
+══════════════════════════════════════════════════ */
+// 安定度Sは正解回数が増えるほど指数的に伸び、誤答が多いほど割り引かれる簡易モデル
+// （厳密な間隔反復アルゴリズムではなく、体感に合わせた近似値）
+export function estimateStability(r) {
+  if (!r || r.attempts === 0) return 0;
+  const acc = r.correct / r.attempts;
+  const n = r.correct;
+  const stability = 1 * Math.pow(2, Math.max(0, n - 1)) * (0.4 + 0.6 * acc);
+  return Math.min(stability, 60); // 上限60日
+}
+
+// 0〜1の定着度スコア。未学習・最終回答日時が不明な場合はnull
+export function retentionScore(r, now = Date.now()) {
+  if (!r || r.attempts === 0 || !r.lastAnsweredAt) return null;
+  const stability = estimateStability(r);
+  if (stability <= 0) return 0;
+  const daysSince = Math.max(0, (now - r.lastAnsweredAt) / 86400000);
+  return Math.exp(-daysSince / stability);
+}

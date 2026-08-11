@@ -906,6 +906,7 @@ body {
   padding: 1px 6px; white-space: nowrap;
 }
 .inn-rate { font-size: .74rem; white-space: nowrap; }
+.inn-retention { font-size: .7rem; white-space: nowrap; }
 .inn-rate-none { color: var(--dq-gray); }
 .inn-rate-good { color: var(--dq-green); }
 .inn-rate-mid  { color: var(--dq-yellow); }
@@ -960,6 +961,12 @@ body {
   height: 10px; margin-bottom: 8px; overflow: hidden;
 }
 .status-lang-expbar-fill { background: var(--dq-green); height: 100%; }
+
+.status-lang-retention { font-size: .76rem; color: var(--dq-white); margin-bottom: 8px; }
+.status-lang-retention b { font-size: .9rem; }
+.status-lang-ret-good { color: var(--dq-green); }
+.status-lang-ret-mid  { color: var(--dq-yellow); }
+.status-lang-ret-bad  { color: var(--dq-red); }
 
 .status-lang-stats {
   display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
