@@ -1148,6 +1148,11 @@ function meaningForUi(item) {
   return item.jp;
 }
 
+function vocabMeaningForUi(item) {
+  if (selectedLanguage === 'ja') return item.en || item.jp || item.word;
+  return meaningForUi(item);
+}
+
 function answerPrefix() {
   return uiLang === 'en' ? 'Answer' : '正解';
 }
@@ -1672,8 +1677,8 @@ function spawnEffects(emojis, count) {
    13. 問題生成
 ══════════════════════════════════════════════════ */
 function buildVocabQ(item, pool) {
-  const dummies = shuffle(pool.filter(p=>p.id!==item.id)).slice(0,3).map(p=>meaningForUi(p));
-  const answer = meaningForUi(item);
+  const dummies = shuffle(pool.filter(p=>p.id!==item.id)).slice(0,3).map(p=>vocabMeaningForUi(p));
+  const answer = vocabMeaningForUi(item);
   const all = shuffle([answer, ...dummies]);
   return {
     id: item.id, type:'vocab',
@@ -1742,7 +1747,7 @@ function buildListeningQ(item, pool) {
       : `🔊 きこえた ${languageWordLabel()}の ことばは どれ？`,
     speakWord: item.word,
     choices: all, ans: all.indexOf(item.word),
-    detail: `${answerPrefix()}: ${wordWithPron(item)}（${meaningForUi(item)}）`,
+    detail: `${answerPrefix()}: ${wordWithPron(item)}（${vocabMeaningForUi(item)}）`,
   };
 }
 
@@ -1754,7 +1759,7 @@ function buildSpeakingQ(item) {
     speakWord: item.word,
     targetText: wordWithPron(item),
     ans: item.word.toLowerCase(),
-    detail: `${answerPrefix()}: ${wordWithPron(item)}（${meaningForUi(item)}）`,
+    detail: `${answerPrefix()}: ${wordWithPron(item)}（${vocabMeaningForUi(item)}）`,
   };
 }
 
@@ -3547,7 +3552,7 @@ function renderInnList(filter) {
       speakText = item.word;
       mainHtml = `<div class="inn-item-word">${item.word} <button type="button" class="inn-speak-btn" aria-label="読み上げ">🔊</button></div>
          ${item.pron && selectedLanguage !== 'en' ? `<div class="inn-item-pron">${item.pron}</div>` : ''}
-         <div class="inn-item-jp">${meaningForUi(item)}</div>
+         <div class="inn-item-jp">${vocabMeaningForUi(item)}</div>
          <div class="inn-item-ex">${item.ex}</div>`;
     } else if (item.category === 'phrase') {
       speakText = item.phrase;
