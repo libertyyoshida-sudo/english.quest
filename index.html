@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Language Quest</title>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <script type="module" crossorigin src="./assets/index-Bznpyg-N.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-CIupdfue.css">
+  <script type="module" crossorigin src="./assets/index-CVO67pIB.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-Bvvs6JGW.css">
 </head>
 <body>
 
@@ -583,7 +583,13 @@
       <!-- 問題ウィンドウ -->
       <div class="dq-window question-window" id="question-window">
         <div class="question-text" id="question-text">…</div>
-        <button type="button" id="question-speak-btn" class="dq-btn dq-btn-blue question-speak-btn hidden" aria-label="読み上げ">🔊 きく</button>
+        <div class="question-audio-row">
+          <button type="button" id="question-speak-btn" class="dq-btn dq-btn-blue question-speak-btn hidden" aria-label="読み上げ">🔊 きく</button>
+          <label class="battle-auto-speech">
+            <input type="checkbox" id="battle-auto-speak-toggle">
+            <span>Auto</span>
+          </label>
+        </div>
 
         <!-- タイピング入力 -->
         <div id="typing-wrap" class="typing-wrap hidden">
@@ -602,10 +608,6 @@
           <button type="button" id="magic-hint-btn" class="dq-btn dq-btn-blue">💙 ヒント 3MP</button>
           <button type="button" id="magic-cut-btn" class="dq-btn dq-btn-blue">💙 へらす 5MP</button>
           <button type="button" id="magic-heal-btn" class="dq-btn dq-btn-green">💙 回復 4MP</button>
-          <label class="battle-auto-speech">
-            <input type="checkbox" id="battle-auto-speak-toggle">
-            <span>Auto🔊</span>
-          </label>
         </div>
         <div class="battle-magic-note" id="battle-magic-note" aria-live="polite"></div>
       </div>
