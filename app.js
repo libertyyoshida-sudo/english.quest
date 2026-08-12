@@ -411,6 +411,8 @@ const I18N = {
     forgot: 'ひみつのコードを忘れた',
     googleMissing: 'Googleログインは現在準備中です。',
     googleFailed: 'Googleログインに失敗しました。',
+    googleConfigLoading: 'Googleログインを確認中です…',
+    googleConfigFailed: 'Googleログイン設定を取得できませんでした。Render APIの起動または通信状態を確認してください。',
     googleLoading: 'Googleログインを読み込み中です…',
     googleScriptFailed: 'Googleログインのスクリプトを読み込めませんでした。通信環境、広告ブロック、ブラウザ設定を確認してください。',
     googleOriginFailed: origin => `Googleログインの表示に失敗しました。Google Cloud Consoleの「承認済みのJavaScript生成元」に ${origin} を追加してください。`,
@@ -506,6 +508,8 @@ const I18N = {
     forgot: 'Forgot password?',
     googleMissing: 'Google sign-in is not configured yet.',
     googleFailed: 'Google sign-in failed.',
+    googleConfigLoading: 'Checking Google sign-in...',
+    googleConfigFailed: 'Could not load Google sign-in settings. Check the Render API startup or network status.',
     googleLoading: 'Loading Google sign-in...',
     googleScriptFailed: 'Could not load the Google sign-in script. Check network, ad blocker, or browser settings.',
     googleOriginFailed: origin => `Google sign-in could not be rendered. Add ${origin} to Authorized JavaScript origins in Google Cloud Console.`,
@@ -721,11 +725,18 @@ function hideGoogleNote() {
 
 async function initGoogleLogin() {
   const wrap = $('google-login-wrap');
+  wrap?.classList.remove('hidden');
+  showGoogleNote(tr('googleConfigLoading'));
   try {
-    const config = await apiFetch('/auth/config');
+    const config = await Promise.race([
+      apiFetch('/auth/config'),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Google config timeout')), 15000)),
+    ]);
     googleClientId = config.googleClientId || null;
   } catch (err) {
     googleClientId = null;
+    showGoogleNote(tr('googleConfigFailed'));
+    return;
   }
 
   if (!googleClientId) {
@@ -774,7 +785,8 @@ function renderGoogleButton() {
       width: 280,
     });
     setTimeout(() => {
-      const rendered = Boolean(buttonEl.querySelector('iframe') || buttonEl.children.length > 0);
+      const rect = buttonEl.getBoundingClientRect();
+      const rendered = Boolean(buttonEl.querySelector('iframe')) && rect.width > 80 && rect.height > 20;
       if (rendered) hideGoogleNote();
       else showGoogleNote(tr('googleOriginFailed', window.location.origin));
     }, 1200);
