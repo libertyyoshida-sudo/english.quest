@@ -411,6 +411,9 @@ const I18N = {
     forgot: 'ひみつのコードを忘れた',
     googleMissing: 'Googleログインは現在準備中です。',
     googleFailed: 'Googleログインに失敗しました。',
+    googleLoading: 'Googleログインを読み込み中です…',
+    googleScriptFailed: 'Googleログインのスクリプトを読み込めませんでした。通信環境、広告ブロック、ブラウザ設定を確認してください。',
+    googleOriginFailed: origin => `Googleログインの表示に失敗しました。Google Cloud Consoleの「承認済みのJavaScript生成元」に ${origin} を追加してください。`,
     resetPassword: '再設定する',
     cancel: 'もどる',
     guest: 'ゲストであそぶ（セーブされません）',
@@ -503,6 +506,9 @@ const I18N = {
     forgot: 'Forgot password?',
     googleMissing: 'Google sign-in is not configured yet.',
     googleFailed: 'Google sign-in failed.',
+    googleLoading: 'Loading Google sign-in...',
+    googleScriptFailed: 'Could not load the Google sign-in script. Check network, ad blocker, or browser settings.',
+    googleOriginFailed: origin => `Google sign-in could not be rendered. Add ${origin} to Authorized JavaScript origins in Google Cloud Console.`,
     resetPassword: 'Reset password',
     cancel: 'Back',
     guest: 'Play as guest (not saved)',
@@ -701,9 +707,20 @@ let googleClientId = null;
 let googleButtonRenderedFor = '';
 let googleScriptWaits = 0;
 
+function showGoogleNote(text, configured = true) {
+  const note = $('google-login-note');
+  if (!note) return;
+  note.dataset.configured = configured ? 'true' : '';
+  note.textContent = text;
+  note.classList.remove('hidden');
+}
+
+function hideGoogleNote() {
+  $('google-login-note')?.classList.add('hidden');
+}
+
 async function initGoogleLogin() {
   const wrap = $('google-login-wrap');
-  const note = $('google-login-note');
   try {
     const config = await apiFetch('/auth/config');
     googleClientId = config.googleClientId || null;
@@ -713,19 +730,12 @@ async function initGoogleLogin() {
 
   if (!googleClientId) {
     wrap?.classList.add('hidden');
-    if (note) {
-      note.dataset.configured = '';
-      note.textContent = tr('googleMissing');
-      note.classList.remove('hidden');
-    }
+    showGoogleNote(tr('googleMissing'), false);
     return;
   }
 
-  if (note) {
-    note.dataset.configured = 'true';
-    note.classList.add('hidden');
-  }
   wrap?.classList.remove('hidden');
+  showGoogleNote(tr('googleLoading'));
   renderGoogleButton();
 }
 
@@ -736,6 +746,8 @@ function renderGoogleButton() {
     if (googleScriptWaits < 40) {
       googleScriptWaits++;
       setTimeout(renderGoogleButton, 250);
+    } else {
+      showGoogleNote(tr('googleScriptFailed'));
     }
     return;
   }
@@ -744,22 +756,28 @@ function renderGoogleButton() {
   if (googleButtonRenderedFor === renderKey) return;
   googleButtonRenderedFor = renderKey;
   buttonEl.innerHTML = '';
-  window.google.accounts.id.initialize({
-    client_id: googleClientId,
-    callback: handleGoogleCredential,
-    auto_select: false,
-    cancel_on_tap_outside: true,
-  });
-  window.google.accounts.id.renderButton(buttonEl, {
-    theme: 'filled_blue',
-    size: 'large',
-    type: 'standard',
-    text: 'signin_with',
-    shape: 'rectangular',
-    logo_alignment: 'left',
-    locale: uiLang === 'en' ? 'en' : 'ja',
-    width: 280,
-  });
+  try {
+    window.google.accounts.id.initialize({
+      client_id: googleClientId,
+      callback: handleGoogleCredential,
+      auto_select: false,
+      cancel_on_tap_outside: true,
+    });
+    window.google.accounts.id.renderButton(buttonEl, {
+      theme: 'filled_blue',
+      size: 'large',
+      type: 'standard',
+      text: 'signin_with',
+      shape: 'rectangular',
+      logo_alignment: 'left',
+      locale: uiLang === 'en' ? 'en' : 'ja',
+      width: 280,
+    });
+    hideGoogleNote();
+  } catch (err) {
+    console.error('Google button render failed:', err);
+    showGoogleNote(tr('googleOriginFailed', window.location.origin));
+  }
 }
 
 async function handleGoogleCredential(response) {
