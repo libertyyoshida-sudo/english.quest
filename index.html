@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Language Quest</title>
-  <script type="module" crossorigin src="./assets/index-BC80l8Sl.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-is32a61o.css">
+  <script type="module" crossorigin src="./assets/index-CyU4uKij.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-QyZxWJFm.css">
 </head>
 <body>
 
@@ -163,6 +163,9 @@
             <div class="field-icon" data-mode="inn"       style="left:68%;top:50%;">
               <span class="field-icon-emoji">🏨</span><span class="field-icon-label">やどや</span>
             </div>
+            <div class="field-icon" data-mode="shop"      style="left:50%;top:50%;">
+              <span class="field-icon-emoji">🛒</span><span class="field-icon-label">Shop</span>
+            </div>
             <div class="field-icon field-icon-exit" data-mode="world" style="left:96%;top:50%;">
               <span class="field-icon-emoji">🗺️</span><span class="field-icon-label">まちの外へ</span>
             </div>
@@ -229,6 +232,10 @@
           <button class="dq-cmd-btn" data-mode="keyboard" data-command-page="2">
             <span class="cmd-icon">⌨️</span> キーボードどうじょう
             <span class="cmd-exp">タイピング基礎</span>
+          </button>
+          <button class="dq-cmd-btn" data-mode="shop" data-command-page="2">
+            <span class="cmd-icon">🛒</span> Shop
+            <span class="cmd-exp">Goldで購入</span>
           </button>
           <button class="dq-cmd-btn" data-mode="world" data-command-page="2">
             <span class="cmd-icon">🗺️</span> まちの外へ（せかいマップ）
@@ -316,6 +323,20 @@
     </section>
 
     <!-- ────────────────────────────────
+         Shop（Goldでアイテム・通行証・言語入門書を購入）
+    ──────────────────────────────── -->
+    <section id="screen-shop" class="screen">
+      <button id="shop-back-btn" class="dq-btn dq-btn-blue inn-back-btn" type="button">◀ まちへもどる</button>
+      <div class="dq-window msg-window" id="shop-msg">
+        <p id="shop-msg-text">Shopへ ようこそ。無料練習でためたGoldを、学びの道具や通行証にかえられる。</p>
+      </div>
+      <div class="dq-window shop-window">
+        <div class="status-title">▶ Shop <span class="shop-gold">所持Gold: <b id="shop-gold">0</b></span></div>
+        <div class="shop-list" id="shop-list"></div>
+      </div>
+    </section>
+
+    <!-- ────────────────────────────────
          ステータス（言語ごとの学習履歴・レベル・マスター状況）
     ──────────────────────────────── -->
     <section id="screen-status" class="screen">
@@ -369,7 +390,7 @@
         <div class="kb-result-stats">
           <div class="kb-result-stat"><span class="kb-result-val" id="kb-result-accuracy">0%</span><span class="kb-result-lbl">正答率</span></div>
           <div class="kb-result-stat"><span class="kb-result-val" id="kb-result-cpm">0</span><span class="kb-result-lbl">CPM(1分あたり)</span></div>
-          <div class="kb-result-stat"><span class="kb-result-val" id="kb-result-mistakes">0</span><span class="kb-result-lbl">ミス数</span></div>
+          <div class="kb-result-stat"><span class="kb-result-val" id="kb-result-mistakes">0</span><span class="kb-result-lbl">ミス / Gold</span></div>
         </div>
         <div class="kb-result-actions">
           <button type="button" id="kb-retry-btn" class="dq-btn dq-btn-gold">🔁 もういちど</button>
