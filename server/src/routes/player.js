@@ -52,6 +52,11 @@ router.get('/profile', authenticateToken, async (req, res) => {
     }
 
     res.json({
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+      },
       profile: user.profile,
       items: user.userItems,
       titles: user.userTitles,

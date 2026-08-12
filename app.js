@@ -84,6 +84,7 @@ function langState(code = selectedLanguage) {
 // ログイン直後・再開時にプロファイル全体（称号・回答統計・言語別レベルを含む）を取得して反映
 async function loadFullProfile() {
   const data = await apiFetch('/player/profile');
+  P.name = data.user?.username || P.name || 'ゆうしゃ';
   applyProfile(data.profile);
   applyInventoryItems(data.items || []);
   P.titles = new Set((data.titles || []).map(t => t.titleId));
@@ -309,6 +310,7 @@ function playSoundItem() {
    4. プレイヤー状態
 ══════════════════════════════════════════════════ */
 const P = {
+  name: 'ゆうしゃ',
   gold: 0,
   totalAnswers: 0, totalCorrect: 0,
   listenCorrect: 0, speakCorrect: 0,
@@ -1353,6 +1355,7 @@ function refreshHeader() {
   updateHeroSprite('hdr-hero', row);
   updateHeroSprite('field-hero', row);
   updateHeroSprite('world-hero', row);
+  if ($('hdr-name'))  $('hdr-name').textContent  = P.name || 'ゆうしゃ';
   if ($('hdr-lv'))    $('hdr-lv').textContent    = effectiveLv;
   if ($('hdr-title')) $('hdr-title').textContent = mastered ? `${row.name}・マスター` : (reachedRow.lv > effectiveLv ? `${row.name}（復習中）` : row.name);
   if ($('hdr-hp'))    $('hdr-hp').textContent    = `${lang.currentHp}/${maxHp}`;
