@@ -31,6 +31,8 @@ npm run deploy
 
 ## 開発・拡充計画
 
+開発・拡充・運用に関する正本は [docs](docs/README.md) にまとめています。
+
 問題追加、Shop解放、Neon Database反映、デプロイ運用は [English Quest Content Expansion Plan](docs/content-expansion-plan.md) に従って進めます。
 
 ## セキュリティ
