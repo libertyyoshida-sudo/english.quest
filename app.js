@@ -655,6 +655,16 @@ function filterLevel(pool, level) {
   return pool.filter(x => x.lv === level);
 }
 
+function expandPoolForCount(pool, level, count) {
+  const filtered = filterLevel(pool, level);
+  if (level === 'all' || filtered.length >= count) return filtered;
+  const seen = new Set(filtered.map(item => item.id));
+  const nearby = [...pool]
+    .filter(item => !seen.has(item.id))
+    .sort((a, b) => Math.abs(a.lv - level) - Math.abs(b.lv - level));
+  return [...filtered, ...nearby];
+}
+
 // 弱点重み付きシャッフル
 function weightedPool(pool) {
   return shuffle(pool.flatMap(item => {
@@ -1073,9 +1083,8 @@ function buildSpeakingQ(item) {
 function buildQuestions(mode, level, count) {
   const vocabDB = currentVocabDB();
   const grammarDB = currentGrammarDB();
-  const vPool = filterLevel(vocabDB, level);
-  const gPool = filterLevel(grammarDB, level);
-  const activeVPool = vPool.length ? vPool : vocabDB;
+  const activeVPool = expandPoolForCount(vocabDB, level, count);
+  const activeGPool = expandPoolForCount(grammarDB, level, count);
   let questions = [];
 
   if (mode === 'vocab') {
@@ -1086,8 +1095,8 @@ function buildQuestions(mode, level, count) {
       if (questions.length >= count) break;
     }
   } else if (mode === 'grammar') {
-    if (gPool.length) {
-      const pool = weightedPool(gPool);
+    if (activeGPool.length) {
+      const pool = weightedPool(activeGPool);
       const seen = new Set();
       for (const item of pool) {
         if (!seen.has(item.id)) { seen.add(item.id); questions.push(buildGrammarQ(item)); }
@@ -1119,8 +1128,7 @@ function buildQuestions(mode, level, count) {
     }
   } else if (mode === 'phrase') {
     const phraseDB = currentPhraseDB();
-    const pPool = filterLevel(phraseDB, level);
-    const activePPool = pPool.length ? pPool : phraseDB;
+    const activePPool = expandPoolForCount(phraseDB, level, count);
     const pool = weightedPool(activePPool);
     const seen = new Set();
     for (const item of pool) {
@@ -1129,8 +1137,7 @@ function buildQuestions(mode, level, count) {
     }
   } else if (mode === 'culture') {
     const cultureDB = currentCultureDB();
-    const cPool = filterLevel(cultureDB, level);
-    const activeCPool = cPool.length ? cPool : cultureDB;
+    const activeCPool = expandPoolForCount(cultureDB, level, count);
     const pool = weightedPool(activeCPool);
     const seen = new Set();
     for (const item of pool) {
@@ -1139,8 +1146,7 @@ function buildQuestions(mode, level, count) {
     }
   } else if (mode === 'weak') {
     const allPool = [...vocabDB, ...grammarDB];
-    const filtered = filterLevel(allPool, level);
-    const activeFiltered = filtered.length ? filtered : allPool;
+    const activeFiltered = expandPoolForCount(allPool, level, count);
     let weak = weakItems(activeFiltered);
     if (weak.length < count) {
       const extra = shuffle(activeFiltered.filter(i => !answerStats[i.id]?.attempts));
@@ -1158,8 +1164,7 @@ function buildQuestions(mode, level, count) {
     const phraseDB = currentPhraseDB();
     const cultureDB = currentCultureDB();
     const allPool = [...vocabDB, ...grammarDB, ...phraseDB, ...cultureDB];
-    const filtered = filterLevel(allPool, level);
-    const activeFiltered = filtered.length ? filtered : allPool;
+    const activeFiltered = expandPoolForCount(allPool, level, count);
     const pool = smartPool(activeFiltered);
     const cultureIds = new Set(cultureDB.map(c => c.id));
     const seen = new Set();
