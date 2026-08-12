@@ -15,6 +15,7 @@ async function runInBatches(items, handler) {
 }
 
 async function upsertVocab(item, language) {
+  const choicesJson = JSON.stringify({ en: item.en || (language === 'en' ? item.word : null) });
   await prisma.question.upsert({
     where: { id: item.id },
     update: {
@@ -25,7 +26,7 @@ async function upsertVocab(item, language) {
       japanese: item.jp,
       pronunciation: item.pron || null,
       exampleSentence: item.ex,
-      choicesJson: null,
+      choicesJson,
     },
     create: {
       id: item.id,
@@ -36,7 +37,7 @@ async function upsertVocab(item, language) {
       japanese: item.jp,
       pronunciation: item.pron || null,
       exampleSentence: item.ex,
-      choicesJson: null,
+      choicesJson,
     },
   });
 }
@@ -71,7 +72,7 @@ async function upsertGrammar(item, language) {
 }
 
 async function upsertPhrase(item, language) {
-  const choicesJson = JSON.stringify({ situation: item.situation });
+  const choicesJson = JSON.stringify({ situation: item.situation, en: item.en || (language === 'en' ? item.phrase : null) });
 
   await prisma.question.upsert({
     where: { id: item.id },

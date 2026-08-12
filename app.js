@@ -989,6 +989,19 @@ function wordWithPron(item) {
   return item.pron && selectedLanguage !== 'en' ? `${item.word}（${item.pron}）` : item.word;
 }
 
+function meaningForUi(item) {
+  if (uiLang === 'en') return item.en || item.word || item.phrase || item.jp;
+  return item.jp;
+}
+
+function answerPrefix() {
+  return uiLang === 'en' ? 'Answer' : '正解';
+}
+
+function meaningQuestionText(text) {
+  return uiLang === 'en' ? `What does "${text}" mean?` : `「${text}」の いみは？`;
+}
+
 function difficultyLabel(lv) {
   return examLevelLabel(selectedLanguage, lv);
 }
@@ -1504,27 +1517,31 @@ function spawnEffects(emojis, count) {
    13. 問題生成
 ══════════════════════════════════════════════════ */
 function buildVocabQ(item, pool) {
-  const dummies = shuffle(pool.filter(p=>p.id!==item.id)).slice(0,3).map(p=>p.jp);
-  const all = shuffle([item.jp, ...dummies]);
+  const dummies = shuffle(pool.filter(p=>p.id!==item.id)).slice(0,3).map(p=>meaningForUi(p));
+  const answer = meaningForUi(item);
+  const all = shuffle([answer, ...dummies]);
   return {
     id: item.id, type:'vocab',
-    qText: `「 ${wordWithPron(item)} 」の いみは？`,
-    choices: all, ans: all.indexOf(item.jp),
-    detail: item.ex ? `例: ${item.ex}` : `正解: ${item.word}（${item.jp}）`,
+    qText: meaningQuestionText(wordWithPron(item)),
+    choices: all, ans: all.indexOf(answer),
+    detail: item.ex ? `${uiLang === 'en' ? 'Example' : '例'}: ${item.ex}` : `${answerPrefix()}: ${item.word}（${answer}）`,
     speakWord: item.word,
   };
 }
 
 function buildPhraseQ(item, pool) {
-  const dummies = shuffle(pool.filter(p=>p.id!==item.id)).slice(0,3).map(p=>p.jp);
-  const all = shuffle([item.jp, ...dummies]);
+  const dummies = shuffle(pool.filter(p=>p.id!==item.id)).slice(0,3).map(p=>meaningForUi(p));
+  const answer = meaningForUi(item);
+  const all = shuffle([answer, ...dummies]);
   const situationLabel = PHRASE_CATEGORIES.find(c => c.code === item.situation)?.label || '';
   const phraseText = item.pron ? `${item.phrase}（${item.pron}）` : item.phrase;
   return {
     id: item.id, type:'phrase',
-    qText: `${situationLabel ? `【${situationLabel}】` : ''}「${phraseText}」の いみは？`,
-    choices: all, ans: all.indexOf(item.jp),
-    detail: `正解: ${phraseText} = ${item.jp}`,
+    qText: uiLang === 'en'
+      ? `${situationLabel ? `[${situationLabel}] ` : ''}What does "${phraseText}" mean?`
+      : `${situationLabel ? `【${situationLabel}】` : ''}「${phraseText}」の いみは？`,
+    choices: all, ans: all.indexOf(answer),
+    detail: `${answerPrefix()}: ${phraseText} = ${answer}`,
     speakWord: item.phrase,
   };
 }
@@ -1565,10 +1582,12 @@ function buildListeningQ(item, pool) {
   const all = shuffle([item.word, ...dummies]);
   return {
     id: item.id, type:'listening',
-    qText: `🔊 きこえた ${languageWordLabel()}の ことばは どれ？`,
+    qText: uiLang === 'en'
+      ? `🔊 Which ${languageWordLabel()} word did you hear?`
+      : `🔊 きこえた ${languageWordLabel()}の ことばは どれ？`,
     speakWord: item.word,
     choices: all, ans: all.indexOf(item.word),
-    detail: `正解: ${wordWithPron(item)}（${item.jp}）`,
+    detail: `${answerPrefix()}: ${wordWithPron(item)}（${meaningForUi(item)}）`,
   };
 }
 
@@ -1580,7 +1599,7 @@ function buildSpeakingQ(item) {
     speakWord: item.word,
     targetText: wordWithPron(item),
     ans: item.word.toLowerCase(),
-    detail: `正解: ${wordWithPron(item)}（${item.jp}）`,
+    detail: `${answerPrefix()}: ${wordWithPron(item)}（${meaningForUi(item)}）`,
   };
 }
 
@@ -3370,7 +3389,7 @@ function renderInnList(filter) {
       speakText = item.word;
       mainHtml = `<div class="inn-item-word">${item.word} <button type="button" class="inn-speak-btn" aria-label="読み上げ">🔊</button></div>
          ${item.pron && selectedLanguage !== 'en' ? `<div class="inn-item-pron">${item.pron}</div>` : ''}
-         <div class="inn-item-jp">${item.jp}</div>
+         <div class="inn-item-jp">${meaningForUi(item)}</div>
          <div class="inn-item-ex">${item.ex}</div>`;
     } else if (item.category === 'phrase') {
       speakText = item.phrase;
@@ -3378,7 +3397,7 @@ function renderInnList(filter) {
       mainHtml = `${situationLabel ? `<div class="inn-item-situation">${situationLabel.icon} ${situationLabel.label}</div>` : ''}
          <div class="inn-item-word">${item.phrase} <button type="button" class="inn-speak-btn" aria-label="読み上げ">🔊</button></div>
          ${item.pron ? `<div class="inn-item-pron">${item.pron}</div>` : ''}
-         <div class="inn-item-jp">${item.jp}</div>`;
+         <div class="inn-item-jp">${meaningForUi(item)}</div>`;
     } else {
       mainHtml = `<div class="inn-item-q">${item.q}</div>
          <div class="inn-item-jp">こたえ: ${item.choices[item.ans]}</div>

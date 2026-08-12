@@ -49,10 +49,12 @@ function toClientQuestion(question) {
       phrase: question.word,
       pron: question.pronunciation || undefined,
       jp: question.japanese,
+      en: meta.en || undefined,
       exam: examMeta(question.language, question.level),
     };
   }
 
+  const meta = question.choicesJson ? JSON.parse(question.choicesJson) : {};
   return {
     id: question.id,
     category: 'vocab',
@@ -60,6 +62,7 @@ function toClientQuestion(question) {
     word: question.word,
     pron: question.pronunciation || undefined,
     jp: question.japanese,
+    en: meta.en || undefined,
     ex: question.exampleSentence || '',
     exam: examMeta(question.language, question.level),
   };

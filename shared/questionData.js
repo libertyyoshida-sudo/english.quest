@@ -2698,6 +2698,7 @@ export const MULTI_VOCAB_DB = Object.fromEntries(
       id: `${code}${String(idx + 1).padStart(3, '0')}`,
       lv: idx < 40 ? Math.min(10, Math.floor(idx / 2) + 1) : NEW_WORD_TIERS[idx - 40],
       word,
+      en: BASIC_MEANINGS[idx][0],
       pron: BASIC_PRON_BY_LANGUAGE[code]?.[idx] || word,
       jp: BASIC_MEANINGS[idx][1],
       ex: `${word}${BASIC_PRON_BY_LANGUAGE[code]?.[idx] && BASIC_PRON_BY_LANGUAGE[code][idx] !== word ? ` (${BASIC_PRON_BY_LANGUAGE[code][idx]})` : ''} = ${BASIC_MEANINGS[idx][1]}`,
@@ -2766,7 +2767,7 @@ const PHRASE_MEANINGS = [
 
 export const PHRASE_DB = PHRASE_MEANINGS.map(([situation, lv, phrase, jp], idx) => ({
   id: `ph${String(idx + 1).padStart(3, '0')}`,
-  situation, lv, phrase, jp,
+  situation, lv, phrase, jp, en: phrase,
 }));
 
 // 各言語のフレーズ本文＋発音（PHRASE_MEANINGSと同じ順序・16件）
@@ -2829,13 +2830,14 @@ export const MULTI_PHRASE_DB = Object.fromEntries(
   Object.entries(PHRASE_TEXT_BY_LANGUAGE).map(([code, phrases]) => [
     code,
     phrases.map((phrase, idx) => {
-      const [situation, lv, , jp] = PHRASE_MEANINGS[idx];
+      const [situation, lv, en, jp] = PHRASE_MEANINGS[idx];
       const pron = PHRASE_PRON_BY_LANGUAGE[code]?.[idx];
       return {
         id: `${code}ph${String(idx + 1).padStart(3, '0')}`,
         situation, lv, phrase,
         pron: pron || undefined,
         jp,
+        en,
       };
     }),
   ]),
