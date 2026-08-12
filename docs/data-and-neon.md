@@ -13,6 +13,7 @@ GitHub PagesなどAPIが使えない環境でも最低限遊べるようにす�
 | Prisma schema | `server/prisma/schema.prisma` |
 | seed | `server/prisma/seed.js` |
 | fallback | `shared/questionData.js` |
+| lightweight metadata | `shared/languageMeta.js` |
 | API | `server/src/routes/questions.js` |
 | 接続情報 | `.env` の `DATABASE_URL` / `DIRECT_URL` |
 
@@ -50,4 +51,5 @@ seed後は最低限、以下を確認します。
 - Neonの接続URL、JWT秘密鍵などは外部に出さない
 - 公開IssueやREADMEに秘密情報を記載しない
 - DB変更を伴う場合は、作業ログにseed結果を残す
-
+- 問題データ本体は初期JSサイズを抑えるため、フロントエンドで必要時に動的importする
+- 初期表示に必要な言語メタデータは `shared/languageMeta.js` に分離する

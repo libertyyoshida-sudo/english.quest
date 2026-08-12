@@ -10,9 +10,8 @@ import {
   comboMult, getLvRow, getNextLvRow, toeicLabel, retentionScore,
 } from './shared/gameData.js';
 import {
-  VOCAB_DB, GRAMMAR_DB, LANGUAGE_OPTIONS, LANGUAGE_PROFILES, MULTI_GRAMMAR_DB, MULTI_VOCAB_DB,
-  PHRASE_DB, MULTI_PHRASE_DB, PHRASE_CATEGORIES, MULTI_CULTURE_DB,
-} from './shared/questionData.js';
+  LANGUAGE_OPTIONS, LANGUAGE_PROFILES, PHRASE_CATEGORIES,
+} from './shared/languageMeta.js';
 
 /* ══════════════════════════════════════════════════
    0. バックエンドAPI（ログイン時のみ使用。未ログインはゲストモードでローカル動作）
@@ -24,6 +23,15 @@ let authToken = localStorage.getItem('eigoDQ_token') || null;
 let selectedLanguage = localStorage.getItem('languageQuest_language') || 'en';
 const questionDataCache = {};
 const questionDataLoading = {};
+let localQuestionDataLoading = null;
+let localQuestionDataLoaded = false;
+let VOCAB_DB = [];
+let GRAMMAR_DB = [];
+let MULTI_GRAMMAR_DB = {};
+let MULTI_VOCAB_DB = {};
+let PHRASE_DB = [];
+let MULTI_PHRASE_DB = {};
+let MULTI_CULTURE_DB = {};
 
 async function apiFetch(path, opts = {}) {
   const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
@@ -467,6 +475,32 @@ function currentCultureDB() {
   return questionDataCache[selectedLanguage]?.culture || MULTI_CULTURE_DB[selectedLanguage] || [];
 }
 
+async function ensureLocalQuestionData() {
+  if (localQuestionDataLoaded) return;
+  if (!localQuestionDataLoading) {
+    localQuestionDataLoading = import('./shared/questionData.js').then(module => {
+      VOCAB_DB = module.VOCAB_DB || [];
+      GRAMMAR_DB = module.GRAMMAR_DB || [];
+      MULTI_GRAMMAR_DB = module.MULTI_GRAMMAR_DB || {};
+      MULTI_VOCAB_DB = module.MULTI_VOCAB_DB || {};
+      PHRASE_DB = module.PHRASE_DB || [];
+      MULTI_PHRASE_DB = module.MULTI_PHRASE_DB || {};
+      MULTI_CULTURE_DB = module.MULTI_CULTURE_DB || {};
+      localQuestionDataLoaded = true;
+    });
+  }
+  return localQuestionDataLoading;
+}
+
+function cacheLocalQuestionData(language) {
+  questionDataCache[language] = {
+    vocab: language === 'en' ? VOCAB_DB : (MULTI_VOCAB_DB[language] || VOCAB_DB),
+    grammar: language === 'en' ? GRAMMAR_DB : (MULTI_GRAMMAR_DB[language] || []),
+    phrase: language === 'en' ? PHRASE_DB : (MULTI_PHRASE_DB[language] || PHRASE_DB),
+    culture: MULTI_CULTURE_DB[language] || [],
+  };
+}
+
 function cacheQuestionData(language, questions) {
   questionDataCache[language] = {
     vocab: questions.filter(q => q.category === 'vocab'),
@@ -490,7 +524,10 @@ async function ensureLanguageQuestionData(language = selectedLanguage) {
     })
     .catch(err => {
       console.warn('DB問題データの取得に失敗したため、ローカルデータを使用します。', err);
-      return null;
+      return ensureLocalQuestionData().then(() => {
+        cacheLocalQuestionData(language);
+        return questionDataCache[language];
+      });
     })
     .finally(() => {
       delete questionDataLoading[language];
@@ -780,16 +817,16 @@ function smartPool(pool) {
 // 言語コードを指定して単語/文法/フレーズDBを取得（ステータス画面で選択中以外の言語も集計するため、
 // currentXxxDB() と違い selectedLanguage やサーバーキャッシュに依存しない）
 function vocabDBFor(code) {
-  return code === 'en' ? VOCAB_DB : (MULTI_VOCAB_DB[code] || VOCAB_DB);
+  return questionDataCache[code]?.vocab || (code === 'en' ? VOCAB_DB : (MULTI_VOCAB_DB[code] || VOCAB_DB));
 }
 function grammarDBFor(code) {
-  return code === 'en' ? GRAMMAR_DB : (MULTI_GRAMMAR_DB[code] || []);
+  return questionDataCache[code]?.grammar || (code === 'en' ? GRAMMAR_DB : (MULTI_GRAMMAR_DB[code] || []));
 }
 function phraseDBFor(code) {
-  return code === 'en' ? PHRASE_DB : (MULTI_PHRASE_DB[code] || PHRASE_DB);
+  return questionDataCache[code]?.phrase || (code === 'en' ? PHRASE_DB : (MULTI_PHRASE_DB[code] || PHRASE_DB));
 }
 function cultureDBFor(code) {
-  return MULTI_CULTURE_DB[code] || [];
+  return questionDataCache[code]?.culture || MULTI_CULTURE_DB[code] || [];
 }
 
 function showScreen(id) {

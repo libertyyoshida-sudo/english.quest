@@ -14,6 +14,7 @@ GitHub Pages では静的ファイルを配信し、API利用環境では Expres
 | フロントエンド | `style.css` | RPG風UI、マップ、バトル、Shop等の見た目 |
 | フロントエンド | `app.js` | ゲーム状態、学習モード、出題、バトル、Shop、マップ |
 | 共有データ | `shared/questionData.js` | 問題データ、言語データ、fallback |
+| 共有データ | `shared/languageMeta.js` | 初期表示に必要な軽量メタデータ |
 | 共有データ | `shared/gameData.js` | ゲーム内データ |
 | API | `server/src/index.js` | Expressサーバー起動 |
 | API | `server/src/routes/*.js` | auth、player、questions、battle のAPI |
@@ -47,10 +48,12 @@ GitHub Pages では静的ファイルを配信し、API利用環境では Expres
 
 コンテンツ追加時は Neon と fallback の不整合を避けるため、seed結果とローカルデータを確認します。
 
+問題データ本体はアプリ初期JSへ静的同梱せず、API取得に失敗した場合など必要時に `shared/questionData.js` を動的importします。初期表示に必要な言語名、言語プロフィール、フレーズカテゴリは `shared/languageMeta.js` から静的importします。
+
 ## 今後の設計方針
 
 - `app.js` が肥大化しているため、将来的に出題、Shop、マップ、保存、音声をモジュール分割する
 - Shop商品、解放条件、地域条件はデータ駆動に寄せる
 - 問題データは重複検査と件数集計をスクリプト化する
 - Neonを正としつつ、GitHub Pages単体でも最低限遊べるfallbackを維持する
-
+- 問題データ増加に備え、言語別・カテゴリ別の分割読み込みを進める
