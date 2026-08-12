@@ -773,7 +773,11 @@ function renderGoogleButton() {
       locale: uiLang === 'en' ? 'en' : 'ja',
       width: 280,
     });
-    hideGoogleNote();
+    setTimeout(() => {
+      const rendered = Boolean(buttonEl.querySelector('iframe') || buttonEl.children.length > 0);
+      if (rendered) hideGoogleNote();
+      else showGoogleNote(tr('googleOriginFailed', window.location.origin));
+    }, 1200);
   } catch (err) {
     console.error('Google button render failed:', err);
     showGoogleNote(tr('googleOriginFailed', window.location.origin));
