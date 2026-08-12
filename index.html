@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Language Quest</title>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <script type="module" crossorigin src="./assets/index-hTs5QTOQ.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-CiITYf1m.css">
+  <script type="module" crossorigin src="./assets/index-Bznpyg-N.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-CIupdfue.css">
 </head>
 <body>
 
@@ -465,17 +465,46 @@
         <button type="button" id="inn-msg-close" class="msg-window-close" aria-label="メッセージを閉じる">✕</button>
       </div>
 
-      <div class="inn-filter-row">
-        <button class="dq-btn inn-filter-btn active" data-filter="all">すべて</button>
-        <button class="dq-btn inn-filter-btn" data-filter="vocab">たんご</button>
-        <button class="dq-btn inn-filter-btn" data-filter="grammar">ぶんぽう</button>
-        <button class="dq-btn inn-filter-btn" data-filter="phrase">💬 フレーズ</button>
-        <button class="dq-btn inn-filter-btn" data-filter="culture">🏛️ 文化</button>
-        <button class="dq-btn inn-filter-btn" data-filter="new">🆕 未学習</button>
-        <button class="dq-btn inn-filter-btn" data-filter="low">📖 練習不足</button>
-        <button class="dq-btn dq-btn-red inn-filter-btn" data-filter="weak">🔥 にがて</button>
-        <button class="dq-btn inn-filter-btn" data-filter="mastered">✅ マスター</button>
-        <button id="inn-flee-btn" class="dq-btn dq-btn-blue inn-back-btn" type="button">◀ まちへ</button>
+      <div class="dq-window inn-tools-window">
+        <button type="button" id="inn-tools-toggle" class="inn-tools-toggle">▼ 復習メニュー</button>
+        <div id="inn-tools-body" class="inn-tools-body">
+          <div class="inn-filter-row">
+            <button class="dq-btn inn-filter-btn active" data-filter="all">すべて</button>
+            <button class="dq-btn inn-filter-btn" data-filter="vocab">たんご</button>
+            <button class="dq-btn inn-filter-btn" data-filter="grammar">ぶんぽう</button>
+            <button class="dq-btn inn-filter-btn" data-filter="phrase">💬 フレーズ</button>
+            <button class="dq-btn inn-filter-btn" data-filter="culture">🏛️ 文化</button>
+            <button class="dq-btn inn-filter-btn" data-filter="new">🆕 未学習</button>
+            <button class="dq-btn inn-filter-btn" data-filter="low">📖 練習不足</button>
+            <button class="dq-btn dq-btn-red inn-filter-btn" data-filter="weak">🔥 にがて</button>
+            <button class="dq-btn inn-filter-btn" data-filter="mastered">✅ マスター</button>
+            <button id="inn-flee-btn" class="dq-btn dq-btn-blue inn-back-btn" type="button">◀ まちへ</button>
+          </div>
+          <div class="inn-control-row">
+            <label class="inn-control">
+              <span>レベル</span>
+              <select id="inn-level-select" class="dq-select">
+                <option value="all">ぜんぶ</option>
+                <option value="1">Lv.1</option>
+                <option value="2">Lv.2</option>
+                <option value="3">Lv.3</option>
+                <option value="4">Lv.4</option>
+                <option value="5">Lv.5</option>
+                <option value="6">Lv.6</option>
+                <option value="7">Lv.7</option>
+                <option value="8">Lv.8</option>
+                <option value="9">Lv.9</option>
+                <option value="10">Lv.10</option>
+              </select>
+            </label>
+            <button id="inn-auto-speak-btn" class="dq-btn dq-btn-gold" type="button">▶ Auto読み上げ</button>
+            <button id="inn-auto-stop-btn" class="dq-btn dq-btn-blue" type="button">■ 停止</button>
+            <label class="inn-control inn-rate-control">
+              <span>速度 <b id="speech-rate-label">0.85x</b></span>
+              <input id="speech-rate-range" type="range" min="0.5" max="3" step="0.05" value="0.85">
+            </label>
+          </div>
+        </div>
       </div>
 
       <div class="dq-window language-profile-window" id="language-profile"></div>
@@ -573,6 +602,10 @@
           <button type="button" id="magic-hint-btn" class="dq-btn dq-btn-blue">💙 ヒント 3MP</button>
           <button type="button" id="magic-cut-btn" class="dq-btn dq-btn-blue">💙 へらす 5MP</button>
           <button type="button" id="magic-heal-btn" class="dq-btn dq-btn-green">💙 回復 4MP</button>
+          <label class="battle-auto-speech">
+            <input type="checkbox" id="battle-auto-speak-toggle">
+            <span>Auto🔊</span>
+          </label>
         </div>
         <div class="battle-magic-note" id="battle-magic-note" aria-live="polite"></div>
       </div>
