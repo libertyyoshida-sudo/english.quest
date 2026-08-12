@@ -602,6 +602,29 @@ body {
 }
 .question-speak-btn { font-size: .74rem; padding: 5px 12px; margin-top: 6px; }
 
+.battle-magic-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.battle-magic-row .dq-btn {
+  font-size: .68rem;
+  padding: 6px 10px;
+  min-height: 32px;
+}
+.battle-magic-note {
+  min-height: 1.4em;
+  margin-top: 5px;
+  color: var(--dq-blue-l);
+  font-size: .72rem;
+  line-height: 1.45;
+}
+.dq-choice.choice-cut {
+  opacity: .34;
+  filter: grayscale(.6);
+}
+
 /* 選択肢 */
 .choices-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
 .dq-choice {

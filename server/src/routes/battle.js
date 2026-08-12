@@ -55,6 +55,7 @@ router.post('/answer', authenticateToken, async (req, res) => {
     let expGain = 0;
     let goldGain = 0;
     let hpChange = 0;
+    let defeated = false;
 
     totalAnswers += 1;
     const beforeMaxHp = getLvRow(totalExp).hp;
@@ -79,6 +80,11 @@ router.post('/answer', authenticateToken, async (req, res) => {
       const damage = Math.max(5, Math.round(beforeMaxHp * 0.2));
       currentHp = Math.max(0, currentHp - damage);
       hpChange = -damage;
+      if (currentHp <= 0) {
+        defeated = true;
+        gold = Math.floor(gold / 2);
+        currentHp = beforeMaxHp;
+      }
     }
 
     const newLevel = getLvRow(totalExp).lv;
@@ -120,6 +126,7 @@ router.post('/answer', authenticateToken, async (req, res) => {
       expGain,
       goldGain,
       hpChange,
+      defeated,
       leveledUp,
       combo: currentCombo,
       unlockedTitles,

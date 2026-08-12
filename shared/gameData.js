@@ -17,6 +17,8 @@ export const ITEM_DB = {
   c1: { type: 'consumable', id: 'c1', name: '集中ミント', icon: '🌿', effect: 'expBoost', value: 1.5, price: 18 },
   c2: { type: 'consumable', id: 'c2', name: '復習しおり', icon: '🔖', effect: 'expBoost', value: 1.3, price: 15 },
   c3: { type: 'consumable', id: 'c3', name: 'コンボのお守り', icon: '🪬', effect: 'comboShield', value: 1, price: 25 },
+  c4: { type: 'consumable', id: 'c4', name: 'ぬくもり茶', icon: '🍵', effect: 'healHp', value: 18, price: 20 },
+  c5: { type: 'consumable', id: 'c5', name: '迷い消しカード', icon: '🃏', effect: 'choiceCut', value: 2, price: 24 },
   p_smart: { type: 'permit', id: 'p_smart', name: 'スマート学習免許', icon: '🧠', price: 60, desc: 'スマート学習を開放' },
   p_world: { type: 'permit', id: 'p_world', name: '世界地図通行証', icon: '🗺️', price: 80, desc: 'まちの外へ出られる' },
   p_desert: { type: 'permit', id: 'p_desert', name: '砂風のコンパス', icon: '🧭', price: 70, desc: '中東・南アジア方面へ入れる' },
@@ -56,7 +58,7 @@ Object.assign(ITEM_DB, LANGUAGE_PERMIT_ITEMS);
 export const SHOP_ITEM_IDS = [
   'p_smart','p_world','p_desert','p_snow','p_ocean',
   ...Object.keys(LANGUAGE_PERMIT_ITEMS),
-  'w2','w3','w4','a2','a3','a4','c1','c2','c3',
+  'w2','w3','w4','a2','a3','a4','c1','c2','c3','c4','c5',
 ];
 
 export const LEVEL_TABLE = [

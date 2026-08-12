@@ -98,11 +98,18 @@ router.post('/equip', authenticateToken, async (req, res) => {
   }
 });
 
-// やどやで休憩：HPを現在レベルの最大値まで全回復
+// やどやで休憩：必要に応じて10Gを消費し、HPを現在レベルの最大値まで全回復
 router.post('/rest', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.userId;
     const lang = req.body.language || 'en';
+    const shouldCharge = req.body.charge !== false;
+
+    const profile = await prisma.playerProfile.findUnique({ where: { userId } });
+    if (!profile) return res.status(404).json({ error: 'プロファイルが見つかりません。' });
+    if (shouldCharge && profile.gold < 10) {
+      return res.status(400).json({ error: '宿屋に泊まるには10G必要です。' });
+    }
 
     const langProfile = await prisma.languageProfile.upsert({
       where: { userId_language: { userId, language: lang } },
@@ -116,7 +123,14 @@ router.post('/rest', authenticateToken, async (req, res) => {
       data: { currentHp: maxHp },
     });
 
-    res.json({ languageProfile: updatedLangProfile });
+    const updatedProfile = shouldCharge
+      ? await prisma.playerProfile.update({
+          where: { userId },
+          data: { gold: profile.gold - 10 },
+        })
+      : profile;
+
+    res.json({ profile: updatedProfile, languageProfile: updatedLangProfile });
   } catch (error) {
     console.error('Rest error:', error);
     res.status(500).json({ error: '休憩処理に失敗しました。' });

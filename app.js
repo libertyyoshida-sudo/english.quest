@@ -50,7 +50,8 @@ function applyProfile(profile) {
 
 // サーバーから受け取った LanguageProfile（言語ごとのレベル/EXP/HP）を P.languages に反映
 function applyLanguageProfile(language, lp) {
-  P.languages[language] = { totalExp: lp.totalExp, level: lp.level, currentHp: lp.currentHp };
+  const prev = P.languages[language];
+  P.languages[language] = { totalExp: lp.totalExp, level: lp.level, currentHp: lp.currentHp, currentMp: prev?.currentMp };
 }
 
 function applyInventoryItems(items = []) {
@@ -66,7 +67,7 @@ function applyInventoryItems(items = []) {
 // 未初期化の言語は初回アクセス時にデフォルト値で作成して返す
 function langState(code = selectedLanguage) {
   if (!P.languages[code]) {
-    P.languages[code] = { totalExp: 0, level: 1, currentHp: getLvRow(0).hp };
+    P.languages[code] = { totalExp: 0, level: 1, currentHp: getLvRow(0).hp, currentMp: getLvRow(0).mp };
   }
   return P.languages[code];
 }
@@ -763,6 +764,7 @@ function gainGold(mode, combo) {
 
 function triggerLevelUp(row) {
   langState().currentHp = row.hp;
+  langState().currentMp = row.mp;
   const next = getNextLvRow(row.lv);
   updateHeroSprite('lu-hero', row);
   $('lu-lv').textContent   = `Lv. ${row.lv}`;
@@ -806,8 +808,12 @@ function refreshHeader() {
   const lang = langState();
   const row = getLvRow(lang.totalExp);
   const maxHp = row.hp;
+  const maxMp = row.mp;
   if (lang.currentHp === undefined || lang.currentHp > maxHp) {
     lang.currentHp = maxHp;
+  }
+  if (lang.currentMp === undefined || lang.currentMp > maxMp) {
+    lang.currentMp = maxMp;
   }
   updateHeroSprite('hdr-hero', row);
   updateHeroSprite('field-hero', row);
@@ -815,7 +821,7 @@ function refreshHeader() {
   if ($('hdr-lv'))    $('hdr-lv').textContent    = row.lv;
   if ($('hdr-title')) $('hdr-title').textContent = row.name;
   if ($('hdr-hp'))    $('hdr-hp').textContent    = `${lang.currentHp}/${maxHp}`;
-  if ($('hdr-mp'))    $('hdr-mp').textContent    = row.mp;
+  if ($('hdr-mp'))    $('hdr-mp').textContent    = `${lang.currentMp}/${maxMp}`;
   if ($('hdr-gold'))  $('hdr-gold').textContent  = P.gold;
 }
 
@@ -1206,6 +1212,7 @@ let battle = {
   correct: 0, wrongItems: [],
   combo: 0, expGained: 0, goldGained: 0,
   answered: false, enemy: null,
+  defeated: false,
 };
 
 /* ══════════════════════════════════════════════════
@@ -1236,6 +1243,8 @@ async function startBattle(mode) {
     activeEffects: activeEffectsThisBattle,
     comboShield: activeEffectsThisBattle.some(e => e.effect === 'comboShield'),
     comboShieldUsed: false,
+    choiceCutUsed: false,
+    defeated: false,
   };
 
   setupBattleScreenUI(enemy);
@@ -1270,7 +1279,7 @@ function startFocusedBattle(item) {
     correct: 0, wrongItems: [],
     combo: 0, expGained: 0, goldGained: 0,
     answered: false, enemy,
-    activeEffects: [], comboShield: false, comboShieldUsed: false,
+    activeEffects: [], comboShield: false, comboShieldUsed: false, choiceCutUsed: false, defeated: false,
   };
 
   setupBattleScreenUI(enemy);
@@ -1297,6 +1306,8 @@ function renderQuestion() {
   $('listening-wrap').classList.add('hidden');
   $('speaking-wrap').classList.add('hidden');
   $('battle-msg').classList.add('hidden');
+  if ($('battle-magic-note')) $('battle-magic-note').textContent = '';
+  if ($('next-btn')) $('next-btn').textContent = '▶ つぎへ';
 
   if (q.type === 'typing') {
     $('typing-wrap').classList.remove('hidden');
@@ -1307,6 +1318,7 @@ function renderQuestion() {
     $('choices-wrap').classList.remove('hidden');
     $('listening-wrap').classList.remove('hidden');
     renderChoices(q);
+    applyQueuedChoiceCut();
     // 自動再生
     scheduleSpeech(() => speak(q.speakWord), 400);
 
@@ -1323,6 +1335,7 @@ function renderQuestion() {
     // vocab / grammar / weak / phrase(4択)
     $('choices-wrap').classList.remove('hidden');
     renderChoices(q);
+    applyQueuedChoiceCut();
   }
 
   // 単語・フレーズ・タイピングは手動読み上げボタンを表示（正解を声で確認したいときに使う）
@@ -1351,7 +1364,7 @@ function renderChoices(q) {
 // ゲストモード（未ログイン）専用：ローカルのみでEXP/GOLD/HPを計算
 function localAnswerUpdate(q, ok) {
   P.totalAnswers++;
-  let expGot = 0, goldGot = 0, damage = 0;
+  let expGot = 0, goldGot = 0, damage = 0, defeated = false;
 
   if (ok) {
     P.totalCorrect++;
@@ -1372,11 +1385,17 @@ function localAnswerUpdate(q, ok) {
     damage = Math.max(5, Math.round(maxHp * 0.2));
     if (lang.currentHp === undefined) lang.currentHp = maxHp;
     lang.currentHp = Math.max(0, lang.currentHp - damage);
+    if (lang.currentHp <= 0) {
+      defeated = true;
+      P.gold = Math.floor(P.gold / 2);
+      lang.currentHp = maxHp;
+      lang.currentMp = getLvRow(lang.totalExp).mp;
+    }
     refreshHeader();
   }
 
   setTimeout(checkTitles, 600);
-  return { expGot, goldGot, damage };
+  return { expGot, goldGot, damage, defeated };
 }
 
 async function handleAnswer(userAns, userText) {
@@ -1416,7 +1435,7 @@ async function handleAnswer(userAns, userText) {
   }
 
   // EXP・GOLD・HP・コンボはログイン時サーバー権威、ゲスト時ローカル計算
-  let expGot = 0, goldGot = 0, damage = 0;
+  let expGot = 0, goldGot = 0, damage = 0, defeated = false;
   if (authToken) {
     try {
       const answerPayload = q.type === 'typing' ? (userAns || '')
@@ -1432,6 +1451,7 @@ async function handleAnswer(userAns, userText) {
       expGot  = result.expGain;
       goldGot = result.goldGain;
       damage  = -result.hpChange;
+      defeated = !!result.defeated;
       refreshHeader();
       refreshExpBar();
       if (result.leveledUp) {
@@ -1443,10 +1463,10 @@ async function handleAnswer(userAns, userText) {
       }
     } catch (err) {
       console.error('サーバーとの通信に失敗しました。ローカル計算にフォールバックします:', err);
-      ({ expGot, goldGot, damage } = localAnswerUpdate(q, ok));
+      ({ expGot, goldGot, damage, defeated } = localAnswerUpdate(q, ok));
     }
   } else {
-    ({ expGot, goldGot, damage } = localAnswerUpdate(q, ok));
+    ({ expGot, goldGot, damage, defeated } = localAnswerUpdate(q, ok));
   }
 
   battle.expGained  += expGot;
@@ -1484,6 +1504,11 @@ async function handleAnswer(userAns, userText) {
   } else {
     const row = getLvRow(langState().totalExp);
     msg = `💀 まちがい… プレイヤーに ${damage} ダメージ！ (HP:${langState().currentHp}/${row.hp})\nせいかいは「${q.type==='typing'||q.type==='speaking' ? q.ans : q.choices[q.ans]}」`;
+    if (defeated) {
+      battle.defeated = true;
+      msg += '\nHPが0になった… Goldが半分になり、宿屋へ運ばれた。';
+      if ($('next-btn')) $('next-btn').textContent = '▶ 宿屋へ';
+    }
   }
 
   $('battle-msg-text').innerHTML  = msg.replace(/\n/g,'<br>');
@@ -1505,6 +1530,10 @@ async function handleAnswer(userAns, userText) {
    19. 次の問題 / リザルト
 ══════════════════════════════════════════════════ */
 function nextQuestion() {
+  if (battle.defeated) {
+    goToInn({ charge: false });
+    return;
+  }
   battle.cur++;
   if (battle.cur >= battle.questions.length) {
     showResult();
@@ -1599,10 +1628,10 @@ function showResult() {
 ══════════════════════════════════════════════════ */
 function rollItemDrop(level) {
   const pools = {
-    beginner:     ['w1','w2','a1','a2','c1','c2','c3'],
-    intermediate: ['w2','w3','a2','a3','c1','c2','c3'],
-    advanced:     ['w3','w4','w5','a3','a4','a5','c1','c2','c3'],
-    all:          ['w1','w2','a1','a2','c1','c2','c3'],
+    beginner:     ['w1','w2','a1','a2','c1','c2','c3','c4','c5'],
+    intermediate: ['w2','w3','a2','a3','c1','c2','c3','c4','c5'],
+    advanced:     ['w3','w4','w5','a3','a4','a5','c1','c2','c3','c4','c5'],
+    all:          ['w1','w2','a1','a2','c1','c2','c3','c4','c5'],
   };
   const pool = pools[level] || pools.all;
   const id = pool[Math.floor(Math.random() * pool.length)];
@@ -1634,6 +1663,8 @@ function showItemDropOverlay(item) {
   else if (item.type === 'armor') stat = `DEF+${item.def}  GOLD×${item.goldMult}`;
   else if (item.effect === 'expBoost') stat = `次バトルEXP×${item.value}`;
   else if (item.effect === 'comboShield') stat = `次バトル1回ミスをカバー`;
+  else if (item.effect === 'healHp') stat = `HP+${item.value}`;
+  else if (item.effect === 'choiceCut') stat = `次バトル選択肢-${item.value}`;
   if (statEl) statEl.textContent = stat;
 
   const ok = addToInventory(item);
@@ -1670,7 +1701,12 @@ async function equipItem(itemIdx) {
 function useItem(itemIdx) {
   const item = P.inventory[itemIdx];
   if (!item || item.type !== 'consumable') return;
-  P.activeEffects.push({ ...item });
+  if (item.effect === 'healHp') {
+    const healed = healHp(item.value || 0);
+    alert(healed > 0 ? `${item.name}を使った！ HPが${healed}回復した。` : 'HPはすでに まんたんです。');
+  } else {
+    P.activeEffects.push({ ...item });
+  }
   P.inventory.splice(itemIdx, 1);
   refreshEquipmentDisplay();
   renderInventoryWindow();
@@ -1712,6 +1748,8 @@ function renderInventoryWindow() {
     else if (item.type === 'armor') stat = `GOLD×${item.goldMult}`;
     else if (item.effect === 'expBoost') stat = `EXP×${item.value}`;
     else if (item.effect === 'comboShield') stat = `コンボ保護`;
+    else if (item.effect === 'healHp') stat = `HP+${item.value}`;
+    else if (item.effect === 'choiceCut') stat = `選択肢-${item.value}`;
     else if (item.type === 'permit') stat = '解放済み';
 
     const isEquipped =
@@ -2061,9 +2099,9 @@ function goToField() {
   stopSpeechAll();
   const lang = langState();
   const row = getLvRow(lang.totalExp);
-  if (lang.currentHp === undefined || lang.currentHp <= 0) {
-    lang.currentHp = row.hp; // 宿屋でHP全回復
-  }
+  if (lang.currentHp === undefined) lang.currentHp = row.hp;
+  if (lang.currentMp === undefined) lang.currentMp = row.mp;
+  resetHeroPosition('screen-field');
   showScreen('screen-field');
   refreshHeader();
   refreshExpBar();
@@ -2100,6 +2138,102 @@ function setupCommandPagination() {
   });
 }
 
+function showMagicNote(text) {
+  const el = $('battle-magic-note');
+  if (el) el.textContent = text;
+}
+
+function maxHpForCurrentLanguage() {
+  return getLvRow(langState().totalExp).hp;
+}
+
+function maxMpForCurrentLanguage() {
+  return getLvRow(langState().totalExp).mp;
+}
+
+function spendMp(cost) {
+  const lang = langState();
+  if (lang.currentMp === undefined) lang.currentMp = maxMpForCurrentLanguage();
+  if (lang.currentMp < cost) {
+    showMagicNote(`MPがたりない！ あと${cost - lang.currentMp}MPひつよう。`);
+    return false;
+  }
+  lang.currentMp -= cost;
+  refreshHeader();
+  return true;
+}
+
+function healHp(amount) {
+  const lang = langState();
+  const maxHp = maxHpForCurrentLanguage();
+  if (lang.currentHp === undefined) lang.currentHp = maxHp;
+  const before = lang.currentHp;
+  lang.currentHp = Math.min(maxHp, lang.currentHp + amount);
+  refreshHeader();
+  return lang.currentHp - before;
+}
+
+function cutWrongChoices(count = 2) {
+  const q = battle.questions[battle.cur];
+  if (!q || !q.choices || battle.answered) return 0;
+  const btns = Array.from(document.querySelectorAll('.dq-choice'));
+  const candidates = btns
+    .map((btn, i) => ({ btn, i }))
+    .filter(({ btn, i }) => i !== q.ans && btn.style.display !== 'none' && !btn.disabled);
+  shuffle(candidates);
+  const picked = candidates.slice(0, Math.min(count, candidates.length));
+  picked.forEach(({ btn }) => {
+    btn.disabled = true;
+    btn.classList.add('choice-cut');
+    btn.textContent = 'ー';
+  });
+  return picked.length;
+}
+
+function applyQueuedChoiceCut() {
+  if (battle.choiceCutUsed) return;
+  const effect = battle.activeEffects?.find(e => e.effect === 'choiceCut');
+  if (!effect) return;
+  const cut = cutWrongChoices(effect.value || 2);
+  if (cut > 0) {
+    battle.choiceCutUsed = true;
+    showMagicNote(`${effect.icon} ${effect.name}で まよいを${cut}つ 消した！`);
+  }
+}
+
+function useHintMagic() {
+  if (battle.answered) return;
+  const q = battle.questions[battle.cur];
+  if (!q || !spendMp(3)) return;
+  if (q.choices) {
+    const wrong = q.choices.find((choice, i) => i !== q.ans && choice);
+    showMagicNote(wrong ? `ヒント: 「${wrong}」ではない。` : 'ヒント: 正解をよく見きわめよう。');
+  } else {
+    const ans = String(q.ans || '');
+    showMagicNote(ans ? `ヒント: はじめの文字は「${ans[0]}」。` : 'ヒント: 音とつづりを思い出そう。');
+  }
+}
+
+function useChoiceCutMagic() {
+  if (battle.answered) return;
+  const q = battle.questions[battle.cur];
+  if (!q?.choices) {
+    showMagicNote('この問題では せんたくしをへらせない。');
+    return;
+  }
+  if (!spendMp(5)) return;
+  const cut = cutWrongChoices(2);
+  showMagicNote(cut > 0 ? `まほうで まちがいを${cut}つ 消した！` : 'もう消せる選択肢がない。');
+}
+
+function useHealMagic() {
+  if (battle.answered) return;
+  if (!spendMp(4)) return;
+  const amount = Math.max(10, Math.round(maxHpForCurrentLanguage() * 0.35));
+  const healed = healHp(amount);
+  showMagicNote(healed > 0 ? `回復まほう！ HPが${healed}回復した。` : 'HPはすでに まんたんだ。');
+}
+
 function shopItems() {
   return SHOP_ITEM_IDS.map(id => ITEM_DB[id]).filter(Boolean);
 }
@@ -2109,6 +2243,8 @@ function itemStatText(item) {
   if (item.type === 'armor') return `Gold倍率 ${item.goldMult}`;
   if (item.type === 'consumable' && item.effect === 'expBoost') return `次バトルEXP x${item.value}`;
   if (item.type === 'consumable' && item.effect === 'comboShield') return '次バトルのミス1回を保護';
+  if (item.type === 'consumable' && item.effect === 'healHp') return `HPを${item.value}回復`;
+  if (item.type === 'consumable' && item.effect === 'choiceCut') return `次バトルの選択肢を${item.value}つ減らす`;
   return item.desc || '学びの道をひらく';
 }
 
@@ -2334,7 +2470,7 @@ async function triggerRandomEncounter() {
     correct: 0, wrongItems: [],
     combo: 0, expGained: 0, goldGained: 0,
     answered: false, enemy,
-    activeEffects: [], comboShield: false, comboShieldUsed: false,
+    activeEffects: [], comboShield: false, comboShieldUsed: false, choiceCutUsed: false, defeated: false,
     returnTo: 'screen-world', returnRegion: currentWorldRegion,
     isRandomEncounter: true,
   };
@@ -2385,7 +2521,7 @@ async function enterLanguageZone(langCode) {
     correct: 0, wrongItems: [],
     combo: 0, expGained: 0, goldGained: 0,
     answered: false, enemy,
-    activeEffects: [], comboShield: false, comboShieldUsed: false,
+    activeEffects: [], comboShield: false, comboShieldUsed: false, choiceCutUsed: false, defeated: false,
     returnTo: 'screen-world', returnRegion: currentWorldRegion,
     isRegionZone: true, zoneLang: langCode,
   };
@@ -2406,7 +2542,7 @@ async function enterLanguageZone(langCode) {
 ══════════════════════════════════════════════════ */
 let currentInnFilter = 'all';
 
-async function goToInn() {
+async function goToInn(opts = {}) {
   stopSpeechAll();
   showScreen('screen-inn');
   playFieldBGM();
@@ -2414,26 +2550,47 @@ async function goToInn() {
   renderLanguageProfile();
   renderInnList(currentInnFilter);
 
-  // 休憩してHPを全回復
+  const lang = langState();
+  const row = getLvRow(lang.totalExp);
+  if (lang.currentHp === undefined) lang.currentHp = row.hp;
+  if (lang.currentMp === undefined) lang.currentMp = row.mp;
+  const needsRest = lang.currentHp < row.hp || lang.currentMp < row.mp;
+  const shouldCharge = opts.charge !== false && needsRest;
+
+  if (shouldCharge && P.gold < 10) {
+    alert('宿屋に泊まるには10G必要です。無料練習でGoldをためましょう。');
+    return;
+  }
+
+  // 休憩してHP/MPを全回復
   if (authToken) {
     try {
       const result = await apiFetch('/player/rest', {
         method: 'POST',
-        body: JSON.stringify({ language: selectedLanguage }),
+        body: JSON.stringify({ language: selectedLanguage, charge: shouldCharge }),
       });
+      applyProfile(result.profile);
       applyLanguageProfile(selectedLanguage, result.languageProfile);
+      langState().currentMp = row.mp;
     } catch (err) {
       console.error('休憩の同期に失敗しました。ローカルのみ回復します:', err);
-      langState().currentHp = getLvRow(langState().totalExp).hp;
+      if (shouldCharge) P.gold = Math.max(0, P.gold - 10);
+      lang.currentHp = row.hp;
+      lang.currentMp = row.mp;
     }
   } else {
-    langState().currentHp = getLvRow(langState().totalExp).hp;
+    if (shouldCharge) P.gold = Math.max(0, P.gold - 10);
+    lang.currentHp = row.hp;
+    lang.currentMp = row.mp;
   }
   refreshHeader();
+  refreshField();
 
   const msgEl = $('inn-msg-text');
   if (msgEl) {
-    msgEl.textContent = 'やどやの おばあさんが うたを うたってくれた。HPが ぜんかいふく した！';
+    msgEl.textContent = needsRest
+      ? `やどやで ひとやすみ。${shouldCharge ? '10Gを はらって ' : ''}HPとMPが ぜんかいふく した！`
+      : 'やどやの おばあさんが ほほえんだ。HPもMPも まんたんだ！';
   }
   $('inn-msg')?.classList.remove('hidden');
 }
@@ -3084,6 +3241,9 @@ document.addEventListener('DOMContentLoaded', () => {
       handleAnswer(parseInt(btn.dataset.idx, 10));
     });
   });
+  $('magic-hint-btn')?.addEventListener('click', useHintMagic);
+  $('magic-cut-btn')?.addEventListener('click', useChoiceCutMagic);
+  $('magic-heal-btn')?.addEventListener('click', useHealMagic);
 
   /* ── タイピング送信（Enterで回答／回答後Enterで次へ） ── */
   $('typing-input')?.addEventListener('keydown', e => {
