@@ -258,6 +258,8 @@
 8. THE App SHALL Googleアカウントによるログインを提供できる。
 9. WHEN Googleログインが成功したとき、THE App SHALL Googleの確認済みメールアドレスを利用して既存アカウントへ紐づけ、該当アカウントがなければ新規ユーザーを作成する。
 10. IF `GOOGLE_CLIENT_ID` が未設定のとき、THEN THE App SHALL Googleログインボタンを表示せず、準備中メッセージを表示する。
+11. THE App SHALL ログインユーザーが勇者名を20文字以内で変更できるようにする。
+12. WHEN Google新規ログイン時にGoogle表示名が取得できるとき、THE App SHALL その表示名を初期勇者名として使用する。
 
 ---
 

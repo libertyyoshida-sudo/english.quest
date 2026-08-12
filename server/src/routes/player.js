@@ -5,6 +5,10 @@ import { ITEM_DB, SHOP_ITEM_IDS, getLvRow } from '../../../shared/gameData.js';
 
 const router = Router();
 
+function normalizeHeroName(name) {
+  return String(name || '').normalize('NFKC').trim().replace(/\s+/g, ' ');
+}
+
 // プレイヤー詳細プロファイル＆回答統計の取得
 router.get('/profile', authenticateToken, async (req, res) => {
   try {
@@ -67,6 +71,31 @@ router.get('/profile', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Player profile fetch error:', error);
     res.status(500).json({ error: 'プロファイル取得に失敗しました。' });
+  }
+});
+
+// 勇者名の変更
+router.patch('/name', authenticateToken, async (req, res) => {
+  try {
+    const username = normalizeHeroName(req.body.username);
+    if (!username) return res.status(400).json({ error: '勇者名を入力してください。' });
+    if (username.length > 20) return res.status(400).json({ error: '勇者名は20文字以内にしてください。' });
+
+    const existing = await prisma.user.findUnique({ where: { username } });
+    if (existing && existing.id !== req.user.userId) {
+      return res.status(400).json({ error: 'この勇者名は既に使われています。' });
+    }
+
+    const user = await prisma.user.update({
+      where: { id: req.user.userId },
+      data: { username },
+      select: { id: true, username: true, email: true },
+    });
+
+    res.json({ user });
+  } catch (error) {
+    console.error('Hero name update error:', error);
+    res.status(500).json({ error: '勇者名の変更に失敗しました。' });
   }
 });
 

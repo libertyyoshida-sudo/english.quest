@@ -418,6 +418,12 @@ const I18N = {
     googleLoading: 'Googleログインを読み込み中です…',
     googleScriptFailed: 'Googleログインのスクリプトを読み込めませんでした。通信環境、広告ブロック、ブラウザ設定を確認してください。',
     googleOriginFailed: origin => `Googleログインの表示に失敗しました。Google Cloud Consoleの「承認済みのJavaScript生成元」に ${origin} を追加してください。`,
+    heroName: '勇者のなまえ',
+    heroNameSave: '変更する',
+    heroNameGuest: 'ログインすると勇者名を変更できます。',
+    heroNameRequired: '勇者名を入力してください。',
+    heroNameTooLong: '勇者名は20文字以内にしてください。',
+    heroNameSaved: '勇者名を変更しました。',
     resetPassword: '再設定する',
     cancel: 'もどる',
     guest: 'ゲストであそぶ（セーブされません）',
@@ -515,6 +521,12 @@ const I18N = {
     googleLoading: 'Loading Google sign-in...',
     googleScriptFailed: 'Could not load the Google sign-in script. Check network, ad blocker, or browser settings.',
     googleOriginFailed: origin => `Google sign-in could not be rendered. Add ${origin} to Authorized JavaScript origins in Google Cloud Console.`,
+    heroName: 'Hero name',
+    heroNameSave: 'Save',
+    heroNameGuest: 'Log in to change your hero name.',
+    heroNameRequired: 'Enter a hero name.',
+    heroNameTooLong: 'Hero name must be 20 characters or fewer.',
+    heroNameSaved: 'Hero name updated.',
     resetPassword: 'Reset password',
     cancel: 'Back',
     guest: 'Play as guest (not saved)',
@@ -665,6 +677,9 @@ function applyUiLanguage() {
   setText('kb-mode-mobile', tr('mobileMode'));
   setText('kb-retry-btn', tr('retryIcon'));
   setText('kb-back-to-stages-btn', tr('stageSelect'));
+  setText('hero-name-save-btn', tr('heroNameSave'));
+  const heroNameTitle = $('status-name-window')?.querySelector('.status-title');
+  if (heroNameTitle) heroNameTitle.textContent = `▶ ${tr('heroName')}`;
   const commandTitle = $('command-page-btn')?.querySelector('span:first-child');
   if (commandTitle) commandTitle.textContent = tr('command');
   const labels = document.querySelectorAll('.setting-row-item .dq-label');
@@ -3303,6 +3318,7 @@ function renderStatusScreen() {
   const summaryEl = $('status-summary');
   const listEl = $('status-lang-list');
   if (!listEl) return;
+  renderHeroNameEditor();
 
   let codes;
   if (authToken) {
@@ -3489,6 +3505,57 @@ let keyboardInputMode = localStorage.getItem('languageQuest_keyboardMode') || 'p
 
 function currentKeyboardAlphabet() {
   return LANGUAGE_ALPHABETS[selectedLanguage] || LANGUAGE_ALPHABETS.en;
+}
+
+function setHeroNameMessage(text = '', type = '') {
+  const el = $('hero-name-msg');
+  if (!el) return;
+  el.textContent = text;
+  el.classList.toggle('error', type === 'error');
+  el.classList.toggle('success', type === 'success');
+}
+
+function renderHeroNameEditor() {
+  const input = $('hero-name-input');
+  const btn = $('hero-name-save-btn');
+  if (input) input.value = P.name || 'ゆうしゃ';
+  if (input) input.disabled = !authToken;
+  if (btn) btn.disabled = !authToken;
+  setHeroNameMessage(authToken ? '' : tr('heroNameGuest'));
+}
+
+async function saveHeroName() {
+  if (!authToken) {
+    setHeroNameMessage(tr('heroNameGuest'), 'error');
+    return;
+  }
+  const input = $('hero-name-input');
+  const username = String(input?.value || '').normalize('NFKC').trim().replace(/\s+/g, ' ');
+  if (!username) {
+    setHeroNameMessage(tr('heroNameRequired'), 'error');
+    return;
+  }
+  if (username.length > 20) {
+    setHeroNameMessage(tr('heroNameTooLong'), 'error');
+    return;
+  }
+
+  const btn = $('hero-name-save-btn');
+  if (btn) btn.disabled = true;
+  try {
+    const result = await apiFetch('/player/name', {
+      method: 'PATCH',
+      body: JSON.stringify({ username }),
+    });
+    P.name = result.user?.username || username;
+    if (input) input.value = P.name;
+    refreshHeader();
+    setHeroNameMessage(tr('heroNameSaved'), 'success');
+  } catch (err) {
+    setHeroNameMessage(err.message, 'error');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
 }
 
 function keyboardCharLabel() {
@@ -3881,6 +3948,10 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   $('logout-btn')?.addEventListener('click', logout);
+  $('hero-name-save-btn')?.addEventListener('click', saveHeroName);
+  $('hero-name-input')?.addEventListener('keydown', ev => {
+    if (ev.key === 'Enter') saveHeroName();
+  });
 
   /* ── コマンドボタン（モード選択） ── */
   $('command-page-btn')?.addEventListener('click', nextCommandPage);

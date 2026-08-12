@@ -540,6 +540,26 @@ body {
 .si-val  { font-size: 1.3rem; color: var(--dq-gold); display: block; }
 .si-lbl  { font-size: .65rem; color: var(--dq-gray); display: block; margin-top: 2px; }
 
+.status-name-window { margin-bottom: 12px; }
+.status-name-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.status-name-input {
+  flex: 1 1 180px;
+  min-width: 0;
+}
+.status-name-msg {
+  min-height: 1.2em;
+  margin: 6px 0 0;
+  color: var(--dq-blue-l);
+  font-size: .72rem;
+}
+.status-name-msg.error { color: #ff6b6b; }
+.status-name-msg.success { color: #6dff9a; }
+
 .title-badges { display: flex; flex-wrap: wrap; gap: 8px; min-height: 36px; }
 .no-badge-msg { font-size: .78rem; color: var(--dq-gray); }
 .badge-chip {

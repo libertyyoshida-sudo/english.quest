@@ -61,24 +61,33 @@ function defaultUserRelations() {
 function googleUsernameBase(payload) {
   const source = payload.name || payload.email?.split('@')[0] || `google-${payload.sub.slice(0, 8)}`;
   const base = source
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-zA-Z0-9_-]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .toLowerCase()
+    .normalize('NFKC')
+    .replace(/\s+/g, ' ')
+    .trim()
     .slice(0, 16);
   return base || `google-${payload.sub.slice(0, 8)}`;
 }
 
-async function uniqueUsernameForGoogle(payload) {
+async function uniqueUsernameForGoogle(payload, excludeUserId = null) {
   const base = googleUsernameBase(payload);
   for (let i = 0; i < 100; i++) {
     const suffix = i === 0 ? '' : String(i + 1);
     const username = `${base.slice(0, 20 - suffix.length)}${suffix}`;
     const existing = await prisma.user.findUnique({ where: { username } });
-    if (!existing) return username;
+    if (!existing || existing.id === excludeUserId) return username;
   }
   return `google-${randomBytes(5).toString('hex')}`;
+}
+
+async function improveGoogleGeneratedUsername(user, payload) {
+  if (!/^google-[a-z0-9]+$/i.test(user.username)) return user;
+  const username = await uniqueUsernameForGoogle(payload, user.id);
+  if (username === user.username || /^google-[a-z0-9]+$/i.test(username)) return user;
+  return prisma.user.update({
+    where: { id: user.id },
+    data: { username },
+    include: { profile: true },
+  });
 }
 
 async function verifyGoogleCredential(credential) {
@@ -260,6 +269,7 @@ router.post('/google', async (req, res) => {
       }
     }
 
+    user = await improveGoogleGeneratedUsername(user, payload);
     const token = authTokenFor(user);
     res.json({ token, user: publicUser(user) });
   } catch (error) {
