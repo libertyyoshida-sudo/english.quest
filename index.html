@@ -582,7 +582,13 @@
       <!-- 問題ウィンドウ -->
       <div class="dq-window question-window" id="question-window">
         <div class="question-text" id="question-text">…</div>
-        <button type="button" id="question-speak-btn" class="dq-btn dq-btn-blue question-speak-btn hidden" aria-label="読み上げ">🔊 きく</button>
+        <div class="question-audio-row">
+          <button type="button" id="question-speak-btn" class="dq-btn dq-btn-blue question-speak-btn hidden" aria-label="読み上げ">🔊 きく</button>
+          <label class="battle-auto-speech">
+            <input type="checkbox" id="battle-auto-speak-toggle">
+            <span>Auto</span>
+          </label>
+        </div>
 
         <!-- タイピング入力 -->
         <div id="typing-wrap" class="typing-wrap hidden">
@@ -601,10 +607,6 @@
           <button type="button" id="magic-hint-btn" class="dq-btn dq-btn-blue">💙 ヒント 3MP</button>
           <button type="button" id="magic-cut-btn" class="dq-btn dq-btn-blue">💙 へらす 5MP</button>
           <button type="button" id="magic-heal-btn" class="dq-btn dq-btn-green">💙 回復 4MP</button>
-          <label class="battle-auto-speech">
-            <input type="checkbox" id="battle-auto-speak-toggle">
-            <span>Auto🔊</span>
-          </label>
         </div>
         <div class="battle-magic-note" id="battle-magic-note" aria-live="polite"></div>
       </div>

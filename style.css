@@ -376,9 +376,10 @@ body {
   position: absolute;
   transform: translate(-50%, -50%);
   display: flex; flex-direction: column; align-items: center; gap: 2px;
-  pointer-events: none;
+  pointer-events: auto;
   animation: field-icon-bob 2.2s ease-in-out infinite;
   z-index: 2;
+  touch-action: manipulation;
 }
 .field-icon-emoji { font-size: 1.6rem; filter: drop-shadow(0 0 6px #000000a0); }
 .field-icon-label {
@@ -664,7 +665,11 @@ body {
   font-size: clamp(1rem, 3vw, 1.25rem);
   line-height: 1.8; color: var(--dq-white);
 }
-.question-speak-btn { font-size: .74rem; padding: 5px 12px; margin-top: 6px; }
+.question-audio-row {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  margin-top: 6px;
+}
+.question-speak-btn { font-size: .74rem; padding: 5px 12px; }
 
 .battle-magic-row {
   display: flex;
@@ -1069,6 +1074,7 @@ body {
   color: var(--dq-blue-l); font-size: .72rem;
   border: 1px solid var(--dq-blue); padding: 5px 8px;
   background: #0a0a20; cursor: pointer;
+  min-height: 30px;
 }
 .battle-auto-speech input { accent-color: var(--dq-gold); }
 

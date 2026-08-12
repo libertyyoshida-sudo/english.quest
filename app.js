@@ -4205,11 +4205,13 @@ document.addEventListener('DOMContentLoaded', () => {
   $('inn-auto-stop-btn')?.addEventListener('click', stopInnAutoSpeak);
   $('speech-rate-range')?.addEventListener('input', e => setSpeechRate(e.target.value));
 
-  document.addEventListener('click', e => {
+  document.addEventListener('pointerdown', e => {
     const icon = e.target.closest?.('.field-icon');
     if (!icon || icon.classList.contains('field-icon-locked')) return;
     const fieldCanvas = icon.closest('#field-canvas');
     const worldCanvas = icon.closest('#world-canvas');
+    if (!fieldCanvas && !worldCanvas) return;
+    e.preventDefault();
     if (fieldCanvas && icon.dataset.mode) {
       touchedFieldIcons.add(icon.dataset.mode);
       enterCommand(icon.dataset.mode);
