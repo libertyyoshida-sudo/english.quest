@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Language Quest</title>
-  <script type="module" crossorigin src="./assets/index-BpZQb0ab.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-BH6y6Xi_.css">
+  <script type="module" crossorigin src="./assets/index-Dso_YMCo.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-D52xror2.css">
 </head>
 <body>
 
@@ -128,7 +128,7 @@
 
       <!-- メッセージウィンドウ -->
       <div class="dq-window msg-window" id="field-msg">
-        <p id="field-msg-text">どこへ　むかうか？　まおうをたおすには　ことばのちからが　ひつようだ！</p>
+        <p id="field-msg-text">どこへ　むかうか？　言語をマスターすると、その国でエンディングが見られる！</p>
         <button type="button" id="field-msg-close" class="msg-window-close" aria-label="メッセージを閉じる">✕</button>
       </div>
 
@@ -363,6 +363,15 @@
         <button type="button" id="keyboard-msg-close" class="msg-window-close" aria-label="メッセージを閉じる">✕</button>
       </div>
 
+      <div class="dq-window keyboard-setup-window">
+        <div class="keyboard-mode-row" role="group" aria-label="入力モード">
+          <button type="button" id="kb-mode-pc" class="dq-btn kb-mode-btn">PC配列</button>
+          <button type="button" id="kb-mode-mobile" class="dq-btn kb-mode-btn">スマホ入力</button>
+        </div>
+        <div class="keyboard-setup-title" id="keyboard-setup-title">⌨️ 入力設定</div>
+        <div class="keyboard-setup-text" id="keyboard-setup-text"></div>
+      </div>
+
       <div class="dq-window kb-stage-window" id="keyboard-stage-select">
         <div class="status-title">▶ れんしゅうステージを えらぼう</div>
         <div class="kb-stage-list" id="keyboard-stage-list"></div>
@@ -400,7 +409,24 @@
 
       <div class="dq-window virtual-keyboard-window">
         <div class="virtual-keyboard" id="virtual-keyboard"></div>
-        <div class="kb-hint">🔵 = つぎに うつ文字。下の配列は選択言語の標準的なキーボード配置です。</div>
+        <div class="kb-hint" id="kb-layout-hint">🔵 = つぎに うつ文字。下の配列は選択言語の標準的なキーボード配置です。</div>
+      </div>
+    </section>
+
+    <!-- ────────────────────────────────
+         言語マスター エンディング
+    ──────────────────────────────── -->
+    <section id="screen-ending" class="screen">
+      <div class="dq-window ending-window">
+        <div class="ending-title" id="ending-title">言語マスター！</div>
+        <div class="ending-hero" id="ending-hero">👑</div>
+        <div class="ending-lang" id="ending-lang"></div>
+        <p class="ending-text" id="ending-text"></p>
+        <div class="ending-stats" id="ending-stats"></div>
+        <div class="result-btns">
+          <button id="ending-keep-learning-btn" class="dq-btn dq-btn-gold" type="button">🧠 学びを続ける</button>
+          <button id="ending-world-btn" class="dq-btn dq-btn-blue" type="button">◀ せかいマップへ</button>
+        </div>
       </div>
     </section>
 
