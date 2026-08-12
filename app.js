@@ -1530,11 +1530,13 @@ function buildPhraseQ(item, pool) {
 }
 
 function buildGrammarQ(item) {
+  const answer = item.choices?.[item.ans] || '';
   return {
     id: item.id, type:'grammar',
     qText: item.q,
     choices: item.choices, ans: item.ans,
     detail: `解説: ${item.exp}`,
+    speakWord: item.q.replace('_____', answer),
   };
 }
 
@@ -1754,7 +1756,9 @@ function setSpeechRate(value) {
   speechRate = Math.min(3, Math.max(0.5, Number(value) || 0.85));
   localStorage.setItem('languageQuest_speechRate', String(speechRate));
   if ($('speech-rate-range')) $('speech-rate-range').value = String(speechRate);
+  if ($('battle-speech-rate-range')) $('battle-speech-rate-range').value = String(speechRate);
   if ($('speech-rate-label')) $('speech-rate-label').textContent = `${speechRate.toFixed(2).replace(/0$/, '').replace(/\.$/, '')}x`;
+  if ($('battle-speech-rate-label')) $('battle-speech-rate-label').textContent = `${speechRate.toFixed(2).replace(/0$/, '').replace(/\.$/, '')}x`;
 }
 
 function setBattleAutoSpeak(enabled) {
@@ -4204,6 +4208,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   $('inn-auto-stop-btn')?.addEventListener('click', stopInnAutoSpeak);
   $('speech-rate-range')?.addEventListener('input', e => setSpeechRate(e.target.value));
+  $('battle-speech-rate-range')?.addEventListener('input', e => setSpeechRate(e.target.value));
 
   document.addEventListener('pointerdown', e => {
     const icon = e.target.closest?.('.field-icon');

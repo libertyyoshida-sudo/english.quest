@@ -1077,6 +1077,16 @@ body {
   min-height: 30px;
 }
 .battle-auto-speech input { accent-color: var(--dq-gold); }
+.battle-rate-control {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: var(--dq-blue-l); font-size: .68rem;
+  border: 1px solid #333366; background: #0a0a20;
+  padding: 5px 8px; min-height: 30px;
+}
+.battle-rate-control input {
+  width: 92px;
+  accent-color: var(--dq-gold);
+}
 
 #screen-inn .msg-window { padding: 8px 14px; margin-bottom: 8px; }
 #screen-inn .msg-window p { font-size: .82rem; line-height: 1.5; margin: 0; padding-right: 26px; }
