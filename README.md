@@ -29,6 +29,10 @@ npm run build
 npm run deploy
 ```
 
+## 開発・拡充計画
+
+問題追加、Shop解放、Neon Database反映、デプロイ運用は [English Quest Content Expansion Plan](docs/content-expansion-plan.md) に従って進めます。
+
 ## セキュリティ
 
 このリポジトリでは、依存関係の脆弱性確認として `npm audit --audit-level=moderate` を実行しています。
