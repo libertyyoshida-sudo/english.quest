@@ -21,6 +21,7 @@ const API_BASE = import.meta.env.DEV
   : 'https://english-quest-26nu.onrender.com/api';
 let authToken = localStorage.getItem('eigoDQ_token') || null;
 let selectedLanguage = localStorage.getItem('languageQuest_language') || 'en';
+let uiLang = localStorage.getItem('languageQuest_uiLang') || 'ja';
 const questionDataCache = {};
 const questionDataLoading = {};
 let localQuestionDataLoading = null;
@@ -120,9 +121,12 @@ function logout() {
   location.reload();
 }
 
-function showLoginError(msg) {
+function showLoginError(msg, type = 'error') {
   const el = $('login-error');
-  if (el) el.textContent = msg || '';
+  if (el) {
+    el.textContent = msg || '';
+    el.classList.toggle('success', Boolean(msg) && type === 'success');
+  }
 }
 
 // ログイン/登録中のローディング表示。Renderの無料プランはスリープからの復帰に
@@ -134,17 +138,21 @@ function setLoginLoading(isLoading) {
 
   const loadingEl = $('login-loading');
   const textEl = $('login-loading-text');
-  const controls = [$('login-btn'), $('register-btn'), $('login-username'), $('login-password')];
+  const controls = [
+    $('login-btn'), $('register-btn'), $('forgot-password-btn'), $('reset-password-btn'),
+    $('reset-cancel-btn'), $('login-username'), $('login-email'), $('login-password'),
+    $('reset-new-password'),
+  ];
 
   controls.forEach(el => { if (el) el.disabled = isLoading; });
 
   if (isLoading) {
     loadingEl?.classList.remove('hidden');
     const messages = [
-      { delay: 0,     text: '🔮 つうしんちゅう…' },
-      { delay: 4000,  text: '⏳ サーバーがねむっているようです…おこしています' },
-      { delay: 12000, text: '🌙 はじめてのアクセスは めざめに1分ほどかかることがあります。もう少しお待ちください…' },
-      { delay: 30000, text: '🐢 もうすぐです！このままお待ちください…' },
+      { delay: 0,     text: tr('loading0') },
+      { delay: 4000,  text: tr('loading1') },
+      { delay: 12000, text: tr('loading2') },
+      { delay: 30000, text: tr('loading3') },
     ];
     if (textEl) textEl.textContent = messages[0].text;
     messages.slice(1).forEach(({ delay, text }) => {
@@ -390,6 +398,296 @@ function pickEnemy(tier, langCode = selectedLanguage) {
    8. ユーティリティ
 ══════════════════════════════════════════════════ */
 const $ = id => document.getElementById(id);
+const I18N = {
+  ja: {
+    appSub: 'ことばの冒険',
+    appCopy: '言語習得への旅',
+    usernamePh: 'なまえ / メールアドレス',
+    emailPh: 'メールアドレス（とうろく・再設定に必要）',
+    passwordPh: 'ひみつのコード（4文字以上）',
+    newPasswordPh: '新しいひみつのコード（4文字以上）',
+    login: 'つづきから',
+    register: 'はじめから とうろく',
+    forgot: 'ひみつのコードを忘れた',
+    resetPassword: '再設定する',
+    cancel: 'もどる',
+    guest: 'ゲストであそぶ（セーブされません）',
+    or: '▼ または',
+    backTown: '◀ まちへもどる',
+    backTownShort: '◀ まちへ',
+    backField: '◀ フィールドへもどる',
+    backWorld: '◀ せかいマップへ',
+    keepLearning: '🧠 学びを続ける',
+    listenAgain: '🔊 もう一度きく',
+    listenShort: '🔊 きく',
+    speak: '🎤 はなす！',
+    hintMagic: '💙 ヒント 3MP',
+    cutMagic: '💙 へらす 5MP',
+    healMagic: '💙 回復 4MP',
+    next: '▶ つぎへ',
+    goInn: '▶ 宿屋へ',
+    retry: 'もう一度',
+    retryIcon: '🔁 もういちど',
+    field: 'フィールドへ',
+    close: 'とじる',
+    ok: 'よし！',
+    stageSelect: '◀ ステージ選択へ',
+    pcMode: 'PC配列',
+    mobileMode: 'スマホ入力',
+    learningLanguage: '学習言語',
+    difficulty: '難易度',
+    questionCount: '問題数',
+    searchLanguage: '言語を検索',
+    command: '▶ コマンド',
+    countSuffix: '問',
+    noLanguage: '該当する言語がありません',
+    shopUnlock: 'Shopで解放',
+    owned: '所持済み',
+    buy: '買う',
+    equip: 'そうびする',
+    use: 'つかう',
+    loginRequired: 'なまえ/メールアドレスとひみつのコードを入力してください',
+    registerRequired: 'なまえ、メールアドレス、ひみつのコードを入力してください',
+    passwordShort: 'ひみつのコードは4文字以上にしてください',
+    emailInvalid: 'メールアドレスの形式を確認してください',
+    resetRequired: 'なまえ、登録メールアドレス、新しいひみつのコードを入力してください',
+    resetDone: 'ひみつのコードを再設定しました。新しいコードでログインしてください。',
+    loading0: '🔮 つうしんちゅう…',
+    loading1: '⏳ サーバーがねむっているようです…おこしています',
+    loading2: '🌙 はじめてのアクセスは めざめに1分ほどかかることがあります。もう少しお待ちください…',
+    loading3: 'もうすぐです！このままお待ちください…',
+    fieldMessage: lang => `どこへ　むかうか？　${lang.label}をマスターすると、その国でエンディングが見られる！`,
+    typingPh: lang => `${lang.label}でうってね（Enterでかいとう）`,
+    kbTypingPh: lang => `${lang.label}でうってね`,
+    lockedLanguage: lang => `${lang?.label || 'この言語'}はまだ学べません。Shopで入門書を購入してください。`,
+    commandLock: req => `${req.label}が必要です。Shopで購入できます。`,
+    commandLabels: {
+      vocab: ['たんごバトル', '+10EXP'],
+      grammar: ['まほうぶんぽう', '+15EXP'],
+      typing: ['タイピング修行', '+12EXP'],
+      listening: ['リスニング訓練', '+18EXP'],
+      speaking: ['スピーキング道場', '+20EXP'],
+      smart: ['スマート学習', '効率学習'],
+      weak: ['よわてき集中', '+25EXP'],
+      phrase: ['フレーズ練習', '+16EXP'],
+      culture: ['文化・地理クイズ', '+18EXP'],
+      review: ['まなびの図書館', 'よみ返し'],
+      inn: ['やどや', 'HP回復'],
+      keyboard: ['キーボードどうじょう', 'タイピング基礎'],
+      shop: ['Shop', 'Goldで購入'],
+      world: ['まちの外へ（せかいマップ）', 'ランダムせんとう'],
+    },
+    filterLabels: {
+      all: 'すべて',
+      vocab: 'たんご',
+      grammar: 'ぶんぽう',
+      phrase: '💬 フレーズ',
+      culture: '🏛️ 文化',
+      new: '🆕 未学習',
+      low: '📖 練習不足',
+      weak: '🔥 にがて',
+      mastered: '✅ マスター',
+    },
+  },
+  en: {
+    appSub: 'Word Adventure',
+    appCopy: 'Your language mastery journey',
+    usernamePh: 'Name or email',
+    emailPh: 'Email for signup and password reset',
+    passwordPh: 'Password (4+ characters)',
+    newPasswordPh: 'New password (4+ characters)',
+    login: 'Continue',
+    register: 'Create account',
+    forgot: 'Forgot password?',
+    resetPassword: 'Reset password',
+    cancel: 'Back',
+    guest: 'Play as guest (not saved)',
+    or: '▼ or',
+    backTown: '◀ Back to town',
+    backTownShort: '◀ Town',
+    backField: '◀ Back to field',
+    backWorld: '◀ World map',
+    keepLearning: '🧠 Keep learning',
+    listenAgain: '🔊 Listen again',
+    listenShort: '🔊 Listen',
+    speak: '🎤 Speak',
+    hintMagic: '💙 Hint 3MP',
+    cutMagic: '💙 Reduce 5MP',
+    healMagic: '💙 Heal 4MP',
+    next: '▶ Next',
+    goInn: '▶ Inn',
+    retry: 'Try again',
+    retryIcon: '🔁 Try again',
+    field: 'Field',
+    close: 'Close',
+    ok: 'OK',
+    stageSelect: '◀ Stage select',
+    pcMode: 'PC layout',
+    mobileMode: 'Mobile input',
+    learningLanguage: 'Learning language',
+    difficulty: 'Difficulty',
+    questionCount: 'Questions',
+    searchLanguage: 'Search languages',
+    command: '▶ Commands',
+    countSuffix: ' questions',
+    noLanguage: 'No matching language',
+    shopUnlock: 'Unlock in Shop',
+    owned: 'Owned',
+    buy: 'Buy',
+    equip: 'Equip',
+    use: 'Use',
+    loginRequired: 'Enter your name/email and password.',
+    registerRequired: 'Enter your name, email, and password.',
+    passwordShort: 'Password must be at least 4 characters.',
+    emailInvalid: 'Check the email address format.',
+    resetRequired: 'Enter your name, registered email, and new password.',
+    resetDone: 'Password reset. Log in with your new password.',
+    loading0: '🔮 Connecting...',
+    loading1: '⏳ The server may be waking up...',
+    loading2: '🌙 First access can take about a minute. Please wait a little longer...',
+    loading3: 'Almost there. Please keep this page open...',
+    fieldMessage: lang => `Where will you go? Master ${lang.label} to see that country ending.`,
+    typingPh: lang => `Type in ${lang.label} (Enter to answer)`,
+    kbTypingPh: lang => `Type in ${lang.label}`,
+    lockedLanguage: lang => `${lang?.label || 'This language'} is locked. Buy its starter book in the Shop.`,
+    commandLock: req => `${req.label} is required. You can buy it in the Shop.`,
+    commandLabels: {
+      vocab: ['Vocabulary Battle', '+10EXP'],
+      grammar: ['Grammar Magic', '+15EXP'],
+      typing: ['Typing Training', '+12EXP'],
+      listening: ['Listening Drill', '+18EXP'],
+      speaking: ['Speaking Dojo', '+20EXP'],
+      smart: ['Smart Learning', 'Efficient'],
+      weak: ['Weak Spot Focus', '+25EXP'],
+      phrase: ['Phrase Practice', '+16EXP'],
+      culture: ['Culture & Geography', '+18EXP'],
+      review: ['Learning Library', 'Review'],
+      inn: ['Inn', 'Recover HP'],
+      keyboard: ['Keyboard Dojo', 'Typing basics'],
+      shop: ['Shop', 'Spend Gold'],
+      world: ['Outside Town (World Map)', 'Random battle'],
+    },
+    filterLabels: {
+      all: 'All',
+      vocab: 'Words',
+      grammar: 'Grammar',
+      phrase: '💬 Phrases',
+      culture: '🏛️ Culture',
+      new: '🆕 New',
+      low: '📖 Needs practice',
+      weak: '🔥 Weak spots',
+      mastered: '✅ Mastered',
+    },
+  },
+};
+
+function tr(key, ...args) {
+  const value = I18N[uiLang]?.[key] ?? I18N.ja[key] ?? key;
+  return typeof value === 'function' ? value(...args) : value;
+}
+
+function setText(id, text) {
+  const el = $(id);
+  if (el) el.textContent = text;
+}
+
+function setPlaceholder(id, text) {
+  const el = $(id);
+  if (el) el.placeholder = text;
+}
+
+function setUiLanguage(lang) {
+  uiLang = lang === 'en' ? 'en' : 'ja';
+  localStorage.setItem('languageQuest_uiLang', uiLang);
+  applyUiLanguage();
+  refreshLanguageText();
+}
+
+function applyUiLanguage() {
+  document.documentElement.lang = uiLang === 'en' ? 'en' : 'ja';
+  document.querySelectorAll('.ui-lang-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.id === `ui-lang-${uiLang}`);
+  });
+  const titleSubs = document.querySelectorAll('.title-logo-sub');
+  if (titleSubs[0]) titleSubs[0].textContent = tr('appSub');
+  setText('title-language-copy', tr('appCopy'));
+  setPlaceholder('login-username', tr('usernamePh'));
+  setPlaceholder('login-email', tr('emailPh'));
+  setPlaceholder('login-password', tr('passwordPh'));
+  setPlaceholder('reset-new-password', tr('newPasswordPh'));
+  setPlaceholder('language-search', tr('searchLanguage'));
+  setText('login-btn', tr('login'));
+  setText('register-btn', tr('register'));
+  setText('forgot-password-btn', tr('forgot'));
+  setText('reset-password-btn', tr('resetPassword'));
+  setText('reset-cancel-btn', tr('cancel'));
+  setText('title-start', tr('guest'));
+  const orText = document.querySelector('.title-copy');
+  if (orText) orText.textContent = tr('or');
+  setText('shop-back-btn', tr('backTown'));
+  setText('status-back-btn', tr('backTown'));
+  setText('keyboard-back-btn', tr('backTownShort'));
+  setText('inn-flee-btn', tr('backTownShort'));
+  setText('world-back-btn', tr('backTown'));
+  setText('battle-flee-btn', tr('backField'));
+  setText('ending-keep-learning-btn', tr('keepLearning'));
+  setText('ending-world-btn', tr('backWorld'));
+  setText('listen-play-btn', tr('listenAgain'));
+  setText('question-speak-btn', tr('listenShort'));
+  setText('speak-btn', tr('speak'));
+  setText('magic-hint-btn', tr('hintMagic'));
+  setText('magic-cut-btn', tr('cutMagic'));
+  setText('magic-heal-btn', tr('healMagic'));
+  setText('next-btn', tr('next'));
+  setText('retry-btn', tr('retry'));
+  setText('field-btn', tr('field'));
+  setText('item-drop-close', tr('close'));
+  setText('lu-close', tr('close'));
+  setText('ti-close', tr('ok'));
+  setText('kb-mode-pc', tr('pcMode'));
+  setText('kb-mode-mobile', tr('mobileMode'));
+  setText('kb-retry-btn', tr('retryIcon'));
+  setText('kb-back-to-stages-btn', tr('stageSelect'));
+  const commandTitle = $('command-page-btn')?.querySelector('span:first-child');
+  if (commandTitle) commandTitle.textContent = tr('command');
+  const labels = document.querySelectorAll('.setting-row-item .dq-label');
+  if (labels[0]) labels[0].textContent = tr('learningLanguage');
+  if (labels[1]) labels[1].textContent = tr('difficulty');
+  if (labels[2]) labels[2].textContent = tr('questionCount');
+  updateCommandButtonLabels();
+  updateFilterButtonLabels();
+  refreshCountOptions();
+}
+
+function updateCommandButtonLabels() {
+  document.querySelectorAll('.dq-cmd-btn').forEach(btn => {
+    const labels = tr('commandLabels');
+    const pair = labels?.[btn.dataset.mode];
+    if (!pair) return;
+    const icon = btn.querySelector('.cmd-icon')?.textContent || '';
+    btn.innerHTML = `<span class="cmd-icon">${icon}</span> ${pair[0]}<span class="cmd-exp">${pair[1]}</span>`;
+  });
+}
+
+function refreshCountOptions() {
+  const select = $('count-select');
+  if (!select) return;
+  const value = select.value || '5';
+  [3, 5, 10].forEach(count => {
+    const opt = select.querySelector(`option[value="${count}"]`);
+    if (opt) opt.textContent = uiLang === 'en' ? `${count}${tr('countSuffix')}` : `${count}${tr('countSuffix')}`;
+  });
+  select.value = value;
+}
+
+function updateFilterButtonLabels() {
+  const labels = tr('filterLabels');
+  document.querySelectorAll('.inn-filter-btn').forEach(btn => {
+    const label = labels?.[btn.dataset.filter];
+    if (label) btn.textContent = label;
+  });
+}
+
 const shuffle = arr => {
   const a = [...arr];
   for (let i = a.length-1; i > 0; i--) {
@@ -447,7 +745,7 @@ function canUseCommand(mode) {
 
 function commandLockMessage(mode) {
   const req = COMMAND_REQUIREMENTS[mode];
-  return req ? `${req.label}が必要です。Shopで購入できます。` : '';
+  return req ? tr('commandLock', req) : '';
 }
 
 function canEnterLanguageArea(code) {
@@ -605,7 +903,7 @@ function populateLanguageSelect() {
     const opt = document.createElement('option');
     opt.value = lang.code;
     const locked = !isLanguageUnlocked(lang.code);
-    opt.textContent = `${locked ? '🔒 ' : ''}${lang.label}（${lang.native}）${lang.status ? ` - ${lang.status}` : ''}${locked ? ' - Shopで解放' : ''}`;
+    opt.textContent = `${locked ? '🔒 ' : ''}${lang.label}（${lang.native}）${lang.status ? ` - ${lang.status}` : ''}${locked ? ` - ${tr('shopUnlock')}` : ''}`;
     select.appendChild(opt);
   });
   if (languages.some(lang => lang.code === selectedLanguage)) {
@@ -615,7 +913,7 @@ function populateLanguageSelect() {
   } else {
     const opt = document.createElement('option');
     opt.value = selectedLanguage;
-    opt.textContent = '該当する言語がありません';
+    opt.textContent = tr('noLanguage');
     opt.disabled = true;
     select.appendChild(opt);
   }
@@ -623,20 +921,21 @@ function populateLanguageSelect() {
 
 function refreshLanguageText() {
   const lang = currentLanguage();
-  if ($('title-language-copy')) $('title-language-copy').textContent = '言語習得への旅';
+  if ($('title-language-copy')) $('title-language-copy').textContent = tr('appCopy');
   if ($('field-msg-text')) {
-    $('field-msg-text').textContent = `どこへ　むかうか？　${lang.label}をマスターすると、その国でエンディングが見られる！`;
+    $('field-msg-text').textContent = tr('fieldMessage', lang);
   }
-  if ($('typing-input')) $('typing-input').placeholder = `${lang.label}でうってね（Enterでかいとう）`;
+  if ($('typing-input')) $('typing-input').placeholder = tr('typingPh', lang);
   refreshLevelOptions();
   refreshCommandLocks();
+  applyUiLanguage();
 }
 
 function refreshLevelOptions() {
   const select = $('level-select');
   if (!select) return;
   const options = [
-    ['auto', 'おまかせ（勇者レベルに連動）', 'おまかせ（ゆうしゃレベルに連動）'],
+    ['auto', 'Auto (matches hero level)', 'おまかせ（ゆうしゃレベルに連動）'],
     ['1', 'Lv.1（TOEIC300）', 'Lv.1（入門）'],
     ['2', 'Lv.2（TOEIC400）', 'Lv.2（基礎）'],
     ['3', 'Lv.3（TOEIC500）', 'Lv.3（初級）'],
@@ -647,14 +946,14 @@ function refreshLevelOptions() {
     ['8', 'Lv.8（TOEIC860）', 'Lv.8（実践）'],
     ['9', 'Lv.9（TOEIC900）', 'Lv.9（熟練）'],
     ['10', 'Lv.10（TOEIC990）', 'Lv.10（達人）'],
-    ['all', 'ぜんぶ（ランダム混合）', 'ぜんぶ（ランダム混合）'],
+    ['all', 'All levels (random)', 'ぜんぶ（ランダム混合）'],
   ];
   const currentValue = select.value || 'auto';
   select.innerHTML = '';
   options.forEach(([value, enText, otherText]) => {
     const opt = document.createElement('option');
     opt.value = value;
-    opt.textContent = selectedLanguage === 'en' ? enText : otherText;
+    opt.textContent = uiLang === 'en' ? enText : otherText;
     select.appendChild(opt);
   });
   select.value = currentValue;
@@ -1442,7 +1741,7 @@ function renderQuestion() {
   $('speaking-wrap').classList.add('hidden');
   $('battle-msg').classList.add('hidden');
   if ($('battle-magic-note')) $('battle-magic-note').textContent = '';
-  if ($('next-btn')) $('next-btn').textContent = '▶ つぎへ';
+  if ($('next-btn')) $('next-btn').textContent = tr('next');
 
   if (q.type === 'typing') {
     $('typing-wrap').classList.remove('hidden');
@@ -1642,7 +1941,7 @@ async function handleAnswer(userAns, userText) {
     if (defeated) {
       battle.defeated = true;
       msg += '\nHPが0になった… Goldが半分になり、宿屋へ運ばれた。';
-      if ($('next-btn')) $('next-btn').textContent = '▶ 宿屋へ';
+      if ($('next-btn')) $('next-btn').textContent = tr('goInn');
     }
   }
 
@@ -1900,19 +2199,19 @@ function renderInventoryWindow() {
     if (item.type === 'weapon' || item.type === 'armor') {
       const btn = document.createElement('button');
       btn.className   = 'dq-btn dq-btn-blue inv-btn';
-      btn.textContent = 'そうびする';
+      btn.textContent = tr('equip');
       btn.addEventListener('click', () => equipItem(idx));
       row.appendChild(btn);
     } else if (item.type === 'consumable') {
       const btn = document.createElement('button');
       btn.className   = 'dq-btn dq-btn-green inv-btn';
-      btn.textContent = 'つかう';
+      btn.textContent = tr('use');
       btn.addEventListener('click', () => useItem(idx));
       row.appendChild(btn);
     } else {
       const badge = document.createElement('span');
       badge.className = 'inv-equipped';
-      badge.textContent = '所持';
+      badge.textContent = tr('owned');
       row.appendChild(badge);
     }
 
@@ -2444,11 +2743,11 @@ function renderShop() {
         <span class="shop-name">${item.name}</span>
         <span class="shop-desc">${itemStatText(item)}</span>
       </span>
-      <span class="shop-price">${owned ? '所持済み' : `${item.price}G`}</span>
+      <span class="shop-price">${owned ? tr('owned') : `${item.price}G`}</span>
     `;
     const btn = document.createElement('button');
     btn.className = 'dq-btn dq-btn-gold shop-buy-btn';
-    btn.textContent = owned ? 'OK' : '買う';
+    btn.textContent = owned ? 'OK' : tr('buy');
     btn.disabled = owned || P.gold < item.price;
     btn.addEventListener('click', () => buyShopItem(item.id));
     row.appendChild(btn);
@@ -2496,7 +2795,7 @@ function renderWorldMap() {
     if ($('world-msg-text')) {
       $('world-msg-text').textContent = 'せかいちずが ひろがった！ まずは5大陸からえらぼう。大陸マップに入ると、主要なことばの国旗が見えるぞ。';
     }
-    if ($('world-back-btn')) $('world-back-btn').textContent = '◀ まちへもどる';
+    if ($('world-back-btn')) $('world-back-btn').textContent = tr('backTown');
     return;
   }
 
@@ -2522,7 +2821,7 @@ function renderWorldMap() {
     if ($('world-msg-text')) {
       $('world-msg-text').textContent = `${region.label}は大きい！ ヨーロッパ・中東・東アジアから行き先をえらぼう。`;
     }
-    if ($('world-back-btn')) $('world-back-btn').textContent = '◀ せかいちずへ';
+    if ($('world-back-btn')) $('world-back-btn').textContent = uiLang === 'en' ? '◀ World map' : '◀ せかいちずへ';
     return;
   }
 
@@ -3107,6 +3406,12 @@ function keyboardLayoutName(code = selectedLanguage) {
 function keyboardSetupGuideText() {
   const lang = currentLanguage();
   const layout = keyboardLayoutName(lang.code);
+  if (uiLang === 'en') {
+    if (keyboardInputMode === 'mobile') {
+      return `${lang.label} mobile input mode. Tap the on-screen keys to practice without changing your device settings. On a real phone, add ${lang.label} from your OS keyboard settings.`;
+    }
+    return `PC layout mode: ${layout}. Browsers cannot change your OS keyboard automatically, so this dojo treats it as configured and lets you practice with physical keys or the on-screen keyboard. For real input, add ${lang.label} / ${layout} in your OS input settings.`;
+  }
   if (keyboardInputMode === 'mobile') {
     return `${lang.label}のスマホ入力モード。下の画面キーをタップすれば、端末のキーボード設定なしで練習できます。実機では多くの言語でOSの「キーボード追加」から ${lang.label} を追加して入力します。`;
   }
@@ -3117,12 +3422,16 @@ function renderKeyboardAssist() {
   document.querySelectorAll('.kb-mode-btn').forEach(btn => {
     btn.classList.toggle('active', btn.id === `kb-mode-${keyboardInputMode}`);
   });
-  if ($('keyboard-setup-title')) $('keyboard-setup-title').textContent = `⌨️ ${keyboardLayoutName()} / ${keyboardInputMode === 'mobile' ? 'スマホ入力' : 'PC配列'}`;
+  if ($('keyboard-setup-title')) $('keyboard-setup-title').textContent = `⌨️ ${keyboardLayoutName()} / ${keyboardInputMode === 'mobile' ? tr('mobileMode') : tr('pcMode')}`;
   if ($('keyboard-setup-text')) $('keyboard-setup-text').textContent = keyboardSetupGuideText();
   if ($('kb-layout-hint')) {
-    $('kb-layout-hint').textContent = keyboardInputMode === 'mobile'
-      ? '青いキーをタップして練習。スマホでもPC配列の位置感を覚えられます。'
-      : '青いキーが次に打つ文字。実キー入力でも、下のキーをクリックしても練習できます。';
+    $('kb-layout-hint').textContent = uiLang === 'en'
+      ? (keyboardInputMode === 'mobile'
+        ? 'Tap the blue key to practice. Mobile mode also helps you learn the PC key positions.'
+        : 'The blue key is the next target. Use your physical keyboard or click the keys below.')
+      : (keyboardInputMode === 'mobile'
+        ? '青いキーをタップして練習。スマホでもPC配列の位置感を覚えられます。'
+        : '青いキーが次に打つ文字。実キー入力でも、下のキーをクリックしても練習できます。');
   }
 }
 
@@ -3143,7 +3452,9 @@ function goToKeyboard() {
   playFieldBGM();
   keyboardState = null;
   if ($('keyboard-msg-text')) {
-    $('keyboard-msg-text').textContent = `キーボードどうじょうへ ようこそ！ ${currentLanguage().label}の${keyboardCharLabel()}と タイピングを れんしゅうしよう。設定していなくても画面キーで入力できる。`;
+    $('keyboard-msg-text').textContent = uiLang === 'en'
+      ? `Welcome to the Keyboard Dojo. Practice ${currentLanguage().label} ${keyboardCharLabel()} and typing. You can use the on-screen keys even without changing OS settings.`
+      : `キーボードどうじょうへ ようこそ！ ${currentLanguage().label}の${keyboardCharLabel()}と タイピングを れんしゅうしよう。設定していなくても画面キーで入力できる。`;
   }
   $('keyboard-stage-select')?.classList.remove('hidden');
   $('keyboard-practice')?.classList.add('hidden');
@@ -3190,7 +3501,7 @@ function startKeyboardStage(stageId) {
   };
   if ($('kb-typing-input')) {
     $('kb-typing-input').value = '';
-    $('kb-typing-input').placeholder = `${currentLanguage().label}でうってね`;
+    $('kb-typing-input').placeholder = tr('kbTypingPh', currentLanguage());
   }
   $('keyboard-stage-select')?.classList.add('hidden');
   $('keyboard-result')?.classList.add('hidden');
@@ -3318,20 +3629,40 @@ function finishKeyboardStage() {
   keyboardState.finishedStageId = stage.id;
 }
 
+function showPasswordResetPanel(show) {
+  $('password-reset-panel')?.classList.toggle('hidden', !show);
+  showLoginError('');
+  if (show) setTimeout(() => $('reset-new-password')?.focus(), 50);
+}
+
 /* ══════════════════════════════════════════════════
    23. イベントリスナー
 ══════════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', () => {
   refreshSpeechVoices();
   if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = refreshSpeechVoices;
+  applyUiLanguage();
   populateLanguageSelect();
   refreshLanguageText();
+
+  $('ui-lang-ja')?.addEventListener('click', () => {
+    setUiLanguage('ja');
+    populateLanguageSelect();
+    renderShop();
+    renderKeyboardAssist();
+  });
+  $('ui-lang-en')?.addEventListener('click', () => {
+    setUiLanguage('en');
+    populateLanguageSelect();
+    renderShop();
+    renderKeyboardAssist();
+  });
 
   $('language-select')?.addEventListener('change', e => {
     if (e.target.selectedOptions[0]?.disabled) return;
     if (!isLanguageUnlocked(e.target.value)) {
       const lang = LANGUAGE_OPTIONS.find(l => l.code === e.target.value);
-      alert(`${lang?.label || 'この言語'}はまだ学べません。Shopで入門書を購入してください。`);
+      alert(tr('lockedLanguage', lang));
       populateLanguageSelect();
       return;
     }
@@ -3361,7 +3692,7 @@ document.addEventListener('DOMContentLoaded', () => {
   $('login-btn')?.addEventListener('click', async () => {
     const username = $('login-username').value.trim();
     const password = $('login-password').value;
-    if (!username || !password) { showLoginError('なまえとひみつのコードを入力してください'); return; }
+    if (!username || !password) { showLoginError(tr('loginRequired')); return; }
     showLoginError('');
     setLoginLoading(true);
     try {
@@ -3376,14 +3707,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
   $('register-btn')?.addEventListener('click', async () => {
     const username = $('login-username').value.trim();
+    const email = $('login-email').value.trim();
     const password = $('login-password').value;
-    if (!username || !password) { showLoginError('なまえとひみつのコードを入力してください'); return; }
-    if (password.length < 4) { showLoginError('ひみつのコードは4文字以上にしてください'); return; }
+    if (!username || !email || !password) { showLoginError(tr('registerRequired')); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showLoginError(tr('emailInvalid')); return; }
+    if (password.length < 4) { showLoginError(tr('passwordShort')); return; }
     showLoginError('');
     setLoginLoading(true);
     try {
-      const data = await apiFetch('/auth/register', { method: 'POST', body: JSON.stringify({ username, password }) });
+      const data = await apiFetch('/auth/register', { method: 'POST', body: JSON.stringify({ username, email, password }) });
       await handleAuthSuccess(data.token);
+    } catch (err) {
+      showLoginError(err.message);
+    } finally {
+      setLoginLoading(false);
+    }
+  });
+
+  $('forgot-password-btn')?.addEventListener('click', () => showPasswordResetPanel(true));
+  $('reset-cancel-btn')?.addEventListener('click', () => showPasswordResetPanel(false));
+  $('reset-password-btn')?.addEventListener('click', async () => {
+    const username = $('login-username').value.trim();
+    const email = $('login-email').value.trim();
+    const newPassword = $('reset-new-password').value;
+    if (!username || !email || !newPassword) { showLoginError(tr('resetRequired')); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showLoginError(tr('emailInvalid')); return; }
+    if (newPassword.length < 4) { showLoginError(tr('passwordShort')); return; }
+    showLoginError('');
+    setLoginLoading(true);
+    try {
+      await apiFetch('/auth/reset-password', { method: 'POST', body: JSON.stringify({ username, email, newPassword }) });
+      $('login-password').value = '';
+      $('reset-new-password').value = '';
+      showPasswordResetPanel(false);
+      showLoginError(tr('resetDone'), 'success');
     } catch (err) {
       showLoginError(err.message);
     } finally {
