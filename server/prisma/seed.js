@@ -5,6 +5,14 @@ import {
 } from '../../shared/questionData.js';
 
 const prisma = new PrismaClient();
+const SEED_CONCURRENCY = 20;
+
+async function runInBatches(items, handler) {
+  for (let i = 0; i < items.length; i += SEED_CONCURRENCY) {
+    const batch = items.slice(i, i + SEED_CONCURRENCY);
+    await Promise.all(batch.map(handler));
+  }
+}
 
 async function upsertVocab(item, language) {
   await prisma.question.upsert({
@@ -123,52 +131,38 @@ async function upsertCulture(item, language) {
 async function main() {
   console.log('Seeding database with questions...');
 
-  for (const item of VOCAB_DB) {
-    await upsertVocab(item, 'en');
-  }
+  await runInBatches(VOCAB_DB, item => upsertVocab(item, 'en'));
 
   let multiVocabCount = 0;
   for (const lang of LANGUAGE_OPTIONS.filter(lang => lang.code !== 'en')) {
     const items = MULTI_VOCAB_DB[lang.code] || [];
-    for (const item of items) {
-      multiVocabCount++;
-      await upsertVocab(item, lang.code);
-    }
+    multiVocabCount += items.length;
+    await runInBatches(items, item => upsertVocab(item, lang.code));
   }
 
-  for (const item of GRAMMAR_DB) {
-    await upsertGrammar(item, 'en');
-  }
+  await runInBatches(GRAMMAR_DB, item => upsertGrammar(item, 'en'));
 
   let multiGrammarCount = 0;
   for (const lang of LANGUAGE_OPTIONS.filter(lang => lang.code !== 'en')) {
     const items = MULTI_GRAMMAR_DB[lang.code] || [];
-    for (const item of items) {
-      multiGrammarCount++;
-      await upsertGrammar(item, lang.code);
-    }
+    multiGrammarCount += items.length;
+    await runInBatches(items, item => upsertGrammar(item, lang.code));
   }
 
   let phraseCount = 0;
-  for (const item of PHRASE_DB) {
-    phraseCount++;
-    await upsertPhrase(item, 'en');
-  }
+  phraseCount += PHRASE_DB.length;
+  await runInBatches(PHRASE_DB, item => upsertPhrase(item, 'en'));
   for (const lang of LANGUAGE_OPTIONS) {
     const items = MULTI_PHRASE_DB[lang.code] || [];
-    for (const item of items) {
-      phraseCount++;
-      await upsertPhrase(item, lang.code);
-    }
+    phraseCount += items.length;
+    await runInBatches(items, item => upsertPhrase(item, lang.code));
   }
 
   let cultureCount = 0;
   for (const lang of LANGUAGE_OPTIONS) {
     const items = MULTI_CULTURE_DB[lang.code] || [];
-    for (const item of items) {
-      cultureCount++;
-      await upsertCulture(item, lang.code);
-    }
+    cultureCount += items.length;
+    await runInBatches(items, item => upsertCulture(item, lang.code));
   }
 
   console.log(`Successfully seeded ${VOCAB_DB.length} English vocab + ${GRAMMAR_DB.length} English grammar + ${multiVocabCount} multilingual vocab + ${multiGrammarCount} multilingual grammar + ${phraseCount} phrase + ${cultureCount} culture questions into Database.`);
