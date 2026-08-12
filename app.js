@@ -1078,6 +1078,7 @@ function refreshLanguageText() {
   }
   if ($('typing-input')) $('typing-input').placeholder = tr('typingPh', lang);
   refreshLevelOptions();
+  refreshInnLevelOptions();
   refreshCommandLocks();
   applyUiLanguage();
 }
@@ -1100,6 +1101,24 @@ function refreshLevelOptions() {
     const opt = document.createElement('option');
     opt.value = value;
     opt.textContent = uiLang === 'en' ? enText : otherText;
+    select.appendChild(opt);
+  });
+  select.value = currentValue;
+}
+
+function refreshInnLevelOptions() {
+  const select = $('inn-level-select');
+  if (!select) return;
+  const currentValue = select.value || currentInnLevel || 'all';
+  select.innerHTML = '';
+  const allOpt = document.createElement('option');
+  allOpt.value = 'all';
+  allOpt.textContent = uiLang === 'en' ? 'All levels' : 'ぜんぶ';
+  select.appendChild(allOpt);
+  Array.from({ length: 10 }, (_, idx) => idx + 1).forEach(lv => {
+    const opt = document.createElement('option');
+    opt.value = String(lv);
+    opt.textContent = `Lv.${lv}（${examLevelLabel(selectedLanguage, lv)}）`;
     select.appendChild(opt);
   });
   select.value = currentValue;
@@ -1669,6 +1688,12 @@ function buildQuestions(mode, level, count) {
 ══════════════════════════════════════════════════ */
 let pendingSpeechTimeouts = [];
 let cachedSpeechVoices = [];
+let speechRate = Math.min(3, Math.max(0.5, Number(localStorage.getItem('languageQuest_speechRate') || 0.85)));
+let battleAutoSpeak = localStorage.getItem('languageQuest_battleAutoSpeak') === '1';
+let innAutoSpeakItems = [];
+let innAutoSpeakIndex = 0;
+let innAutoSpeaking = false;
+
 function scheduleSpeech(fn, delay) {
   const id = setTimeout(() => {
     pendingSpeechTimeouts = pendingSpeechTimeouts.filter(t => t !== id);
@@ -1715,7 +1740,7 @@ function speak(text, onEnd) {
   const utter = new SpeechSynthesisUtterance(fallback ? speechFallbackText(text) : text);
   utter.lang  = fallback ? 'en-US' : currentLanguage().speechLang;
   if (voice) utter.voice = voice;
-  utter.rate  = 0.85;
+  utter.rate  = speechRate;
   utter.pitch = 1.0;
   if (onEnd) utter.onend = onEnd;
   // 少し遅らせて確実に再生
@@ -1723,6 +1748,67 @@ function speak(text, onEnd) {
     if (!cachedSpeechVoices.length) refreshSpeechVoices();
     window.speechSynthesis.speak(utter);
   }, 120);
+}
+
+function setSpeechRate(value) {
+  speechRate = Math.min(3, Math.max(0.5, Number(value) || 0.85));
+  localStorage.setItem('languageQuest_speechRate', String(speechRate));
+  if ($('speech-rate-range')) $('speech-rate-range').value = String(speechRate);
+  if ($('speech-rate-label')) $('speech-rate-label').textContent = `${speechRate.toFixed(2).replace(/0$/, '').replace(/\.$/, '')}x`;
+}
+
+function setBattleAutoSpeak(enabled) {
+  battleAutoSpeak = !!enabled;
+  localStorage.setItem('languageQuest_battleAutoSpeak', battleAutoSpeak ? '1' : '0');
+  if ($('battle-auto-speak-toggle')) $('battle-auto-speak-toggle').checked = battleAutoSpeak;
+}
+
+function setupSpeechControls() {
+  setSpeechRate(speechRate);
+  setBattleAutoSpeak(battleAutoSpeak);
+}
+
+function speakTextForReviewItem(item) {
+  if (item.category === 'vocab') return item.word;
+  if (item.category === 'phrase') return item.phrase;
+  if (item.category === 'grammar') return item.q.replace('_____', item.choices?.[item.ans] || '');
+  return null;
+}
+
+function stopInnAutoSpeak() {
+  innAutoSpeaking = false;
+  innAutoSpeakItems = [];
+  innAutoSpeakIndex = 0;
+  stopSpeechAll();
+  if ($('inn-auto-speak-btn')) $('inn-auto-speak-btn').textContent = '▶ Auto読み上げ';
+}
+
+function playNextInnAutoSpeak() {
+  if (!innAutoSpeaking) return;
+  const item = innAutoSpeakItems[innAutoSpeakIndex++];
+  if (!item) {
+    stopInnAutoSpeak();
+    return;
+  }
+  const text = speakTextForReviewItem(item);
+  if (!text) {
+    playNextInnAutoSpeak();
+    return;
+  }
+  speak(text, () => scheduleSpeech(playNextInnAutoSpeak, 450));
+}
+
+function startInnAutoSpeak() {
+  const items = buildInnItems(currentInnFilter).filter(item => ['vocab','grammar','phrase'].includes(item.category));
+  innAutoSpeakItems = items;
+  innAutoSpeakIndex = 0;
+  innAutoSpeaking = items.length > 0;
+  if (!innAutoSpeaking) {
+    alert('読み上げできる単語・文法・フレーズがありません。');
+    return;
+  }
+  if ($('inn-auto-speak-btn')) $('inn-auto-speak-btn').textContent = '▶ Auto再生中';
+  playNextInnAutoSpeak();
 }
 
 /* ══════════════════════════════════════════════════
@@ -2097,6 +2183,10 @@ async function handleAnswer(userAns, userText) {
     ? `EXP +${expGot}　GOLD +${goldGot}` + (comboMult(battle.combo)>1 ? `　(×${comboMult(battle.combo)} コンボボーナス!)` : '')
     : q.detail;
   $('battle-msg').classList.remove('hidden');
+
+  if (battleAutoSpeak && q.speakWord) {
+    scheduleSpeech(() => speak(q.speakWord), 350);
+  }
 
   // 敵撃破演出
   if (hpPct <= 0) {
@@ -2674,6 +2764,10 @@ function fieldLoop(ts) {
    22. フィールドへ戻る（バトル中断・音声停止）
 ══════════════════════════════════════════════════ */
 function stopSpeechAll() {
+  innAutoSpeaking = false;
+  innAutoSpeakItems = [];
+  innAutoSpeakIndex = 0;
+  if ($('inn-auto-speak-btn')) $('inn-auto-speak-btn').textContent = '▶ Auto読み上げ';
   clearPendingSpeech();
   if (window.speechSynthesis) window.speechSynthesis.cancel();
   if (recognition) {
@@ -3174,12 +3268,16 @@ function showLanguageEnding(langCode = selectedLanguage) {
    やどや：単語・文法の読み返し／HP回復／にがて特訓の入り口
 ══════════════════════════════════════════════════ */
 let currentInnFilter = 'all';
+let currentInnLevel = 'all';
 
 async function goToInn(opts = {}) {
   stopSpeechAll();
   showScreen('screen-inn');
   playFieldBGM();
   await ensureLanguageQuestionData();
+  refreshInnLevelOptions();
+  if ($('inn-level-select')) $('inn-level-select').value = currentInnLevel;
+  setupSpeechControls();
   renderLanguageProfile();
   renderInnList(currentInnFilter);
 
@@ -3237,18 +3335,7 @@ function renderInnList(filter) {
   const container = $('inn-list');
   if (!container) return;
 
-  let items = [
-    ...currentVocabDB().map(it => ({ ...it, category: 'vocab' })),
-    ...currentGrammarDB().map(it => ({ ...it, category: 'grammar' })),
-    ...currentPhraseDB().map(it => ({ ...it, category: 'phrase' })),
-    ...currentCultureDB().map(it => ({ ...it, category: 'culture' })),
-  ];
-
-  if (filter === 'vocab')        items = items.filter(it => it.category === 'vocab');
-  else if (filter === 'grammar') items = items.filter(it => it.category === 'grammar');
-  else if (filter === 'phrase')  items = items.filter(it => it.category === 'phrase');
-  else if (filter === 'culture') items = items.filter(it => it.category === 'culture');
-  else if (['new','low','weak','mastered'].includes(filter)) items = items.filter(it => classifyItem(it) === filter);
+  const items = buildInnItems(filter);
 
   container.innerHTML = '';
   if (items.length === 0) {
@@ -3323,6 +3410,26 @@ function renderInnList(filter) {
 
     container.appendChild(row);
   });
+}
+
+function buildInnItems(filter = currentInnFilter) {
+  let items = [
+    ...currentVocabDB().map(it => ({ ...it, category: 'vocab' })),
+    ...currentGrammarDB().map(it => ({ ...it, category: 'grammar' })),
+    ...currentPhraseDB().map(it => ({ ...it, category: 'phrase' })),
+    ...currentCultureDB().map(it => ({ ...it, category: 'culture' })),
+  ];
+
+  if (filter === 'vocab')        items = items.filter(it => it.category === 'vocab');
+  else if (filter === 'grammar') items = items.filter(it => it.category === 'grammar');
+  else if (filter === 'phrase')  items = items.filter(it => it.category === 'phrase');
+  else if (filter === 'culture') items = items.filter(it => it.category === 'culture');
+  else if (['new','low','weak','mastered'].includes(filter)) items = items.filter(it => classifyItem(it) === filter);
+
+  if (currentInnLevel !== 'all') {
+    items = items.filter(it => Number(it.lv) === Number(currentInnLevel));
+  }
+  return items;
 }
 
 /* ══════════════════════════════════════════════════
@@ -3867,6 +3974,7 @@ document.addEventListener('DOMContentLoaded', () => {
   populateLanguageSelect();
   refreshLanguageText();
   initGoogleLogin();
+  setupSpeechControls();
 
   $('ui-lang-ja')?.addEventListener('click', () => {
     setUiLanguage('ja');
@@ -4009,7 +4117,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* ── やどやフィルタータブ ── */
   document.querySelectorAll('.inn-filter-btn').forEach(btn => {
-    btn.addEventListener('click', () => renderInnList(btn.dataset.filter));
+    btn.addEventListener('click', () => {
+      stopInnAutoSpeak();
+      renderInnList(btn.dataset.filter);
+    });
   });
   $('inn-msg-close')?.addEventListener('click', () => $('inn-msg')?.classList.add('hidden'));
   $('field-msg-close')?.addEventListener('click', () => $('field-msg')?.classList.add('hidden'));
@@ -4054,6 +4165,7 @@ document.addEventListener('DOMContentLoaded', () => {
   $('magic-hint-btn')?.addEventListener('click', useHintMagic);
   $('magic-cut-btn')?.addEventListener('click', useChoiceCutMagic);
   $('magic-heal-btn')?.addEventListener('click', useHealMagic);
+  $('battle-auto-speak-toggle')?.addEventListener('change', e => setBattleAutoSpeak(e.target.checked));
 
   /* ── タイピング送信（Enterで回答／回答後Enterで次へ） ── */
   $('typing-input')?.addEventListener('keydown', e => {
@@ -4073,6 +4185,41 @@ document.addEventListener('DOMContentLoaded', () => {
   $('question-speak-btn')?.addEventListener('click', () => {
     const q = battle.questions[battle.cur];
     if (q?.speakWord) speak(q.speakWord);
+  });
+
+  $('inn-tools-toggle')?.addEventListener('click', () => {
+    const body = $('inn-tools-body');
+    const hidden = !body?.classList.contains('hidden');
+    body?.classList.toggle('hidden', hidden);
+    if ($('inn-tools-toggle')) $('inn-tools-toggle').textContent = hidden ? '▶ 復習メニュー' : '▼ 復習メニュー';
+  });
+  $('inn-level-select')?.addEventListener('change', e => {
+    currentInnLevel = e.target.value || 'all';
+    stopInnAutoSpeak();
+    renderInnList(currentInnFilter);
+  });
+  $('inn-auto-speak-btn')?.addEventListener('click', () => {
+    if (innAutoSpeaking) stopInnAutoSpeak();
+    else startInnAutoSpeak();
+  });
+  $('inn-auto-stop-btn')?.addEventListener('click', stopInnAutoSpeak);
+  $('speech-rate-range')?.addEventListener('input', e => setSpeechRate(e.target.value));
+
+  document.addEventListener('click', e => {
+    const icon = e.target.closest?.('.field-icon');
+    if (!icon || icon.classList.contains('field-icon-locked')) return;
+    const fieldCanvas = icon.closest('#field-canvas');
+    const worldCanvas = icon.closest('#world-canvas');
+    if (fieldCanvas && icon.dataset.mode) {
+      touchedFieldIcons.add(icon.dataset.mode);
+      enterCommand(icon.dataset.mode);
+    } else if (worldCanvas) {
+      const key = icon.dataset.region || icon.dataset.lang;
+      if (key) {
+        touchedFieldIcons.add(key);
+        handleWorldZoneTouch(key, icon);
+      }
+    }
   });
 
   /* ── スピーキング：はなす！ ── */

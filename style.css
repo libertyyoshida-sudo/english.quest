@@ -1038,12 +1038,39 @@ body {
 .inn-back-btn { display: inline-block; margin-bottom: 8px; font-size: .78rem; padding: 6px 14px; }
 .inn-filter-row .inn-back-btn { display: inline-flex; margin-bottom: 0; font-size: .76rem; padding: 5px 12px; }
 
+.inn-tools-window { padding: 8px 12px; margin-bottom: 8px; }
+.inn-tools-toggle {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  background: none; border: 0; color: var(--dq-yellow); cursor: pointer;
+  font-family: var(--font-dq); font-size: .82rem; padding: 0; text-align: left;
+}
+.inn-tools-toggle:hover { color: var(--dq-gold); }
+.inn-tools-body { margin-top: 8px; }
+.inn-tools-body.hidden { display: none; }
 .inn-filter-row {
   display: flex; gap: 6px; flex-wrap: wrap;
   margin-bottom: 8px;
 }
 .inn-filter-btn { font-size: .76rem; padding: 5px 12px; opacity: .6; }
 .inn-filter-btn.active { opacity: 1; box-shadow: 0 0 8px var(--dq-gold); }
+.inn-control-row {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding-top: 6px; border-top: 1px solid #333366;
+}
+.inn-control {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: var(--dq-blue-l); font-size: .74rem;
+}
+.inn-control .dq-select { min-width: 110px; padding: 5px 8px; font-size: .72rem; }
+.inn-rate-control { min-width: 190px; flex: 1; }
+.inn-rate-control input { width: min(260px, 100%); accent-color: var(--dq-gold); }
+.battle-auto-speech {
+  display: inline-flex; align-items: center; gap: 4px;
+  color: var(--dq-blue-l); font-size: .72rem;
+  border: 1px solid var(--dq-blue); padding: 5px 8px;
+  background: #0a0a20; cursor: pointer;
+}
+.battle-auto-speech input { accent-color: var(--dq-gold); }
 
 #screen-inn .msg-window { padding: 8px 14px; margin-bottom: 8px; }
 #screen-inn .msg-window p { font-size: .82rem; line-height: 1.5; margin: 0; padding-right: 26px; }
@@ -1144,6 +1171,8 @@ body {
 .inn-status-low      { color: var(--dq-yellow); }
 .inn-status-mastered { color: var(--dq-green); }
 .inn-train-btn { font-size: .7rem; padding: 5px 10px; }
+.field-icon { cursor: pointer; }
+.field-icon-locked { cursor: not-allowed; }
 .inv-icon { font-size: 1.1rem; flex-shrink: 0; }
 .inv-name { flex: 1; color: var(--dq-white); }
 .inv-equipped { color: var(--dq-gold); font-size: .72rem; }
