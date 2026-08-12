@@ -371,16 +371,23 @@ body {
   z-index: 3;
   animation: field-icon-bob 2.6s ease-in-out infinite;
 }
+.world-region-emoji {
+  font-size: 1.65rem;
+  line-height: 1;
+  filter: drop-shadow(0 0 6px #00000080);
+}
 .world-region-label {
   color: var(--dq-dark);
   background: #ffe07ad9;
   border: 2px solid #7a4a00;
   box-shadow: 0 2px 0 #0006;
-  padding: 6px 10px;
-  font-size: .74rem;
+  padding: 5px 8px;
+  font-size: .68rem;
   line-height: 1.2;
   white-space: nowrap;
 }
+.world-subregion-gate .world-region-emoji { font-size: 1.5rem; }
+.world-subregion-gate .world-region-label { background: #ffffffd8; }
 .world-area-title {
   position: absolute;
   top: 10px;

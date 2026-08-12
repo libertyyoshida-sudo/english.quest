@@ -1690,7 +1690,21 @@ let nextEncounterAt = randomEncounterThreshold();
 let currentWorldRegion = null;
 
 const WORLD_REGIONS = [
-  { id: 'europe', label: 'ヨーロッパ', left: 35, top: 23, hero: { x: 50, y: 82 }, color: '#ef8fa0', langs: [
+  { id: 'north-america', label: '北アメリカ大陸', icon: '🌎', left: 88, top: 20, hero: { x: 50, y: 84 }, langs: [
+    { code: 'en', flag: '🇺🇸', label: 'English', left: 46, top: 34 },
+  ] },
+  { id: 'south-america', label: '南アメリカ大陸', icon: '🌎', left: 91, top: 58, hero: { x: 50, y: 84 }, langs: [
+    { code: 'es', flag: '🇲🇽', label: 'Español', left: 42, top: 42 },
+    { code: 'pt', flag: '🇧🇷', label: 'Português', left: 58, top: 62 },
+  ] },
+  { id: 'eurasia', label: 'ユーラシア大陸', icon: '🌏', left: 44, top: 22, hero: { x: 50, y: 84 }, children: ['europe', 'middle-east', 'east-asia'] },
+  { id: 'africa', label: 'アフリカ大陸', icon: '🌍', left: 46, top: 52, hero: { x: 50, y: 84 }, langs: [
+    { code: 'ar', flag: '🇸🇦', label: 'العربية', left: 50, top: 38 },
+  ] },
+  { id: 'oceania', label: 'オセアニア大陸', icon: '🌏', left: 73, top: 77, hero: { x: 50, y: 84 }, langs: [
+    { code: 'en', flag: '🇦🇺', label: 'English', left: 50, top: 48 },
+  ] },
+  { id: 'europe', parent: 'eurasia', label: 'ヨーロッパ', icon: '🏰', left: 30, top: 36, hero: { x: 50, y: 82 }, color: '#ef8fa0', langs: [
     { code: 'fr', flag: '🇫🇷', label: 'Français', left: 24, top: 40 },
     { code: 'de', flag: '🇩🇪', label: 'Deutsch', left: 38, top: 32 },
     { code: 'nl', flag: '🇳🇱', label: 'Nederlands', left: 28, top: 26 },
@@ -1699,18 +1713,16 @@ const WORLD_REGIONS = [
     { code: 'el', flag: '🇬🇷', label: 'Ελληνικά', left: 54, top: 62 },
     { code: 'ru', flag: '🇷🇺', label: 'Русский', left: 72, top: 22 },
   ] },
-  { id: 'middle-east', label: '中東・北アフリカ', left: 49, top: 40, hero: { x: 50, y: 82 }, color: '#f0c16e', langs: [
-    { code: 'ar', flag: '🇸🇦', label: 'العربية', left: 42, top: 48 },
-    { code: 'tr', flag: '🇹🇷', label: 'Türkçe', left: 50, top: 30 },
-  ] },
-  { id: 'south-asia', label: '南アジア', left: 60, top: 43, hero: { x: 50, y: 84 }, color: '#8ec570', langs: [
+  { id: 'middle-east', parent: 'eurasia', label: '中東・南アジア', icon: '🕌', left: 50, top: 52, hero: { x: 50, y: 82 }, color: '#f0c16e', langs: [
+    { code: 'ar', flag: '🇸🇦', label: 'العربية', left: 24, top: 34 },
+    { code: 'tr', flag: '🇹🇷', label: 'Türkçe', left: 42, top: 28 },
     { code: 'hi', flag: '🇮🇳', label: 'हिन्दी', left: 36, top: 38 },
     { code: 'bn', flag: '🇧🇩', label: 'বাংলা', left: 58, top: 36 },
     { code: 'ne', flag: '🇳🇵', label: 'नेपाली', left: 48, top: 24 },
     { code: 'ta', flag: '🇮🇳', label: 'தமிழ்', left: 36, top: 60 },
     { code: 'si', flag: '🇱🇰', label: 'සිංහල', left: 54, top: 70 },
   ] },
-  { id: 'east-se-asia', label: '東・東南アジア', left: 68, top: 38, hero: { x: 50, y: 84 }, color: '#7398cf', langs: [
+  { id: 'east-asia', parent: 'eurasia', label: '東アジア', icon: '⛩️', left: 70, top: 40, hero: { x: 50, y: 84 }, color: '#7398cf', langs: [
     { code: 'ja', flag: '🇯🇵', label: '日本語', left: 70, top: 24 },
     { code: 'zh', flag: '🇨🇳', label: '中文', left: 40, top: 26 },
     { code: 'yue', flag: '🇭🇰', label: '粵語', left: 50, top: 40 },
@@ -1720,11 +1732,6 @@ const WORLD_REGIONS = [
     { code: 'vi', flag: '🇻🇳', label: 'Tiếng Việt', left: 62, top: 56 },
     { code: 'tl', flag: '🇵🇭', label: 'Tagalog', left: 72, top: 62 },
     { code: 'id', flag: '🇮🇩', label: 'Bahasa Indonesia', left: 52, top: 76 },
-  ] },
-  { id: 'americas', label: 'アメリカ大陸', left: 85, top: 43, hero: { x: 50, y: 84 }, color: '#f2ab6c', langs: [
-    { code: 'en', flag: '🇺🇸', label: 'English', left: 46, top: 28 },
-    { code: 'es', flag: '🇲🇽', label: 'Español', left: 42, top: 56 },
-    { code: 'pt', flag: '🇧🇷', label: 'Português', left: 58, top: 68 },
   ] },
 ];
 
@@ -2001,17 +2008,17 @@ function renderWorldMap() {
   layer.innerHTML = '';
 
   if (!region) {
-    WORLD_REGIONS.forEach(r => {
+    WORLD_REGIONS.filter(r => !r.parent).forEach(r => {
       const el = document.createElement('div');
       el.className = 'field-icon world-region-gate';
       el.dataset.region = r.id;
       el.style.left = `${r.left}%`;
       el.style.top = `${r.top}%`;
-      el.innerHTML = `<span class="world-region-label">${r.label}</span>`;
+      el.innerHTML = `<span class="world-region-emoji">${r.icon}</span><span class="world-region-label">${r.label}</span>`;
       layer.appendChild(el);
     });
     if ($('world-msg-text')) {
-      $('world-msg-text').textContent = 'せかいちずが ひろがった！ まずは地域をえらぼう。地域マップに入ると、主要なことばの国旗が見えるぞ。';
+      $('world-msg-text').textContent = 'せかいちずが ひろがった！ まずは5大陸からえらぼう。大陸マップに入ると、主要なことばの国旗が見えるぞ。';
     }
     if ($('world-back-btn')) $('world-back-btn').textContent = '◀ まちへもどる';
     return;
@@ -2021,6 +2028,27 @@ function renderWorldMap() {
   title.className = 'world-area-title';
   title.textContent = region.label;
   layer.appendChild(title);
+
+  if (region.children?.length) {
+    region.children
+      .map(id => WORLD_REGIONS.find(r => r.id === id))
+      .filter(Boolean)
+      .forEach(child => {
+        const el = document.createElement('div');
+        el.className = 'field-icon world-region-gate world-subregion-gate';
+        el.dataset.region = child.id;
+        el.style.left = `${child.left}%`;
+        el.style.top = `${child.top}%`;
+        el.innerHTML = `<span class="world-region-emoji">${child.icon}</span><span class="world-region-label">${child.label}</span>`;
+        layer.appendChild(el);
+      });
+
+    if ($('world-msg-text')) {
+      $('world-msg-text').textContent = `${region.label}は大きい！ ヨーロッパ・中東・東アジアから行き先をえらぼう。`;
+    }
+    if ($('world-back-btn')) $('world-back-btn').textContent = '◀ せかいちずへ';
+    return;
+  }
 
   region.langs.forEach(lang => {
     const el = document.createElement('div');
@@ -2035,7 +2063,7 @@ function renderWorldMap() {
   if ($('world-msg-text')) {
     $('world-msg-text').textContent = `${region.label}のマップに入った！ 国旗の場所へ行くと、そのことばの てきが あらわれる。`;
   }
-  if ($('world-back-btn')) $('world-back-btn').textContent = '◀ せかいちずへ';
+  if ($('world-back-btn')) $('world-back-btn').textContent = region.parent ? '◀ ユーラシアへ' : '◀ せかいちずへ';
 }
 
 function enterWorldRegion(regionId) {
@@ -2048,7 +2076,8 @@ function enterWorldRegion(regionId) {
 }
 
 function leaveWorldRegion() {
-  currentWorldRegion = null;
+  const region = currentWorldRegion ? WORLD_REGIONS.find(r => r.id === currentWorldRegion) : null;
+  currentWorldRegion = region?.parent || null;
   renderWorldMap();
   resetHeroPosition('screen-world');
   worldEncounterTimer = 0;
