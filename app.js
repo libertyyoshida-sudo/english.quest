@@ -409,6 +409,8 @@ const I18N = {
     login: 'つづきから',
     register: 'はじめから とうろく',
     forgot: 'ひみつのコードを忘れた',
+    googleMissing: 'Googleログインは現在準備中です。',
+    googleFailed: 'Googleログインに失敗しました。',
     resetPassword: '再設定する',
     cancel: 'もどる',
     guest: 'ゲストであそぶ（セーブされません）',
@@ -499,6 +501,8 @@ const I18N = {
     login: 'Continue',
     register: 'Create account',
     forgot: 'Forgot password?',
+    googleMissing: 'Google sign-in is not configured yet.',
+    googleFailed: 'Google sign-in failed.',
     resetPassword: 'Reset password',
     cancel: 'Back',
     guest: 'Play as guest (not saved)',
@@ -601,6 +605,7 @@ function setUiLanguage(lang) {
   localStorage.setItem('languageQuest_uiLang', uiLang);
   applyUiLanguage();
   refreshLanguageText();
+  renderGoogleButton();
 }
 
 function applyUiLanguage() {
@@ -657,6 +662,10 @@ function applyUiLanguage() {
   updateCommandButtonLabels();
   updateFilterButtonLabels();
   refreshCountOptions();
+  const note = $('google-login-note');
+  if (note && !note.classList.contains('hidden') && !note.dataset.configured) {
+    note.textContent = tr('googleMissing');
+  }
 }
 
 function updateCommandButtonLabels() {
@@ -686,6 +695,91 @@ function updateFilterButtonLabels() {
     const label = labels?.[btn.dataset.filter];
     if (label) btn.textContent = label;
   });
+}
+
+let googleClientId = null;
+let googleButtonRenderedFor = '';
+let googleScriptWaits = 0;
+
+async function initGoogleLogin() {
+  const wrap = $('google-login-wrap');
+  const note = $('google-login-note');
+  try {
+    const config = await apiFetch('/auth/config');
+    googleClientId = config.googleClientId || null;
+  } catch (err) {
+    googleClientId = null;
+  }
+
+  if (!googleClientId) {
+    wrap?.classList.add('hidden');
+    if (note) {
+      note.dataset.configured = '';
+      note.textContent = tr('googleMissing');
+      note.classList.remove('hidden');
+    }
+    return;
+  }
+
+  if (note) {
+    note.dataset.configured = 'true';
+    note.classList.add('hidden');
+  }
+  wrap?.classList.remove('hidden');
+  renderGoogleButton();
+}
+
+function renderGoogleButton() {
+  const buttonEl = $('google-signin-button');
+  if (!buttonEl || !googleClientId) return;
+  if (!window.google?.accounts?.id) {
+    if (googleScriptWaits < 40) {
+      googleScriptWaits++;
+      setTimeout(renderGoogleButton, 250);
+    }
+    return;
+  }
+  googleScriptWaits = 0;
+  const renderKey = `${googleClientId}:${uiLang}`;
+  if (googleButtonRenderedFor === renderKey) return;
+  googleButtonRenderedFor = renderKey;
+  buttonEl.innerHTML = '';
+  window.google.accounts.id.initialize({
+    client_id: googleClientId,
+    callback: handleGoogleCredential,
+    auto_select: false,
+    cancel_on_tap_outside: true,
+  });
+  window.google.accounts.id.renderButton(buttonEl, {
+    theme: 'filled_blue',
+    size: 'large',
+    type: 'standard',
+    text: 'signin_with',
+    shape: 'rectangular',
+    logo_alignment: 'left',
+    locale: uiLang === 'en' ? 'en' : 'ja',
+    width: 280,
+  });
+}
+
+async function handleGoogleCredential(response) {
+  if (!response?.credential) {
+    showLoginError(tr('googleFailed'));
+    return;
+  }
+  showLoginError('');
+  setLoginLoading(true);
+  try {
+    const data = await apiFetch('/auth/google', {
+      method: 'POST',
+      body: JSON.stringify({ credential: response.credential }),
+    });
+    await handleAuthSuccess(data.token);
+  } catch (err) {
+    showLoginError(err.message || tr('googleFailed'));
+  } finally {
+    setLoginLoading(false);
+  }
 }
 
 const shuffle = arr => {
@@ -3644,6 +3738,7 @@ document.addEventListener('DOMContentLoaded', () => {
   applyUiLanguage();
   populateLanguageSelect();
   refreshLanguageText();
+  initGoogleLogin();
 
   $('ui-lang-ja')?.addEventListener('click', () => {
     setUiLanguage('ja');

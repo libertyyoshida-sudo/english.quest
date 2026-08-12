@@ -255,6 +255,9 @@
 5. THE App SHALL パスワード再設定時にユーザー名、登録メールアドレス、新しいパスワードを照合・更新する。
 6. IF メールアドレスの形式が不正なとき、THEN THE App SHALL 登録または再設定を拒否する。
 7. IF パスワードが4文字未満のとき、THEN THE App SHALL 登録または再設定を拒否する。
+8. THE App SHALL Googleアカウントによるログインを提供できる。
+9. WHEN Googleログインが成功したとき、THE App SHALL Googleの確認済みメールアドレスを利用して既存アカウントへ紐づけ、該当アカウントがなければ新規ユーザーを作成する。
+10. IF `GOOGLE_CLIENT_ID` が未設定のとき、THEN THE App SHALL Googleログインボタンを表示せず、準備中メッセージを表示する。
 
 ---
 

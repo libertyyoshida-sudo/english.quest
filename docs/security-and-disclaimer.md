@@ -32,6 +32,9 @@ npm audit --audit-level=moderate
 - 現時点のパスワード再設定は、メール送信サービス未導入のため「ユーザー名 + 登録メールアドレス + 新パスワード」の照合方式
 - 本番運用で利用者規模が増える場合は、メール送信による期限付きトークン方式、レート制限、監査ログの追加を推奨する
 - メールアドレスは個人情報に該当し得るため、ログ出力・Issue・READMEに記載しない
+- Googleログインではフロントエンドで受け取ったIDトークンをサーバー側で `google-auth-library` により検証する
+- `GOOGLE_CLIENT_ID` は公開され得るOAuthクライアントIDだが、Google Cloud Console側で承認済みJavaScript生成元を必要最小限にする
+- Googleログインで取得する情報は確認済みメールアドレスとGoogle subject IDに限定し、アクセストークンやGoogle API権限は要求しない
 
 ## OSS免責
 

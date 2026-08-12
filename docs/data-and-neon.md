@@ -21,7 +21,7 @@ GitHub PagesなどAPIが使えない環境でも最低限遊べるようにす�
 
 | テーブル | 主な項目 | 方針 |
 | --- | --- | --- |
-| `User` | `username`, `email`, `passwordHash` | `username` はPrisma上で一意。`email` は既存ユーザー保護のため nullable、新規登録では必須、DB側の部分unique indexでNULL以外を一意化 |
+| `User` | `username`, `email`, `googleId`, `passwordHash` | `username` はPrisma上で一意。`email` / `googleId` は既存ユーザー保護のため nullable、DB側の部分unique indexでNULL以外を一意化 |
 | `PlayerProfile` | EXP、Gold、HP、称号・装備参照 | アカウント全体の進捗 |
 | `LanguageProfile` | 言語別EXP、Lv、HP | 言語ごとの習熟状態 |
 
@@ -61,4 +61,4 @@ seed後は最低限、以下を確認します。
 - DB変更を伴う場合は、作業ログにseed結果を残す
 - 問題データ本体は初期JSサイズを抑えるため、フロントエンドで必要時に動的importする
 - 初期表示に必要な言語メタデータは `shared/languageMeta.js` に分離する
-- `User.email` のように既存データをnullableで拡張する場合は、Prisma schema更新と明示SQLを併用し、必要に応じてPrisma Clientを再生成する
+- `User.email` / `User.googleId` のように既存データをnullableで拡張する場合は、Prisma schema更新と明示SQLを併用し、必要に応じてPrisma Clientを再生成する
