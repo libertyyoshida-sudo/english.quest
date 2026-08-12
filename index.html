@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Language Quest</title>
-  <script type="module" crossorigin src="./assets/index-CF_fiR9t.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-x8-57eMd.css">
+  <script type="module" crossorigin src="./assets/index-Dgp0RpHt.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-B2ScFat-.css">
 </head>
 <body>
 
@@ -100,15 +100,28 @@
           <div class="title-logo-main">LANGUAGE QUEST</div>
           <div class="title-logo-sub" id="title-language-copy">言語習得への旅</div>
         </div>
+        <div class="ui-language-toggle" role="group" aria-label="Display language">
+          <button id="ui-lang-ja" class="dq-btn ui-lang-btn" type="button">日本語</button>
+          <button id="ui-lang-en" class="dq-btn ui-lang-btn" type="button">English</button>
+        </div>
         <div class="title-hero-art">🐉</div>
 
         <div class="login-box">
           <input id="login-username" class="dq-select login-input" type="text" placeholder="なまえ" autocomplete="username" maxlength="20" />
+          <input id="login-email" class="dq-select login-input" type="email" placeholder="メールアドレス（とうろく・再設定に必要）" autocomplete="email" maxlength="254" />
           <input id="login-password" class="dq-select login-input" type="password" placeholder="ひみつのコード（4文字以上）" autocomplete="current-password" maxlength="64" />
+          <div id="password-reset-panel" class="password-reset-panel hidden">
+            <input id="reset-new-password" class="dq-select login-input" type="password" placeholder="新しいひみつのコード（4文字以上）" autocomplete="new-password" maxlength="64" />
+            <div class="login-actions">
+              <button id="reset-password-btn" class="dq-btn dq-btn-gold" type="button">再設定する</button>
+              <button id="reset-cancel-btn" class="dq-btn dq-btn-blue" type="button">もどる</button>
+            </div>
+          </div>
           <p id="login-error" class="login-error"></p>
           <div class="login-actions">
             <button id="login-btn" class="dq-btn">つづきから</button>
             <button id="register-btn" class="dq-btn dq-btn-gold">はじめから とうろく</button>
+            <button id="forgot-password-btn" class="dq-btn dq-btn-blue" type="button">ひみつのコードを忘れた</button>
           </div>
           <div id="login-loading" class="login-loading hidden">
             <span class="login-spinner" aria-hidden="true"></span>
