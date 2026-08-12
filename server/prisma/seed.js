@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import {
   LANGUAGE_OPTIONS, MULTI_GRAMMAR_DB, MULTI_VOCAB_DB, VOCAB_DB, GRAMMAR_DB,
-  PHRASE_DB, MULTI_PHRASE_DB,
+  PHRASE_DB, MULTI_PHRASE_DB, MULTI_CULTURE_DB,
 } from '../../shared/questionData.js';
 
 const prisma = new PrismaClient();
@@ -91,6 +91,35 @@ async function upsertPhrase(item, language) {
   });
 }
 
+async function upsertCulture(item, language) {
+  const choicesJson = JSON.stringify({ choices: item.choices, ans: item.ans, exp: item.exp });
+
+  await prisma.question.upsert({
+    where: { id: item.id },
+    update: {
+      language,
+      category: 'culture',
+      level: String(item.lv),
+      word: item.q,
+      japanese: item.choices[item.ans],
+      pronunciation: null,
+      exampleSentence: null,
+      choicesJson,
+    },
+    create: {
+      id: item.id,
+      language,
+      category: 'culture',
+      level: String(item.lv),
+      word: item.q,
+      japanese: item.choices[item.ans],
+      pronunciation: null,
+      exampleSentence: null,
+      choicesJson,
+    },
+  });
+}
+
 async function main() {
   console.log('Seeding database with questions...');
 
@@ -133,7 +162,16 @@ async function main() {
     }
   }
 
-  console.log(`Successfully seeded ${VOCAB_DB.length} English vocab + ${GRAMMAR_DB.length} English grammar + ${multiVocabCount} multilingual vocab + ${multiGrammarCount} multilingual grammar + ${phraseCount} phrase questions into Database.`);
+  let cultureCount = 0;
+  for (const lang of LANGUAGE_OPTIONS) {
+    const items = MULTI_CULTURE_DB[lang.code] || [];
+    for (const item of items) {
+      cultureCount++;
+      await upsertCulture(item, lang.code);
+    }
+  }
+
+  console.log(`Successfully seeded ${VOCAB_DB.length} English vocab + ${GRAMMAR_DB.length} English grammar + ${multiVocabCount} multilingual vocab + ${multiGrammarCount} multilingual grammar + ${phraseCount} phrase + ${cultureCount} culture questions into Database.`);
 }
 
 main()

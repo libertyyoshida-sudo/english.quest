@@ -303,20 +303,17 @@ body {
     repeating-linear-gradient(90deg, transparent, transparent 9%, #ffffff12 9%, #ffffff12 9.6%);
 }
 
-/* せかいマップ：まちの緑一色フィールドとは別の見た目にし、地形の違いが分かるようにする */
+/* せかいマップ：世界地図（オリジナルの簡略化した大陸イラスト）の上を移動する */
 #world-canvas {
-  background:
-    radial-gradient(circle at 18% 28%, #1f5a24 0%, transparent 40%),  /* もり */
-    radial-gradient(circle at 80% 22%, #55555f 0%, transparent 40%),  /* どうくつ・岩場 */
-    radial-gradient(circle at 14% 80%, #6b4423 0%, transparent 42%),  /* やま */
-    radial-gradient(circle at 84% 82%, #5a0a1e 0%, transparent 44%),  /* まおうのしろ */
-    linear-gradient(180deg, #182338 0%, #202f4a 100%);                 /* 荒野のベース */
+  aspect-ratio: 3 / 2;
+  background: #bfe3f2;
   border-color: var(--dq-gold);
 }
-#world-canvas::before {
-  background-image:
-    repeating-linear-gradient(0deg,  transparent, transparent 12%, #ffffff0a 12%, #ffffff0a 12.6%),
-    repeating-linear-gradient(90deg, transparent, transparent 12%, #ffffff0a 12%, #ffffff0a 12.6%);
+#world-canvas::before { content: none; }
+.world-map-svg {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  display: block;
 }
 
 .field-icon {
@@ -354,9 +351,10 @@ body {
 .field-icon-exit .field-icon-emoji { filter: drop-shadow(0 0 8px var(--dq-gold)); }
 .field-icon-exit .field-icon-label { color: var(--dq-gold); }
 
-/* せかいマップのボスアイコン */
-.world-boss-icon .field-icon-emoji { font-size: 1.9rem; filter: drop-shadow(0 0 8px var(--dq-red)); }
-.world-boss-icon .field-icon-label { color: var(--dq-red); }
+/* せかいマップの言語ゾーンアイコン（国旗＋現地語ラベル） */
+.world-zone-icon { z-index: 3; }
+.world-zone-icon .field-icon-emoji { font-size: 1.5rem; filter: drop-shadow(0 0 6px var(--dq-gold)); }
+.world-zone-icon .field-icon-label { color: var(--dq-gold); font-size: .48rem; }
 
 /* ---------- 十字キー（モバイル操作） ---------- */
 .field-dpad {
@@ -1021,6 +1019,63 @@ body {
 .status-lang-train-btn { font-size: .74rem; padding: 6px 14px; }
 .status-lang-note { color: var(--dq-gray); font-size: .74rem; margin-top: 8px; text-align: center; }
 
+/* キーボードどうじょう */
+.kb-stage-list {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px;
+}
+.kb-stage-btn {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 3px;
+  background: var(--dq-dark); border: 2px solid var(--dq-blue);
+  padding: 10px 12px; text-align: left; cursor: pointer;
+  font-family: var(--font-dq);
+  transition: background .12s, border-color .12s;
+}
+.kb-stage-btn:hover { background: #223366; border-color: var(--dq-gold); }
+.kb-stage-label { color: var(--dq-yellow); font-size: .92rem; }
+.kb-stage-desc { color: var(--dq-blue-l); font-size: .72rem; }
+.kb-stage-best { color: var(--dq-gold); font-size: .7rem; margin-top: 2px; }
+
+.kb-progress-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; font-size: .8rem; color: var(--dq-blue-l); }
+.kb-progress-track { flex: 1; height: 10px; background: #111133; border: 2px solid var(--dq-gray); overflow: hidden; }
+.kb-progress-fill { height: 100%; background: linear-gradient(90deg, var(--dq-exp), #ffee00); transition: width .2s ease; }
+
+.kb-target-display { text-align: center; margin-bottom: 14px; }
+.kb-target-label { display: block; color: var(--dq-blue-l); font-size: .8rem; margin-bottom: 6px; }
+.kb-target-char {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 84px; height: 84px; font-size: 2.6rem; color: var(--dq-gold);
+  background: #111133; border: 3px solid var(--dq-win-bd);
+  animation: kb-target-pulse 1s ease-in-out infinite;
+}
+@keyframes kb-target-pulse { 0%,100% { box-shadow: 0 0 0 var(--dq-gold); } 50% { box-shadow: 0 0 14px var(--dq-gold); } }
+.kb-stats-row { display: flex; justify-content: center; gap: 24px; font-size: .95rem; color: var(--dq-white); }
+
+.kb-result-stats { display: flex; justify-content: center; gap: 24px; margin: 12px 0; }
+.kb-result-stat { text-align: center; }
+.kb-result-val { display: block; font-size: 1.3rem; color: var(--dq-gold); }
+.kb-result-lbl { display: block; font-size: .68rem; color: var(--dq-gray); margin-top: 2px; }
+.kb-result-actions { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+
+.virtual-keyboard-window { text-align: center; }
+.virtual-keyboard { display: flex; flex-direction: column; align-items: center; gap: 5px; margin-bottom: 8px; }
+.kb-row { display: flex; gap: 5px; }
+.kb-key {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 32px; height: 32px; padding: 0 4px;
+  background: #1a1a40; border: 2px solid var(--dq-blue); color: var(--dq-white);
+  font-size: .82rem; font-family: var(--font-dq);
+  transition: background .1s, border-color .1s, transform .1s;
+}
+.kb-key-home { border-color: var(--dq-gold); position: relative; }
+.kb-key-home::after {
+  content: ''; position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%);
+  width: 10px; height: 2px; background: var(--dq-gold); border-radius: 1px;
+}
+.kb-key-target { border-color: var(--dq-blue-l); background: #2a2a66; box-shadow: 0 0 10px var(--dq-blue-l); transform: scale(1.12); }
+.kb-key-correct { background: var(--dq-green); border-color: var(--dq-green); }
+.kb-key-wrong { background: var(--dq-red); border-color: var(--dq-red); }
+.kb-hint { font-size: .68rem; color: var(--dq-gray); }
+
 @media (min-width: 641px) {
   .title-screen {
     min-height: 100%;
@@ -1068,7 +1123,8 @@ body {
   .field-dpad { display: none; }
   .field-hint { font-size: .62rem; }
   .field-icon-emoji { font-size: 1.35rem; }
-  .world-boss-icon .field-icon-emoji { font-size: 1.5rem; }
+  .world-zone-icon .field-icon-emoji { font-size: 1.15rem; }
+  .world-zone-icon .field-icon-label { font-size: .42rem; }
 
   .command-window { gap: 3px; min-height: 0; overflow-y: auto; }
   .cmd-title { margin-bottom: 3px; flex-shrink: 0; }

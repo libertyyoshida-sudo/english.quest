@@ -17,6 +17,19 @@ function toClientQuestion(question) {
     };
   }
 
+  if (question.category === 'culture') {
+    const meta = question.choicesJson ? JSON.parse(question.choicesJson) : {};
+    return {
+      id: question.id,
+      category: 'culture',
+      lv: Number(question.level),
+      q: question.word,
+      choices: meta.choices || [],
+      ans: meta.ans ?? 0,
+      exp: meta.exp || question.exampleSentence || '',
+    };
+  }
+
   if (question.category === 'phrase') {
     const meta = question.choicesJson ? JSON.parse(question.choicesJson) : {};
     return {

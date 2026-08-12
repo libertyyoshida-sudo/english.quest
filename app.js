@@ -11,7 +11,7 @@ import {
 } from './shared/gameData.js';
 import {
   VOCAB_DB, GRAMMAR_DB, LANGUAGE_OPTIONS, LANGUAGE_PROFILES, MULTI_GRAMMAR_DB, MULTI_VOCAB_DB,
-  PHRASE_DB, MULTI_PHRASE_DB, PHRASE_CATEGORIES,
+  PHRASE_DB, MULTI_PHRASE_DB, PHRASE_CATEGORIES, MULTI_CULTURE_DB,
 } from './shared/questionData.js';
 
 /* ══════════════════════════════════════════════════
@@ -320,12 +320,45 @@ const ENEMIES = [
   { name:'まおうのてさき',sprite:'😈', lv:9, expRate:3.0 },
   { name:'だいまおう',   sprite:'💀', lv:10,expRate:4.0 },
 ];
+
+// 学習言語ごとに、その地域の神話・民話にちなんだ名前で敵を表示する（スプライト・強さはENEMIESを流用）
+const REGION_ENEMY_NAMES = {
+  en: ['ピクシー','レプラコーン','森の盗賊','ブラックドッグ','ゴブリンの頭領','バンシー','円卓の異端騎士','ワイバーン','グレンデル','湖上の魔女モルガン'],
+  fr: ['ルタン(森の妖精)','ガーゴイル','人狼ルー・ガルー','黒衣の騎士','ノートルダムの怪物','ドラゴン・タラスク','鉄仮面の亡霊','ヴェルサイユの影武者','カタコンブの番人','ノルマンディーの竜'],
+  es: ['エル・クコ','チュパカブラ','泣き女ラ・ヨローナ','闘牛の亡霊','山賊の頭目','コンキスタドールの亡霊','エル・ドラドの番人','アステカの戦士','アンデスのコンドル神','ケツァルコアトル'],
+  pt: ['クリキ(森の精)','サシ・ペレレ','ボイタタ(火の蛇)','クルピラ(森の守護者)','幽霊船の船長','アマゾンの守護獣','ジャガーの戦士','ピンクドルフィンの精霊','大西洋の海竜','リオの謝肉祭の悪魔'],
+  ru: ['ドモボイ(家の精)','森の主レーシー','化け物ヴィイ','バーバ・ヤーガ','氷の巨人モロース','双頭の鷲の化身','不死の魔王カスチェイ','熊の戦士','シベリアの雪女','竜ズメイ'],
+  de: ['コボルト','水の精ネック','黒い森の狼男','ラインの黄金の番人','ニーベルングの小人','ローレライ','ヴァルプルギスの魔女','鉄の騎士','グリム童話の魔王','竜ファフニール'],
+  ar: ['ジン(精霊)','グール(食屍鬼)','イフリート','砂漠のサソリ王','千夜一夜の盗賊','魔法のランプの守護者','空飛ぶ絨毯の賊','怪鳥ロック','バグダッドの魔術師','砂漠の大魔王'],
+  tr: ['火の精アル','トルコ石の魔人','近衛兵長イェニチェリ','カッパドキアの洞窟竜','ボスポラスの人魚','バザールの盗賊王','大宰相の影','アナトリアの狼','イスタンブールの獅子像','オスマン帝国の亡霊皇帝'],
+  th: ['精霊ピー','蛇神ナーガ','門番鬼ヤック','森の虎霊','魔王トッサカン','黄金の仏塔の番人','ムエタイの亡霊戦士','メコン川の竜','象の戦士','タイ王朝の守護竜'],
+  zh: ['妖狐','山の妖怪シャンシャオ','龍の子','兵馬俑の戦士','白蛇の精','孫悟空の分身','麒麟','牛魔王','万里の長城の守護竜','玉皇大帝の使者'],
+  yue: ['キョンシー','山海経の異獣','九龍城の影','茶楼の妖怪','龍舟の守護竜','獅子舞の精霊','ビクトリア港の海竜','武術家の幽霊','珠江の水神','香港島の大魔王'],
+  ko: ['鬼神トッケビ','九尾狐クミホ','山神ホランイ','龍宮の使者','花郎の亡霊戦士','済州島の石の守護者','高麗の武士','朝鮮王朝の守護竜','白頭山の神霊','檀君の化身'],
+  pl: ['森の精レシー','水の精ヴォドニク','竜ヴァヴェル','ポズナンの妖精','ポーランド騎士団','冬の魔女マルズァナ','タトラ山脈の巨人','ワルシャワの人魚','リトアニア大公の亡霊','ポーランドの黒騎士'],
+  nl: ['小人カボウター','風車の番人','チューリップの精','デルフト焼きの人形','海の巨人','堤防の守護竜','幻の画家の亡霊','アムステルダムの海賊','黄金時代の提督','北海の大竜'],
+  el: ['サテュロス','ケンタウロス','ハルピュイア','ミノタウロス','メデューサ','キマイラ','サイクロプス','ヒュドラ','タイタン','ゼウスの雷神'],
+  tl: ['アスワン','小人ドゥエンデ','マナナンガル','馬人ティクバラン','巨人カプレ','月食の竜バコナワ','聖エルモの火','英雄の亡霊','七千の島の守護竜','バタラの化身'],
+  id: ['クンティラナック','ポチョン','獅子の精霊バロン','コモドの竜神','ワヤン人形の影武者','ボロブドゥールの守護者','神鳥ガルーダ','ジャワの王の亡霊','スマトラの虎霊','インドラの使者'],
+  it: ['ローマ軍団の亡霊兵','ベネチアの仮面の怪人','ポンペイの灰の亡霊','剣闘士の幽霊','トスカーナの狼男','堕天使の残影','錬金術師','シチリアの海竜','ヴェスヴィオの火竜','ローマ皇帝の亡霊'],
+  vi: ['幽霊マー','竜神ロン','ホアンキエム湖の亀神','フエ王朝の武将幽霊','メコンデルタの精霊','山の神ソンティン','竹の妖精','戦象の亡霊','龍の子孫の戦士','ベトナムの竜王'],
+  bn: ['妖鳥ションカチル','森の精ベヘトゥ','ベンガルタイガーの霊','ガンジス川の女神','古城の亡霊','スンダルバンスの守護獣','詩人の魂','ベンガルの竜','モンスーンの化身','ベンガル王朝の守護神'],
+  my: ['精霊ナッ','守護獅子チンテー','イラワジ川の竜神','バガン遺跡の亡霊','タナカの精','ビルマの虎霊','黄金の仏塔の番人','シャン高原の魔女','マンダレー王の亡霊','ミャンマーの竜王'],
+  si: ['悪霊ヤカー','蛇神ナーガ','シーギリヤの獅子像','キャンディ王朝の亡霊','象霊','紅茶畑の精','仏歯寺の守護者','インド洋の海竜','シンハラ王朝の守護獣','スリランカの竜王'],
+  ta: ['精霊ヤクシー','守護神ムニーシュワラン','象神ガネーシャの使い','タミル王朝の武将幽霊','チョーラ朝の亡霊戦士','寺院の石像の守護者','ベンガル湾の海竜','タンジャーヴールの竜','ムルガン神の化身','タミルの竜王'],
+  hi: ['羅刹ラークシャサ','夜叉ヤクシャ','蛇神ナーガ','ハヌマーンの化身','神鳥ガルーダ','タージマハルの守護霊','ヒマラヤの雪男','ガンジス川の女神','デリー王朝の亡霊皇帝','インドラの雷竜'],
+  ne: ['雪豹の霊','雪男イエティ','エベレストの守護竜','寺院の石像','シェルパの亡霊案内人','女神クマリの化身','ポカラ湖の精霊','ゴルカ兵の亡霊戦士','ヒマラヤの雷鳥','ネパール王国の守護竜'],
+};
+
 // tier: 'all' か 1〜10。問題のティア（TOEICレベル）と同じ数値で敵の強さを決める
-function pickEnemy(tier) {
+// langCode を指定すると、その言語・地域にちなんだ名前の敵になる（省略時は現在の学習言語）
+function pickEnemy(tier, langCode = selectedLanguage) {
   const baseTier = tier === 'all' ? getLvRow(langState().totalExp).lv : tier;
   const spread = Math.floor(Math.random() * 3) - 1; // -1〜+1でばらつきを持たせる
   const idx = Math.min(9, Math.max(0, baseTier - 1 + spread));
-  return ENEMIES[idx];
+  const base = ENEMIES[idx];
+  const regionNames = REGION_ENEMY_NAMES[langCode];
+  return regionNames ? { ...base, name: regionNames[idx] } : base;
 }
 
 
@@ -366,11 +399,17 @@ function currentPhraseDB() {
     || (selectedLanguage === 'en' ? PHRASE_DB : (MULTI_PHRASE_DB[selectedLanguage] || PHRASE_DB));
 }
 
+// 文化・名産品・歴史クイズ（せかいマップの地域ゾーン探索で出題）
+function currentCultureDB() {
+  return questionDataCache[selectedLanguage]?.culture || MULTI_CULTURE_DB[selectedLanguage] || [];
+}
+
 function cacheQuestionData(language, questions) {
   questionDataCache[language] = {
     vocab: questions.filter(q => q.category === 'vocab'),
     grammar: questions.filter(q => q.category === 'grammar'),
     phrase: questions.filter(q => q.category === 'phrase'),
+    culture: questions.filter(q => q.category === 'culture'),
   };
 }
 
@@ -574,7 +613,7 @@ function retentionPct(item) {
 
 // 言語全体の総合定着度（%）：学習済み項目の定着度スコアの平均。学習済み項目が無ければnull
 function languageRetention(code) {
-  const pool = [...vocabDBFor(code), ...grammarDBFor(code), ...phraseDBFor(code)];
+  const pool = [...vocabDBFor(code), ...grammarDBFor(code), ...phraseDBFor(code), ...cultureDBFor(code)];
   const scores = pool
     .map(it => retentionScore(answerStats[it.id]))
     .filter(s => s !== null);
@@ -610,6 +649,9 @@ function grammarDBFor(code) {
 }
 function phraseDBFor(code) {
   return code === 'en' ? PHRASE_DB : (MULTI_PHRASE_DB[code] || PHRASE_DB);
+}
+function cultureDBFor(code) {
+  return MULTI_CULTURE_DB[code] || [];
 }
 
 function showScreen(id) {
@@ -841,6 +883,15 @@ function buildGrammarQ(item) {
   };
 }
 
+function buildCultureQ(item) {
+  return {
+    id: item.id, type:'culture',
+    qText: item.q,
+    choices: item.choices, ans: item.ans,
+    detail: `解説: ${item.exp}`,
+  };
+}
+
 function buildTypingQ(item) {
   return {
     id: item.id, type:'typing',
@@ -933,6 +984,16 @@ function buildQuestions(mode, level, count) {
       if (!seen.has(item.id)) { seen.add(item.id); questions.push(buildPhraseQ(item, activePPool)); }
       if (questions.length >= count) break;
     }
+  } else if (mode === 'culture') {
+    const cultureDB = currentCultureDB();
+    const cPool = filterLevel(cultureDB, level);
+    const activeCPool = cPool.length ? cPool : cultureDB;
+    const pool = weightedPool(activeCPool);
+    const seen = new Set();
+    for (const item of pool) {
+      if (!seen.has(item.id)) { seen.add(item.id); questions.push(buildCultureQ(item)); }
+      if (questions.length >= count) break;
+    }
   } else if (mode === 'weak') {
     const allPool = [...vocabDB, ...grammarDB];
     const filtered = filterLevel(allPool, level);
@@ -952,15 +1013,18 @@ function buildQuestions(mode, level, count) {
     }
   } else if (mode === 'smart') {
     const phraseDB = currentPhraseDB();
-    const allPool = [...vocabDB, ...grammarDB, ...phraseDB];
+    const cultureDB = currentCultureDB();
+    const allPool = [...vocabDB, ...grammarDB, ...phraseDB, ...cultureDB];
     const filtered = filterLevel(allPool, level);
     const activeFiltered = filtered.length ? filtered : allPool;
     const pool = smartPool(activeFiltered);
+    const cultureIds = new Set(cultureDB.map(c => c.id));
     const seen = new Set();
     for (const item of pool) {
       if (seen.has(item.id)) continue;
       seen.add(item.id);
       if (item.situation) questions.push(buildPhraseQ(item, phraseDB));
+      else if (cultureIds.has(item.id)) questions.push(buildCultureQ(item));
       else if (item.choices) questions.push(buildGrammarQ(item));
       else questions.push(buildVocabQ(item, activeVPool));
       if (questions.length >= count) break;
@@ -1115,9 +1179,13 @@ function setupBattleScreenUI(enemy) {
 // やどやの「とっくん」ボタンから、にがてな1問だけを集中して練習する
 function startFocusedBattle(item) {
   stopSpeechAll();
-  const mode = item.category === 'grammar' ? 'grammar' : item.category === 'phrase' ? 'phrase' : 'vocab';
+  const mode = item.category === 'grammar' ? 'grammar'
+             : item.category === 'phrase'  ? 'phrase'
+             : item.category === 'culture' ? 'culture'
+             : 'vocab';
   const q     = item.category === 'grammar' ? buildGrammarQ(item)
               : item.category === 'phrase'  ? buildPhraseQ(item, currentPhraseDB())
+              : item.category === 'culture' ? buildCultureQ(item)
               : buildVocabQ(item, currentVocabDB());
   const enemy = pickEnemy(item.lv);
 
@@ -1607,7 +1675,7 @@ const FIELD_MOVE_SPEED = 130; // px/秒（キャンバス実寸換算）
 // 「歩ける画面」の定義。まち（フィールド）とせかいマップの両方で同じ移動システムを使い回す
 const WALKABLE_SCREENS = {
   'screen-field': { canvasId: 'field-canvas', heroId: 'field-hero', onTouch: mode => enterCommand(mode) },
-  'screen-world': { canvasId: 'world-canvas', heroId: 'world-hero', onTouch: bossId => enterBossZone(bossId) },
+  'screen-world': { canvasId: 'world-canvas', heroId: 'world-hero', onTouch: langCode => enterLanguageZone(langCode) },
 };
 // 画面ごとの勇者位置（%）。画面を切り替えるたびに入り口の位置へリセットする
 const heroPositions = {
@@ -1788,7 +1856,7 @@ function checkFieldIconContacts(active) {
   const leaveDist = short * FIELD_ICON_LEAVE_RATIO;
 
   canvas.querySelectorAll('.field-icon').forEach(iconEl => {
-    const key   = iconEl.dataset.mode || iconEl.dataset.boss;
+    const key   = iconEl.dataset.mode || iconEl.dataset.lang;
     const iRect = iconEl.getBoundingClientRect();
     const iCx = iRect.left + iRect.width / 2;
     const iCy = iRect.top  + iRect.height / 2;
@@ -1859,6 +1927,7 @@ function enterCommand(mode) {
   if (mode === 'inn' || mode === 'review') goToInn();
   else if (mode === 'world') goToWorld();
   else if (mode === 'status') goToStatus();
+  else if (mode === 'keyboard') goToKeyboard();
   else startBattle(mode);
 }
 
@@ -1880,13 +1949,6 @@ function nextCommandPage() {
 /* ══════════════════════════════════════════════════
    せかいマップ：まちの外・ランダムせんとう・ボス戦
 ══════════════════════════════════════════════════ */
-const WORLD_BOSSES = {
-  forest:   { tier: 3,  count: 10, title: 'もりの ぬし' },
-  cave:     { tier: 6,  count: 12, title: 'どうくつの ぬし' },
-  mountain: { tier: 8,  count: 14, title: 'やまの ドラゴン' },
-  castle:   { tier: 10, count: 16, title: 'まおうのしろ の あるじ' },
-};
-
 function goToWorld() {
   stopSpeechAll();
   resetHeroPosition('screen-world');
@@ -1938,43 +2000,45 @@ async function triggerRandomEncounter() {
   renderQuestion();
 }
 
-// 単語＋文法を混ぜたボス戦用の問題セットを作る
-function buildBossQuestions(tier, count) {
-  const vocabCount   = Math.ceil(count * 0.7);
-  const grammarCount = count - vocabCount;
-  const qs = [
-    ...buildQuestions('vocab', tier, vocabCount),
-    ...buildQuestions('grammar', tier, grammarCount),
-  ];
-  return shuffle(qs);
-}
-
-async function enterBossZone(bossId) {
-  const boss = WORLD_BOSSES[bossId];
-  if (!boss) return;
+// せかいマップの地域ゾーンに触れると、その言語・地域にちなんだ敵が現れる
+// （単語・文法・フレーズ・文化を横断する「スマート学習」の出題ロジックを流用）
+let enteringZone = false; // ゾーンが密集しているため、遷移中に別ゾーンへ二重突入するのを防ぐ
+async function enterLanguageZone(langCode) {
+  if (enteringZone) return;
+  if (!LANGUAGE_OPTIONS.some(l => l.code === langCode)) return;
+  enteringZone = true;
   stopSpeechAll();
+  setLanguage(langCode);
   await ensureLanguageQuestionData();
 
-  const qs = buildBossQuestions(boss.tier, boss.count);
+  const tier = getLvRow(langState(langCode).totalExp).lv;
+  const qs = buildQuestions('smart', tier, 8);
   if (qs.length === 0) {
-    alert('このボスに ちょうせんするには もんだいが たりません。');
+    alert('この地域では まだ もんだいが たりません。');
+    enteringZone = false;
     return;
   }
 
-  const enemy = { ...ENEMIES[boss.tier - 1], name: boss.title };
+  const enemy = pickEnemy(tier, langCode);
 
   battle = {
-    mode: 'boss', questions: qs, cur: 0,
+    mode: 'smart', questions: qs, cur: 0,
     correct: 0, wrongItems: [],
     combo: 0, expGained: 0, goldGained: 0,
     answered: false, enemy,
     activeEffects: [], comboShield: false, comboShieldUsed: false,
-    returnTo: 'screen-world', isBoss: true, bossId,
+    returnTo: 'screen-world', isRegionZone: true, zoneLang: langCode,
   };
+
+  const lang = currentLanguage();
+  const msgEl = $('world-msg-text');
+  if (msgEl) msgEl.textContent = `${lang.label}の ちいきに とうちゃく！ ${enemy.sprite} ${enemy.name}が あらわれた！`;
+  $('world-msg')?.classList.remove('hidden');
 
   setupBattleScreenUI(enemy);
   showScreen('screen-battle');
   renderQuestion();
+  enteringZone = false;
 }
 
 /* ══════════════════════════════════════════════════
@@ -2027,11 +2091,13 @@ function renderInnList(filter) {
     ...currentVocabDB().map(it => ({ ...it, category: 'vocab' })),
     ...currentGrammarDB().map(it => ({ ...it, category: 'grammar' })),
     ...currentPhraseDB().map(it => ({ ...it, category: 'phrase' })),
+    ...currentCultureDB().map(it => ({ ...it, category: 'culture' })),
   ];
 
   if (filter === 'vocab')        items = items.filter(it => it.category === 'vocab');
   else if (filter === 'grammar') items = items.filter(it => it.category === 'grammar');
   else if (filter === 'phrase')  items = items.filter(it => it.category === 'phrase');
+  else if (filter === 'culture') items = items.filter(it => it.category === 'culture');
   else if (['new','low','weak','mastered'].includes(filter)) items = items.filter(it => classifyItem(it) === filter);
 
   container.innerHTML = '';
@@ -2149,7 +2215,7 @@ function renderStatusScreen() {
 
     // 出題数・正答率（サーバー集計があればそれを、ゲストはローカルのanswerStatsから算出）
     const hist = authToken ? (languageHistory[code] || { totalAnswers: 0, totalCorrect: 0 }) : (() => {
-      const pool = [...vocabDBFor(code), ...grammarDBFor(code), ...phraseDBFor(code)];
+      const pool = [...vocabDBFor(code), ...grammarDBFor(code), ...phraseDBFor(code), ...cultureDBFor(code)];
       let total = 0, correct = 0;
       pool.forEach(it => { const r = answerStats[it.id]; if (r) { total += r.attempts; correct += r.correct; } });
       return { totalAnswers: total, totalCorrect: correct };
@@ -2157,7 +2223,7 @@ function renderStatusScreen() {
     const rate = hist.totalAnswers > 0 ? Math.round(hist.totalCorrect / hist.totalAnswers * 100) : null;
 
     // 未学習・練習不足・にがて・マスター済みの内訳（全言語共通・selectedLanguageに依存しない集計）
-    const pool = [...vocabDBFor(code), ...grammarDBFor(code), ...phraseDBFor(code)];
+    const pool = [...vocabDBFor(code), ...grammarDBFor(code), ...phraseDBFor(code), ...cultureDBFor(code)];
     const counts = { new: 0, low: 0, weak: 0, mid: 0, mastered: 0 };
     pool.forEach(it => { counts[classifyItem(it)]++; });
     const retentionPercent = languageRetention(code);
@@ -2223,6 +2289,156 @@ function renderStatusScreen() {
   if (!authToken) {
     listEl.insertAdjacentHTML('beforeend', '<p class="status-lang-note">ログインすると すべての言語の学習履歴が きろくされ、ここに表示されるようになる。</p>');
   }
+}
+
+/* ══════════════════════════════════════════════════
+   キーボードどうじょう：アルファベット・QWERTY配列タイピングの基礎練習
+   （RPGのレベル/EXPとは無関係の独立した練習コーナー。成績はブラウザに保存）
+══════════════════════════════════════════════════ */
+// 実際のキーボードはQWERTY配列（アルファベットの並びはUS/JIS共通）でレンダリングする
+const KEYBOARD_LAYOUT = [
+  ['1','2','3','4','5','6','7','8','9','0'],
+  ['Q','W','E','R','T','Y','U','I','O','P'],
+  ['A','S','D','F','G','H','J','K','L'],
+  ['Z','X','C','V','B','N','M'],
+];
+const KEYBOARD_HOME_KEYS = ['F', 'J']; // 指を置く基準となる、突起のあるキー
+
+const KEYBOARD_STAGES = [
+  { id: 'alphabet', label: 'アルファベット', desc: 'A〜Zの文字になれよう',           keys: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('') },
+  { id: 'home',     label: 'ホームポジション', desc: '指を置く基本の位置（A S D F  J K L）', keys: 'ASDFJKL'.split('') },
+  { id: 'top',      label: '上の段',         desc: 'Q〜Pの列',                     keys: 'QWERTYUIOP'.split('') },
+  { id: 'bottom',   label: '下の段',         desc: 'Z〜Mの列',                     keys: 'ZXCVBNM'.split('') },
+  { id: 'number',   label: 'すうじ',         desc: '1〜0の列',                     keys: '1234567890'.split('') },
+  { id: 'mix',      label: 'そうごう練習',    desc: 'ぜんぶの文字キーをランダムに',    keys: 'QWERTYUIOPASDFGHJKLZXCVBNM'.split('') },
+];
+
+let keyboardState = null; // {stage, sequence, idx, correct, mistakes, startTime}
+
+function goToKeyboard() {
+  stopSpeechAll();
+  showScreen('screen-keyboard');
+  playFieldBGM();
+  keyboardState = null;
+  $('keyboard-stage-select')?.classList.remove('hidden');
+  $('keyboard-practice')?.classList.add('hidden');
+  $('keyboard-result')?.classList.add('hidden');
+  renderKeyboardStageList();
+  renderVirtualKeyboard(null);
+}
+
+function renderKeyboardStageList() {
+  const container = $('keyboard-stage-list');
+  if (!container) return;
+  container.innerHTML = '';
+  KEYBOARD_STAGES.forEach(stage => {
+    const best = Number(localStorage.getItem(`kbDojo_best_${stage.id}`) || 0);
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'dq-btn kb-stage-btn';
+    btn.innerHTML = `
+      <span class="kb-stage-label">${stage.label}</span>
+      <span class="kb-stage-desc">${stage.desc}</span>
+      ${best > 0 ? `<span class="kb-stage-best">🏆 ベスト正答率 ${best}%</span>` : ''}
+    `;
+    btn.addEventListener('click', () => startKeyboardStage(stage.id));
+    container.appendChild(btn);
+  });
+}
+
+function buildKeySequence(keys, count) {
+  const seq = [];
+  for (let i = 0; i < count; i++) seq.push(keys[Math.floor(Math.random() * keys.length)]);
+  return seq;
+}
+
+function startKeyboardStage(stageId) {
+  const stage = KEYBOARD_STAGES.find(s => s.id === stageId);
+  if (!stage) return;
+  keyboardState = {
+    stage, sequence: buildKeySequence(stage.keys, 20),
+    idx: 0, correct: 0, mistakes: 0, startTime: Date.now(),
+  };
+  $('keyboard-stage-select')?.classList.add('hidden');
+  $('keyboard-result')?.classList.add('hidden');
+  $('keyboard-practice')?.classList.remove('hidden');
+  updateKeyboardPracticeUI();
+}
+
+function updateKeyboardPracticeUI() {
+  if (!keyboardState) return;
+  const { sequence, idx, correct, mistakes } = keyboardState;
+  const target = sequence[idx];
+  if ($('kb-target-char'))     $('kb-target-char').textContent = target;
+  if ($('kb-progress-text'))   $('kb-progress-text').textContent = `${idx}/${sequence.length}`;
+  if ($('kb-progress-fill'))   $('kb-progress-fill').style.width = `${Math.round(idx / sequence.length * 100)}%`;
+  if ($('kb-correct-count'))   $('kb-correct-count').textContent = correct;
+  if ($('kb-miss-count'))      $('kb-miss-count').textContent = mistakes;
+  renderVirtualKeyboard(target);
+}
+
+function renderVirtualKeyboard(targetKey) {
+  const container = $('virtual-keyboard');
+  if (!container) return;
+  container.innerHTML = KEYBOARD_LAYOUT.map(row => `
+    <div class="kb-row">
+      ${row.map(k => {
+        const cls = ['kb-key'];
+        if (k === targetKey) cls.push('kb-key-target');
+        if (KEYBOARD_HOME_KEYS.includes(k)) cls.push('kb-key-home');
+        return `<span class="${cls.join(' ')}" data-key="${k}">${k}</span>`;
+      }).join('')}
+    </div>
+  `).join('');
+}
+
+function handleKeyboardKeydown(e) {
+  if (!keyboardState) return;
+  const screenEl = $('screen-keyboard');
+  if (!screenEl || !screenEl.classList.contains('active')) return;
+  if (e.key.length !== 1) return; // Shift・Enterなどの装飾キーは無視
+  const key = e.key.toUpperCase();
+  e.preventDefault();
+
+  const target = keyboardState.sequence[keyboardState.idx];
+  const keyEl = document.querySelector(`.kb-key[data-key="${key}"]`);
+
+  if (key === target) {
+    keyboardState.correct++;
+    keyEl?.classList.add('kb-key-correct');
+    setTimeout(() => keyEl?.classList.remove('kb-key-correct'), 150);
+    keyboardState.idx++;
+    if (keyboardState.idx >= keyboardState.sequence.length) {
+      finishKeyboardStage();
+      return;
+    }
+    updateKeyboardPracticeUI();
+  } else {
+    keyboardState.mistakes++;
+    keyEl?.classList.add('kb-key-wrong');
+    setTimeout(() => keyEl?.classList.remove('kb-key-wrong'), 150);
+  }
+}
+
+function finishKeyboardStage() {
+  const { stage, correct, mistakes, startTime } = keyboardState;
+  const elapsedSec = Math.max(1, (Date.now() - startTime) / 1000);
+  const total = correct + mistakes;
+  const accuracy = total > 0 ? Math.round(correct / total * 100) : 100;
+  const cpm = Math.round(correct / elapsedSec * 60);
+
+  const bestKey = `kbDojo_best_${stage.id}`;
+  const prevBest = Number(localStorage.getItem(bestKey) || 0);
+  if (accuracy > prevBest) localStorage.setItem(bestKey, String(accuracy));
+
+  $('keyboard-practice')?.classList.add('hidden');
+  $('keyboard-result')?.classList.remove('hidden');
+  if ($('kb-result-title'))     $('kb-result-title').textContent = `${stage.label} クリア！`;
+  if ($('kb-result-accuracy'))  $('kb-result-accuracy').textContent = `${accuracy}%`;
+  if ($('kb-result-cpm'))       $('kb-result-cpm').textContent = `${cpm}`;
+  if ($('kb-result-mistakes'))  $('kb-result-mistakes').textContent = `${mistakes}`;
+
+  keyboardState.finishedStageId = stage.id;
 }
 
 /* ══════════════════════════════════════════════════
@@ -2310,6 +2526,7 @@ document.addEventListener('DOMContentLoaded', () => {
   $('inn-flee-btn')?.addEventListener('click', goToField);
   $('world-back-btn')?.addEventListener('click', goToField);
   $('status-back-btn')?.addEventListener('click', goToField);
+  $('keyboard-back-btn')?.addEventListener('click', goToField);
 
   /* ── やどやフィルタータブ ── */
   document.querySelectorAll('.inn-filter-btn').forEach(btn => {
@@ -2319,6 +2536,19 @@ document.addEventListener('DOMContentLoaded', () => {
   $('field-msg-close')?.addEventListener('click', () => $('field-msg')?.classList.add('hidden'));
   $('world-msg-close')?.addEventListener('click', () => $('world-msg')?.classList.add('hidden'));
   $('status-msg-close')?.addEventListener('click', () => $('status-msg')?.classList.add('hidden'));
+  $('keyboard-msg-close')?.addEventListener('click', () => $('keyboard-msg')?.classList.add('hidden'));
+
+  /* ── キーボードどうじょう ── */
+  document.addEventListener('keydown', handleKeyboardKeydown);
+  $('kb-retry-btn')?.addEventListener('click', () => {
+    if (keyboardState?.stage) startKeyboardStage(keyboardState.stage.id);
+  });
+  $('kb-back-to-stages-btn')?.addEventListener('click', () => {
+    keyboardState = null;
+    $('keyboard-result')?.classList.add('hidden');
+    $('keyboard-stage-select')?.classList.remove('hidden');
+    renderKeyboardStageList();
+  });
 
   /* ── 「ぼうけんのきろく」ボックスをタップでステータス画面へ ── */
   $('status-window-btn')?.addEventListener('click', goToStatus);

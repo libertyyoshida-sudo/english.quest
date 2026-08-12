@@ -64,8 +64,8 @@ export function toeicLabel(tier) {
   return row ? `TOEIC${row.toeic}` : '';
 }
 
-export const EXP_BASE = { vocab: 10, grammar: 15, typing: 12, listening: 18, speaking: 20, weak: 25, boss: 35, phrase: 16, smart: 22 };
-export const GOLD_BASE = { vocab: 2, grammar: 3, typing: 2, listening: 4, speaking: 5, weak: 6, boss: 10, phrase: 3, smart: 5 };
+export const EXP_BASE = { vocab: 10, grammar: 15, typing: 12, listening: 18, speaking: 20, weak: 25, boss: 35, phrase: 16, smart: 22, culture: 18 };
+export const GOLD_BASE = { vocab: 2, grammar: 3, typing: 2, listening: 4, speaking: 5, weak: 6, boss: 10, phrase: 3, smart: 5, culture: 4 };
 
 export function comboMult(combo) {
   if (combo >= 10) return 3;
