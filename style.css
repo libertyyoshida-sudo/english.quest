@@ -326,7 +326,7 @@ body {
     radial-gradient(circle at 78% 68%, #ffffff40 0 2px, transparent 3px),
     linear-gradient(180deg, #bfe3f2 0%, #91c9e1 100%);
 }
-#world-canvas.world-area-mode .world-map-svg { opacity: .28; filter: saturate(1.2); }
+#world-canvas.world-area-mode .world-map-svg { opacity: 1; filter: saturate(1.12); }
 
 .field-icon {
   position: absolute;
@@ -444,10 +444,10 @@ body {
 }
 .cmd-page-btn:hover { color: var(--dq-gold); }
 .cmd-page-indicator { color: var(--dq-blue-l); font-size: .72rem; }
-.command-window[data-page="1"] .dq-cmd-btn[data-command-page="2"],
-.command-window[data-page="2"] .dq-cmd-btn[data-command-page="1"] {
-  display: none;
-}
+.command-window[data-page="1"] .dq-cmd-btn:not([data-command-page="1"]),
+.command-window[data-page="2"] .dq-cmd-btn:not([data-command-page="2"]),
+.command-window[data-page="3"] .dq-cmd-btn:not([data-command-page="3"]),
+.command-window[data-page="4"] .dq-cmd-btn:not([data-command-page="4"]) { display: none; }
 
 .dq-cmd-btn {
   background: var(--dq-dark);

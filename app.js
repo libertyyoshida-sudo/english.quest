@@ -1698,10 +1698,10 @@ const WORLD_REGIONS = [
     { code: 'pt', flag: '🇧🇷', label: 'Português', left: 58, top: 62 },
   ] },
   { id: 'eurasia', label: 'ユーラシア大陸', icon: '🌏', left: 44, top: 22, hero: { x: 50, y: 84 }, children: ['europe', 'middle-east', 'east-asia'] },
-  { id: 'africa', label: 'アフリカ大陸', icon: '🌍', left: 46, top: 52, hero: { x: 50, y: 84 }, langs: [
+  { id: 'africa', label: 'アフリカ大陸', icon: '🌍', left: 22, top: 61, hero: { x: 50, y: 84 }, langs: [
     { code: 'ar', flag: '🇸🇦', label: 'العربية', left: 50, top: 38 },
   ] },
-  { id: 'oceania', label: 'オセアニア大陸', icon: '🌏', left: 73, top: 77, hero: { x: 50, y: 84 }, langs: [
+  { id: 'oceania', label: 'オセアニア大陸', icon: '🌏', left: 62, top: 76, hero: { x: 50, y: 84 }, langs: [
     { code: 'en', flag: '🇦🇺', label: 'English', left: 50, top: 48 },
   ] },
   { id: 'europe', parent: 'eurasia', label: 'ヨーロッパ', icon: '🏰', left: 30, top: 36, hero: { x: 50, y: 82 }, color: '#ef8fa0', langs: [
@@ -1734,6 +1734,27 @@ const WORLD_REGIONS = [
     { code: 'id', flag: '🇮🇩', label: 'Bahasa Indonesia', left: 52, top: 76 },
   ] },
 ];
+
+const WORLD_MAP_BASE = `
+  <rect x="0" y="0" width="100" height="100" fill="#bfe3f2"/>
+  <polygon points="14,18 22,10 32,8 42,10 50,7 58,9 64,14 68,22 70,30 72,38 70,46 72,52 66,56 60,58 54,52 50,56 44,52 40,56 34,50 28,54 22,48 16,42 12,34 10,26" fill="#ef8fa0"/>
+  <polygon points="20,40 26,38 30,44 29,54 32,62 30,72 26,84 20,88 15,80 13,68 12,56 14,46" fill="#f6d76e"/>
+  <polygon points="78,14 86,8 94,12 97,20 96,30 90,36 92,42 84,44 78,38 76,26 77,18" fill="#f2ab6c"/>
+  <polygon points="80,48 86,46 90,54 91,64 89,74 86,84 82,86 78,78 77,66 76,56" fill="#7398cf"/>
+  <polygon points="54,66 64,63 73,68 75,76 68,83 57,81 51,74" fill="#8ec570"/>
+  <polygon points="0,92 15,90 30,94 45,91 60,95 75,90 90,94 100,91 100,100 0,100" fill="#c3c9cf"/>
+`;
+
+const WORLD_MAP_FOCUSED = {
+  'north-america': `<rect x="0" y="0" width="100" height="100" fill="#bfe3f2"/><polygon points="16,20 30,10 50,8 70,16 82,30 78,48 62,58 50,72 34,66 24,50 12,42" fill="#f2ab6c"/>`,
+  'south-america': `<rect x="0" y="0" width="100" height="100" fill="#bfe3f2"/><polygon points="42,12 60,16 72,32 70,48 62,68 52,88 42,78 36,58 32,38" fill="#7398cf"/>`,
+  eurasia: `<rect x="0" y="0" width="100" height="100" fill="#bfe3f2"/><polygon points="8,28 20,16 38,12 54,16 72,14 88,24 94,40 88,58 70,66 54,58 42,68 30,56 18,60 8,46" fill="#ef8fa0"/>`,
+  africa: `<rect x="0" y="0" width="100" height="100" fill="#bfe3f2"/><polygon points="42,10 60,16 70,34 66,54 58,78 42,90 28,76 24,54 28,30" fill="#f6d76e"/>`,
+  oceania: `<rect x="0" y="0" width="100" height="100" fill="#bfe3f2"/><polygon points="22,48 40,38 62,42 78,56 74,72 54,82 32,76 18,62" fill="#8ec570"/>`,
+  europe: `<rect x="0" y="0" width="100" height="100" fill="#bfe3f2"/><polygon points="16,22 34,12 56,16 70,30 64,48 76,62 58,72 42,60 28,68 16,52" fill="#ef8fa0"/>`,
+  'middle-east': `<rect x="0" y="0" width="100" height="100" fill="#bfe3f2"/><polygon points="16,24 36,16 58,22 76,36 70,54 82,68 60,78 42,68 28,78 18,58" fill="#f0c16e"/>`,
+  'east-asia': `<rect x="0" y="0" width="100" height="100" fill="#bfe3f2"/><polygon points="18,20 38,12 62,18 78,34 72,52 84,66 66,80 46,70 30,78 18,58" fill="#7398cf"/>`,
+};
 
 function getActiveWalkable() {
   for (const [screenId, cfg] of Object.entries(WALKABLE_SCREENS)) {
@@ -1980,14 +2001,23 @@ function enterCommand(mode) {
 }
 
 let commandPage = 1;
-const COMMAND_PAGE_MAX = 2;
+let commandPageMax = 1;
+const COMMANDS_PER_PAGE = 6;
+
+function setupCommandPagination() {
+  const buttons = Array.from(document.querySelectorAll('.dq-cmd-btn'));
+  commandPageMax = Math.max(1, Math.ceil(buttons.length / COMMANDS_PER_PAGE));
+  buttons.forEach((btn, idx) => {
+    btn.dataset.commandPage = String(Math.floor(idx / COMMANDS_PER_PAGE) + 1);
+  });
+}
 
 function showCommandPage(page) {
-  commandPage = page < 1 ? COMMAND_PAGE_MAX : page > COMMAND_PAGE_MAX ? 1 : page;
+  commandPage = page < 1 ? commandPageMax : page > commandPageMax ? 1 : page;
   const commandWindow = $('command-window');
   const pageIndicator = $('command-page-indicator');
   if (commandWindow) commandWindow.dataset.page = String(commandPage);
-  if (pageIndicator) pageIndicator.textContent = `${commandPage}/${COMMAND_PAGE_MAX}`;
+  if (pageIndicator) pageIndicator.textContent = `${commandPage}/${commandPageMax}`;
 }
 
 function nextCommandPage() {
@@ -2001,10 +2031,12 @@ function renderWorldMap() {
   const canvas = $('world-canvas');
   const layer = $('world-zone-layer');
   if (!canvas || !layer) return;
+  const mapSvg = canvas.querySelector('.world-map-svg');
 
   const region = currentWorldRegion ? WORLD_REGIONS.find(r => r.id === currentWorldRegion) : null;
   canvas.classList.toggle('world-area-mode', Boolean(region));
   canvas.dataset.region = region?.id || 'global';
+  if (mapSvg) mapSvg.innerHTML = region ? (WORLD_MAP_FOCUSED[region.id] || WORLD_MAP_BASE) : WORLD_MAP_BASE;
   layer.innerHTML = '';
 
   if (!region) {
@@ -2468,6 +2500,31 @@ const LANGUAGE_ALPHABETS = {
   ne: 'अआइईउऊऋएऐओऔकखगघङचछजझञटठडढणतथदधनपफबभमयरलवशषसह'.split(''),
 };
 
+const KEYBOARD_LAYOUTS = {
+  en: [['Q','W','E','R','T','Y','U','I','O','P'], ['A','S','D','F','G','H','J','K','L'], ['Z','X','C','V','B','N','M']],
+  ja: [['Q','W','E','R','T','Y','U','I','O','P'], ['A','S','D','F','G','H','J','K','L'], ['Z','X','C','V','B','N','M']],
+  fr: [['A','Z','E','R','T','Y','U','I','O','P'], ['Q','S','D','F','G','H','J','K','L','M'], ['W','X','C','V','B','N']],
+  de: [['Q','W','E','R','T','Z','U','I','O','P','Ü'], ['A','S','D','F','G','H','J','K','L','Ö','Ä'], ['Y','X','C','V','B','N','M']],
+  pl: [['Q','W','E','R','T','Y','U','I','O','P'], ['A','S','D','F','G','H','J','K','L','Ł'], ['Z','X','C','V','B','N','M']],
+  tr: [['F','G','Ğ','I','O','D','R','N','H','P'], ['U','İ','E','A','Ü','T','K','M','L','Y'], ['J','Ö','V','C','Ç','Z','S','B']],
+  ru: [['Й','Ц','У','К','Е','Н','Г','Ш','Щ','З','Х','Ъ'], ['Ф','Ы','В','А','П','Р','О','Л','Д','Ж','Э'], ['Я','Ч','С','М','И','Т','Ь','Б','Ю']],
+  el: [[';','Σ','Ε','Ρ','Τ','Υ','Θ','Ι','Ο','Π'], ['Α','Σ','Δ','Φ','Γ','Η','Ξ','Κ','Λ'], ['Ζ','Χ','Ψ','Ω','Β','Ν','Μ']],
+  ar: [['ض','ص','ث','ق','ف','غ','ع','ه','خ','ح','ج','د'], ['ش','س','ي','ب','ل','ا','ت','ن','م','ك','ط'], ['ئ','ء','ؤ','ر','ى','ة','و','ز','ظ']],
+  th: [['ๆ','ไ','ำ','พ','ะ','ั','ี','ร','น','ย','บ','ล'], ['ฟ','ห','ก','ด','เ','้','่','า','ส','ว','ง'], ['ผ','ป','แ','อ','ิ','ื','ท','ม','ใ','ฝ']],
+  ko: [['ㅂ','ㅈ','ㄷ','ㄱ','ㅅ','ㅛ','ㅕ','ㅑ','ㅐ','ㅔ'], ['ㅁ','ㄴ','ㅇ','ㄹ','ㅎ','ㅗ','ㅓ','ㅏ','ㅣ'], ['ㅋ','ㅌ','ㅊ','ㅍ','ㅠ','ㅜ','ㅡ']],
+  zh: [['Q','W','E','R','T','Y','U','I','O','P'], ['A','S','D','F','G','H','J','K','L'], ['Z','X','C','V','B','N','M']],
+  yue: [['Q','W','E','R','T','Y','U','I','O','P'], ['A','S','D','F','G','H','J','K','L'], ['Z','X','C','V','B','N','M']],
+  hi: [['ौ','ै','ा','ी','ू','ब','ह','ग','द','ज','ड'], ['ो','े','्','ि','ु','प','र','क','त','च','ट'], ['ॉ','ं','म','न','व','ल','स',',','.']],
+  ne: [['ौ','ै','ा','ी','ू','ब','ह','ग','द','ज','ड'], ['ो','े','्','ि','ु','प','र','क','त','च','ट'], ['ॉ','ं','म','न','व','ल','स',',','.']],
+  bn: [['ৌ','ৈ','া','ী','ূ','ব','হ','গ','দ','জ','ড'], ['ো','ে','্','ি','ু','প','র','ক','ত','চ','ট'], ['ং','ম','ন','ব','ল','স',',','.']],
+  ta: [['ஆ','ஈ','ஊ','ஐ','ஏ','ள','ற','ன','ட','ண'], ['அ','இ','உ','எ','ஒ','ப','ர','க','த','ச'], ['ம','ந','வ','ல','ஸ','ய']],
+  my: [['ဆ','တ','န','မ','အ','ပ','က','င','သ','စ','ဟ'], ['ေ','ျ','ိ','်','ါ','့','ြ','ု','ူ','း','ဒ'], ['ဖ','ထ','ခ','လ','ဘ','ညာ','ယ']],
+  si: [['ෞ','ැ','ෑ','ි','ී','ු','ූ','බ','ග','ද','ජ'], ['ෝ','ේ','්','ා','ෙ','ට','ය','ව','න','ක','ත'], ['ො','ං','ම','ල','ස','.']],
+};
+
+const LATIN_QWERTY_LANGS = ['es','pt','nl','tl','id','it','vi'];
+LATIN_QWERTY_LANGS.forEach(code => { KEYBOARD_LAYOUTS[code] = KEYBOARD_LAYOUTS.en; });
+
 let keyboardState = null; // {stage, sequence, idx, correct, mistakes, startTime}
 let keyboardComposing = false;
 
@@ -2586,12 +2643,12 @@ function updateKeyboardPracticeUI() {
 function renderVirtualKeyboard(targetKey) {
   const container = $('virtual-keyboard');
   if (!container) return;
-  const rows = chunkArray(currentKeyboardAlphabet(), 10);
+  const rows = KEYBOARD_LAYOUTS[selectedLanguage] || KEYBOARD_LAYOUTS.en;
   container.innerHTML = rows.map(row => `
     <div class="kb-row">
       ${row.map(k => {
         const cls = ['kb-key'];
-        if (k === targetKey) cls.push('kb-key-target');
+        if (normalizeKeyboardChar(k) === normalizeKeyboardChar(targetKey)) cls.push('kb-key-target');
         return `<span class="${cls.join(' ')}" data-key="${k}">${k}</span>`;
       }).join('')}
     </div>
@@ -2732,6 +2789,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* ── コマンドボタン（モード選択） ── */
   $('command-page-btn')?.addEventListener('click', nextCommandPage);
+  setupCommandPagination();
   showCommandPage(1);
 
   document.querySelectorAll('.dq-cmd-btn').forEach(btn => {
