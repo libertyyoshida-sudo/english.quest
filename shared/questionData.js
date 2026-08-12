@@ -2689,6 +2689,159 @@ Object.entries({
   ],
 }).forEach(([code, rows]) => appendGrammarItems(code, rows));
 
+Object.entries({
+  ja: [
+    [6, '締め切りが変わる場合は、事前に確認_____.', ['してください','しました','している','すること'], 0, '条件に続く依頼は「確認してください」。'],
+    [7, '資料は会議で使われる前に共有される_____です。', ['べき','ところ','もの','だけ'], 0, '義務・適切さは「べきです」。'],
+    [8, '説明が詳しいほど、内容は_____なります。', ['分かりやすく','分かりやすいを','分かりやすいで','分かりやすいへ'], 0, '形容詞の変化は「〜くなる」。'],
+    [9, 'もし事前に連絡していれば、混乱を_____.', ['避けられたでしょう','避けます','避けています','避けること'], 0, '過去の反事実は「避けられたでしょう」。'],
+  ],
+  fr: [
+    [6, 'Si la date limite change, veuillez la _____ a l avance.', ['confirmer','confirme','confirmee','confirmant'], 0, 'veuillez + infinitif。'],
+    [7, 'Les documents doivent etre partages avant d etre _____.', ['utilises','utiliser','utilise','utilisant'], 0, '受動態は etre + participe passe。'],
+    [8, 'Plus l explication est detaillee, _____ elle devient claire.', ['plus','moins','tres','aussi'], 0, 'Plus..., plus... の構文。'],
+    [9, 'Si nous avions prevenu l equipe, nous _____ la confusion.', ['aurions evite','evitons','eviterons','eviter'], 0, '過去反実仮想は aurions + participe。'],
+  ],
+  es: [
+    [6, 'Si cambia la fecha limite, por favor _____ con anticipacion.', ['confirmenla','confirmamos','confirmo','confirmando'], 0, '依頼は命令形 confirmenla。'],
+    [7, 'Los documentos deben ser compartidos antes de ser _____.', ['utilizados','utilizar','utiliza','utilizando'], 0, 'ser + participio。'],
+    [8, 'Cuanto mas detallada es la explicacion, _____ clara resulta.', ['mas','menos','muy','tan'], 0, 'Cuanto mas..., mas... の構文。'],
+    [9, 'Si hubieramos avisado al equipo, _____ la confusion.', ['habriamos evitado','evitamos','evitaremos','evitar'], 0, '過去反実仮想は habriamos + participio。'],
+  ],
+  pt: [
+    [6, 'Se o prazo mudar, por favor _____ com antecedencia.', ['confirme-o','confirmamos','confirmou','confirmando'], 0, '依頼は命令形 confirme-o。'],
+    [7, 'Os documentos devem ser compartilhados antes de serem _____.', ['usados','usar','usa','usando'], 0, 'serem + participio。'],
+    [8, 'Quanto mais detalhada e a explicacao, _____ clara ela fica.', ['mais','menos','muito','tao'], 0, 'Quanto mais..., mais... の構文。'],
+    [9, 'Se tivessemos avisado a equipe, _____ a confusao.', ['teriamos evitado','evitamos','evitaremos','evitar'], 0, '過去反実仮想は teriamos + participio。'],
+  ],
+  ru: [
+    [6, 'Если срок изменится, _____ его заранее.', ['подтвердите','подтверждает','подтвердил','подтверждая'], 0, '丁寧な命令は подтвердите。'],
+    [7, 'Документы должны быть переданы до того, как их _____.', ['используют','использовать','использует','используя'], 0, '受動的な意味で未来複数 используют。'],
+    [8, 'Чем подробнее объяснение, _____ понятнее содержание.', ['тем','более','самое','очень'], 0, 'Чем..., тем... の構文。'],
+    [9, 'Если бы мы предупредили команду заранее, мы _____ путаницы.', ['избежали бы','избегаем','избежим','избежать'], 0, '反事実は過去形 + бы。'],
+  ],
+  de: [
+    [6, 'Wenn sich die Frist andert, _____ Sie sie bitte vorher.', ['bestatigen','bestatigt','bestatigte','bestatigend'], 0, '丁寧な依頼は bestatigen Sie。'],
+    [7, 'Die Dokumente muessen geteilt werden, bevor sie _____ werden.', ['verwendet','verwenden','verwendete','verwendend'], 0, '受動態 werden + Partizip。'],
+    [8, 'Je detaillierter die Erklaerung ist, _____ klarer wird der Inhalt.', ['desto','mehr','meist','sehr'], 0, 'Je..., desto... の構文。'],
+    [9, 'Haetten wir das Team vorher informiert, _____ wir Verwirrung vermieden.', ['haetten','haben','werden','sind'], 0, '過去反実仮想は haetten + Partizip。'],
+  ],
+  ar: [
+    [6, 'إذا تغير الموعد النهائي، _____ مسبقا.', ['أكدوه','يؤكد','أكد','مؤكدا'], 0, 'الطلب المباشر يستخدم أكدوه.'],
+    [7, 'يجب مشاركة المستندات قبل أن يتم _____.', ['استخدامها','استخدام','يستخدم','مستخدما'], 0, 'بعد يتم نستخدم صيغة مناسبة للمفعول.'],
+    [8, 'كلما كان الشرح مفصلا أكثر، أصبح المحتوى _____ وضوحا.', ['أكثر','أقل','جدا','مثل'], 0, 'كلما..., أكثر... للمقارنة المتدرجة.'],
+    [9, 'لو أخبرنا الفريق مسبقا، _____ الارتباك.', ['لتجنبنا','نتجنب','سنتجنب','تجنب'], 0, 'لو للماضي غير الحقيقي مع اللام.'],
+  ],
+  tr: [
+    [6, 'Son tarih degisirse lutfen onceden _____.', ['onaylayin','onaylar','onayladi','onaylayan'], 0, 'Rica/komut icin onaylayin.'],
+    [7, 'Belgeler kullanilmadan once _____ gerekir.', ['paylasilmasi','paylasmak','paylasti','paylasiyor'], 0, 'Gereklilik icin isim-fiil + gerekir.'],
+    [8, 'Aciklama ne kadar ayrintili olursa icerik o kadar _____ olur.', ['anlasilir','anlasildi','anlam','anlasilmak'], 0, 'Ne kadar..., o kadar... yapisi.'],
+    [9, 'Ekibe onceden haber verseydik karisikligi _____ olurduk.', ['onlemis','onler','onleyecek','onlemek'], 0, 'Gecmis kosulda -mis + olurduk.'],
+  ],
+  th: [
+    [6, 'ถ้ากำหนดส่งเปลี่ยน กรุณา _____ ล่วงหน้า', ['ยืนยัน','ดื่ม','ซื้อ','ไป'], 0, '「確認する」は ยืนยัน。'],
+    [7, 'เอกสารควรถูกแชร์ก่อนที่จะถูก _____.', ['ใช้','กิน','ซื้อ','ไป'], 0, '受動的な「使われる」は ถูกใช้。'],
+    [8, 'ยิ่งคำอธิบายละเอียด เนื้อหาก็ยิ่ง _____.', ['เข้าใจง่าย','แพง','ไกล','สุดท้าย'], 0, 'ยิ่ง..., ยิ่ง... の構文。'],
+    [9, 'ถ้าเราแจ้งทีมล่วงหน้า เรา_____ความสับสนได้แล้ว', ['คงหลีกเลี่ยง','หลีกเลี่ยง','จะหลีกเลี่ยง','กำลังหลีกเลี่ยง'], 0, '反事実には คง + 動詞。'],
+  ],
+  zh: [
+    [6, '如果截止日期变化，请提前_____。', ['确认','确认了','确认着','确认的'], 0, '请 + 动词。'],
+    [7, '文件在使用之前应该被_____.', ['共享','共享了','共享着','共享的'], 0, '被 + 动词 表受动。'],
+    [8, '说明越详细，内容就越_____.', ['清楚','最后','昂贵','远'], 0, '越..., 就越... 的结构。'],
+    [9, '如果我们提前通知团队，就_____混乱。', ['会避免','避免','正在避免','避免过'], 0, '假设结果用 会 + 动词。'],
+  ],
+  yue: [
+    [6, '如果截止日期有變，請預先_____。', ['確認','飲','買','去'], 0, '請 + 動詞。'],
+    [7, '文件使用之前應該被_____.', ['分享','飲','買','去'], 0, '被 + 動詞 表受動。'],
+    [8, '說明越詳細，內容就越_____.', ['清楚','最後','貴','遠'], 0, '越..., 就越...。'],
+    [9, '如果我哋預先通知團隊，就_____混亂。', ['會避免','避免緊','避免咗','去'], 0, '假設結果用 會 + 動詞。'],
+  ],
+  ko: [
+    [6, '마감일이 바뀌면 미리 _____.', ['확인해 주세요','확인했습니다','마십니다','갑니다'], 0, '依頼は -해 주세요。'],
+    [7, '문서는 사용되기 전에 공유되어야 _____.', ['합니다','했습니다','갑니다','삽니다'], 0, '義務は -아/어야 합니다。'],
+    [8, '설명이 자세할수록 내용이 더 _____.', ['명확해집니다','마십니다','삽니다','갑니다'], 0, '変化は -아/어집니다。'],
+    [9, '팀에 미리 알렸다면 혼란을 _____ 것입니다.', ['피했을','피합니다','피하고','피하기'], 0, '反事実は -았/었을 것입니다。'],
+  ],
+  pl: [
+    [6, 'Jesli termin sie zmieni, prosze go wczesniej _____.', ['potwierdzic','potwierdza','potwierdzil','potwierdzajac'], 0, 'prosze + infinitiv。'],
+    [7, 'Dokumenty musza zostac udostepnione, zanim zostana _____.', ['uzyte','uzyc','uzywa','uzywajac'], 0, '受動態 zostana uzyte。'],
+    [8, 'Im bardziej szczegolowe wyjasnienie, _____ jasniejsza tresc.', ['tym','bardziej','najbardziej','bardzo'], 0, 'Im..., tym... の構文。'],
+    [9, 'Gdybysmy uprzedzili zespol, _____ zamieszania.', ['uniknelibysmy','unikniemy','unikamy','uniknac'], 0, '反事実は -libysmy。'],
+  ],
+  nl: [
+    [6, 'Als de deadline verandert, _____ die dan vooraf.', ['bevestig','bevestigt','bevestigde','bevestigend'], 0, '命令形は bevestig。'],
+    [7, 'De documenten moeten worden gedeeld voordat ze worden _____.', ['gebruikt','gebruiken','gebruiktte','gebruikend'], 0, '受動態 worden gebruikt。'],
+    [8, 'Hoe gedetailleerder de uitleg is, _____ duidelijker de inhoud wordt.', ['hoe','meer','meest','zeer'], 0, 'Hoe..., hoe... の構文。'],
+    [9, 'Als we het team vooraf hadden ingelicht, _____ we verwarring vermeden.', ['hadden','hebben','zullen','zijn'], 0, '過去反実は hadden + voltooid deelwoord。'],
+  ],
+  el: [
+    [6, 'Αν αλλάξει η προθεσμία, _____ την εκ των προτέρων.', ['επιβεβαιώστε','επιβεβαιώνει','επιβεβαίωσε','επιβεβαιώνοντας'], 0, '丁寧な命令は επιβεβαιώστε。'],
+    [7, 'Τα έγγραφα πρέπει να κοινοποιηθούν πριν _____.', ['χρησιμοποιηθούν','χρησιμοποιεί','χρησιμοποιήσει','χρησιμοποιώντας'], 0, '受動的に「使われる」は χρησιμοποιηθούν。'],
+    [8, 'Όσο πιο λεπτομερής είναι η εξήγηση, τόσο πιο _____ γίνεται το περιεχόμενο.', ['σαφές','ακριβό','μακρινό','τελευταίο'], 0, 'Όσο πιο..., τόσο πιο...。'],
+    [9, 'Αν είχαμε ενημερώσει την ομάδα νωρίτερα, _____ τη σύγχυση.', ['θα είχαμε αποφύγει','αποφεύγουμε','θα αποφύγουμε','αποφεύγοντας'], 0, '過去反実は θα είχαμε + μετοχή。'],
+  ],
+  tl: [
+    [6, 'Kung magbago ang deadline, _____ ito nang maaga.', ['kumpirmahin','uminom','bumili','pumunta'], 0, '確認するは kumpirmahin。'],
+    [7, 'Dapat ibahagi ang dokumento bago ito _____.', ['gamitin','inumin','bilhin','puntahan'], 0, '使われる/使う対象は gamitin。'],
+    [8, 'Habang mas detalyado ang paliwanag, mas _____ ang nilalaman.', ['malinaw','mahal','malayo','huli'], 0, 'mas ... ang 構文。'],
+    [9, 'Kung naabisuhan natin ang grupo nang maaga, _____ sana natin ang kalituhan.', ['naiwasan','iniiwasan','iiwasan','iwasan'], 0, '反事実には sana。'],
+  ],
+  id: [
+    [6, 'Jika tenggat berubah, _____ terlebih dahulu.', ['konfirmasi','minum','membeli','pergi'], 0, '確認するは konfirmasi。'],
+    [7, 'Dokumen harus dibagikan sebelum _____.', ['digunakan','minum','membeli','pergi'], 0, '受動態は di-。'],
+    [8, 'Semakin rinci penjelasannya, semakin _____ isinya.', ['jelas','mahal','jauh','terakhir'], 0, 'Semakin..., semakin...。'],
+    [9, 'Jika kita memberi tahu tim lebih awal, kita _____ kebingungan itu.', ['bisa menghindari','menghindari','akan menghindari','dihindari'], 0, '反事実に近い表現は bisa + 動詞。'],
+  ],
+  it: [
+    [6, 'Se la scadenza cambia, la _____ in anticipo.', ['confermi','conferma','confermato','confermando'], 0, '丁寧な依頼は congiuntivo/imperativo confermi。'],
+    [7, 'I documenti devono essere condivisi prima di essere _____.', ['usati','usare','usa','usando'], 0, 'essere + participio。'],
+    [8, 'Piu dettagliata e la spiegazione, _____ chiaro diventa il contenuto.', ['piu','meno','molto','tanto'], 0, 'Piu..., piu... の構文。'],
+    [9, 'Se avessimo avvisato il team prima, _____ la confusione.', ['avremmo evitato','evitiamo','eviteremo','evitare'], 0, '過去反実は avremmo + participio。'],
+  ],
+  vi: [
+    [6, 'Nếu hạn chót thay đổi, vui lòng _____ trước.', ['xác nhận','uống','mua','đi'], 0, '確認するは xác nhận。'],
+    [7, 'Tài liệu phải được chia sẻ trước khi được _____.', ['sử dụng','uống','mua','đi'], 0, '受動的表現は được + 動詞。'],
+    [8, 'Càng giải thích chi tiết, nội dung càng _____.', ['rõ ràng','đắt','xa','cuối cùng'], 0, 'Càng..., càng... の構文。'],
+    [9, 'Nếu thông báo cho nhóm sớm hơn, chúng ta _____ sự nhầm lẫn.', ['đã có thể tránh','tránh','sẽ tránh','đang tránh'], 0, '反事実に近い表現は đã có thể。'],
+  ],
+  bn: [
+    [6, 'সময়সীমা বদলালে আগে থেকে _____.', ['নিশ্চিত করুন','খান','কিনুন','যান'], 0, '確認する依頼は নিশ্চিত করুন।'],
+    [7, 'নথি ব্যবহার করার আগে _____ দরকার।', ['শেয়ার করা','খাওয়া','কেনা','যাওয়া'], 0, '必要は করা দরকার。'],
+    [8, 'ব্যাখ্যা যত বিস্তারিত হয়, বিষয়বস্তু তত _____ হয়।', ['স্পষ্ট','দামি','দূরে','শেষ'], 0, 'যত..., তত... の構文。'],
+    [9, 'দলকে আগে জানালে আমরা বিভ্রান্তি _____।', ['এড়াতে পারতাম','এড়াই','এড়াব','এড়াতে'], 0, '反事実的な可能性は পারতাম。'],
+  ],
+  my: [
+    [6, 'နောက်ဆုံးရက်ပြောင်းရင် ကြိုတင် _____.', ['အတည်ပြုပါ','သောက်ပါ','ဝယ်ပါ','သွားပါ'], 0, '確認する依頼は အတည်ပြုပါ。'],
+    [7, 'စာရွက်စာတမ်းတွေကို အသုံးမပြုခင် _____ လိုတယ်။', ['မျှဝေရန်','သောက်ရန်','ဝယ်ရန်','သွားရန်'], 0, '必要は -ရန် လိုတယ်。'],
+    [8, 'ရှင်းပြချက် ပိုအသေးစိတ်လေလေ အကြောင်းအရာက ပို_____လာတယ်။', ['ရှင်းလင်း','စျေးကြီး','ဝေး','နောက်ဆုံး'], 0, 'ပို..., ပို... 構文。'],
+    [9, 'အဖွဲ့ကို ကြိုတင်အသိပေးခဲ့ရင် ရှုပ်ထွေးမှုကို _____ နိုင်ခဲ့မယ်။', ['ရှောင်ရှား','သောက်','ဝယ်','သွား'], 0, '反事実の可能性は နိုင်ခဲ့မယ်。'],
+  ],
+  si: [
+    [6, 'අවසන් දිනය වෙනස් වුවහොත් කලින් _____.', ['තහවුරු කරන්න','බොන්න','ගන්න','යන්න'], 0, '確認する依頼は තහවුරු කරන්න。'],
+    [7, 'ලේඛන භාවිතා කිරීමට පෙර _____ යුතුය.', ['බෙදාගත','බිව්','ගත්','ගිය'], 0, '義務は කළ යුතුය。'],
+    [8, 'විස්තරය වැඩි වශයෙන් සවිස්තරාත්මක වන තරමට අන්තර්ගතය තවත් _____.', ['පැහැදිලි වේ','මිල අධික වේ','දුර වේ','අවසන් වේ'], 0, '〜するほど、さらに〜。'],
+    [9, 'කණ්ඩායමට කලින් දැනුම් දුන්නා නම් අපට අවුල _____ තිබුණි.', ['වළක්වාගත','බී','ගෙන','ගොස්'], 0, '反事実は තිබුණි と結ぶ。'],
+  ],
+  ta: [
+    [6, 'கடைசி தேதி மாறினால் முன்கூட்டியே _____.', ['உறுதிப்படுத்தவும்','குடிக்கவும்','வாங்கவும்','செல்லவும்'], 0, '確認する依頼は உறுதிப்படுத்தவும்。'],
+    [7, 'ஆவணங்கள் பயன்படுத்தப்படும் முன் _____ வேண்டும்.', ['பகிரப்பட','குடிக்க','வாங்க','செல்ல'], 0, '受動的な義務は பகிரப்பட வேண்டும்。'],
+    [8, 'விளக்கம் அதிகம் விரிவாக இருந்தால் உள்ளடக்கம் மேலும் _____.', ['தெளிவாகும்','விலையுயரும்','தூரமாகும்','கடைசியாகும்'], 0, '変化は -ஆகும்。'],
+    [9, 'குழுவிற்கு முன்பே தெரிவித்திருந்தால் குழப்பத்தை _____ இருப்போம்.', ['தவிர்த்திருப்போம்','தவிர்க்கிறோம்','தவிர்ப்போம்','தவிர்க்க'], 0, '過去反実は -திருப்போம்。'],
+  ],
+  hi: [
+    [6, 'यदि समयसीमा बदले, तो पहले से _____।', ['पुष्टि करें','पीएं','खरीदें','जाएं'], 0, '確認する依頼は पुष्टि करें。'],
+    [7, 'दस्तावेज़ उपयोग होने से पहले _____ चाहिए।', ['साझा किए जाने','पीना','खरीदना','जाना'], 0, '受動的義務は किए जाने चाहिए。'],
+    [8, 'व्याख्या जितनी विस्तृत होती है, सामग्री उतनी ही _____ होती है।', ['स्पष्ट','महंगी','दूर','अंतिम'], 0, 'जितना..., उतना... の構文。'],
+    [9, 'यदि हमने टीम को पहले बताया होता, तो हम भ्रम _____।', ['से बच जाते','से बचते हैं','से बचेंगे','से बचना'], 0, '反事実は जाते。'],
+  ],
+  ne: [
+    [6, 'म्याद परिवर्तन भएमा पहिले नै _____।', ['पुष्टि गर्नुहोस्','पिउनुहोस्','किन्नुहोस्','जानुहोस्'], 0, '確認する依頼は पुष्टि गर्नुहोस्。'],
+    [7, 'कागजात प्रयोग हुनु अघि _____ पर्छ।', ['साझा गर्न','पिउन','किन्न','जान'], 0, '義務は गर्न पर्छ。'],
+    [8, 'व्याख्या जति विस्तृत हुन्छ, सामग्री त्यति नै _____ हुन्छ।', ['स्पष्ट','महँगो','टाढा','अन्तिम'], 0, 'जति..., त्यति... の構文。'],
+    [9, 'हामीले टोलीलाई पहिले जानकारी दिएको भए अन्योल _____ थियौं।', ['जोगाउने','जोगाउँछौं','जोगाउनेछौं','जोगाउन'], 0, '反事実は जोगाउने थियौं。'],
+  ],
+}).forEach(([code, rows]) => appendGrammarItems(code, rows));
+
 const NEW_WORD_TIERS = [1,1,1,1,1,1,2,2,2,2,1,1,1,2,3,3,3,3,3,2,2,2,2,2,2,3,2,3,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,1,1,1,1,1,1,1,1,1,2,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,1,1,1,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,2,2,1,1,2,1,1,1,2,1,1,1,2,1,2,2,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,1,1,2,2,1,1,1,1,1,2,2,2,2,2,2,1];
 
 export const MULTI_VOCAB_DB = Object.fromEntries(
