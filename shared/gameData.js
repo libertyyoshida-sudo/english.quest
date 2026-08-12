@@ -84,7 +84,7 @@ export const TITLE_DEFS = [
   { id: 'listen5', icon: '👂', name: 'ちょうりょく5', check: p => p.listenCorrect >= 5 },
   { id: 'speak5', icon: '🎤', name: 'はっわ5', check: p => p.speakCorrect >= 5 },
   { id: 'lv5', icon: '🦸', name: 'レベル5達成', check: p => p.lv >= 5 },
-  { id: 'lv10', icon: '🐉', name: 'まおうをたおした', check: p => p.lv >= 10 },
+  { id: 'lv10', icon: '👑', name: '言語マスター', check: p => p.lv >= 10 },
   { id: 'gold100', icon: '💰', name: 'ゴールド100G', check: p => p.gold >= 100 },
 ];
 

@@ -365,7 +365,7 @@ const REGION_ENEMY_NAMES = {
 // tier: 'all' か 1〜10。問題のティア（TOEICレベル）と同じ数値で敵の強さを決める
 // langCode を指定すると、その言語・地域にちなんだ名前の敵になる（省略時は現在の学習言語）
 function pickEnemy(tier, langCode = selectedLanguage) {
-  const baseTier = tier === 'all' ? getLvRow(langState().totalExp).lv : tier;
+  const baseTier = tier === 'all' ? languageMasteryState(langCode).effectiveLv : tier;
   const spread = Math.floor(Math.random() * 3) - 1; // -1〜+1でばらつきを持たせる
   const idx = Math.min(9, Math.max(0, baseTier - 1 + spread));
   const base = ENEMIES[idx];
@@ -395,8 +395,15 @@ function currentLanguage() {
   return LANGUAGE_OPTIONS.find(lang => lang.code === selectedLanguage) || LANGUAGE_OPTIONS[0];
 }
 
+function levelRowByLv(lv) {
+  return LEVEL_TABLE.find(row => row.lv === lv) || LEVEL_TABLE[0];
+}
+
 const FREE_LANGUAGE_CODES = ['ja', 'en'];
 const FREE_COMMAND_MODES = ['vocab', 'grammar', 'typing', 'keyboard', 'inn', 'review', 'shop', 'status'];
+const MASTER_LEVEL = 10;
+const MASTER_RETENTION_THRESHOLD = 85;
+const MASTER_COVERAGE_THRESHOLD = 70;
 const COMMAND_REQUIREMENTS = {
   smart: { itemId: 'p_smart', label: 'スマート学習免許' },
   weak: { itemId: 'p_smart', label: 'スマート学習免許' },
@@ -516,9 +523,11 @@ function renderLanguageProfile() {
     el.innerHTML = '';
     return;
   }
+  const mastery = languageMasteryState(lang.code);
+  const retText = mastery.retentionPercent === null ? '未計測' : `${mastery.retentionPercent}%`;
   el.innerHTML = `
     <button type="button" class="language-profile-toggle">
-      <span class="language-profile-title">📚 ${lang.label}（${lang.native}）</span>
+      <span class="language-profile-title">📚 ${lang.label}（${lang.native}） 現在Lv.${mastery.effectiveLv}${mastery.mastered ? ' 👑 マスター' : ''}</span>
       <span class="language-profile-toggle-icon">${languageProfileExpanded ? '▲ 閉じる' : '▼ くわしく'}</span>
     </button>
     <div class="language-profile-detail${languageProfileExpanded ? '' : ' hidden'}">
@@ -532,6 +541,7 @@ function renderLanguageProfile() {
           <p>${profile.speakers}</p>
         </div>
       </div>
+      <p class="language-profile-note">現在レベルは忘却曲線と追加問題の習得状況で変動します。定着度: ${retText} / カバー率: ${mastery.coveragePercent}%</p>
       <p class="language-profile-note">${profile.note}</p>
     </div>
   `;
@@ -578,7 +588,7 @@ function refreshLanguageText() {
   const lang = currentLanguage();
   if ($('title-language-copy')) $('title-language-copy').textContent = '言語習得への旅';
   if ($('field-msg-text')) {
-    $('field-msg-text').textContent = `どこへ　むかうか？　まおうをたおすには　${lang.label}のちからが　ひつようだ！`;
+    $('field-msg-text').textContent = `どこへ　むかうか？　${lang.label}をマスターすると、その国でエンディングが見られる！`;
   }
   if ($('typing-input')) $('typing-input').placeholder = `${lang.label}でうってね（Enterでかいとう）`;
   refreshLevelOptions();
@@ -636,7 +646,7 @@ function refreshCommandLocks() {
 // 'auto' は勇者の現在レベルに連動させる（敵の強さ・問題レベルが自動で上がる）
 function resolveLevelSelection(rawValue) {
   if (rawValue === 'all') return 'all';
-  if (rawValue === 'auto') return getLvRow(langState().totalExp).lv;
+  if (rawValue === 'auto') return languageMasteryState().effectiveLv;
   return parseInt(rawValue, 10);
 }
 
@@ -687,6 +697,56 @@ function languageRetention(code) {
     .filter(s => s !== null);
   if (scores.length === 0) return null;
   return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length * 100);
+}
+
+function languageProgressCounts(code) {
+  const pool = [...vocabDBFor(code), ...grammarDBFor(code), ...phraseDBFor(code), ...cultureDBFor(code)];
+  const counts = { new: 0, low: 0, weak: 0, mid: 0, mastered: 0, total: pool.length };
+  pool.forEach(it => { counts[classifyItem(it)]++; });
+  return counts;
+}
+
+function masteryCoveragePct(code) {
+  const counts = languageProgressCounts(code);
+  if (counts.total === 0) return 0;
+  return Math.round(counts.mastered / counts.total * 100);
+}
+
+function decayPenaltyFromRetention(retentionPercent) {
+  if (retentionPercent === null) return 0;
+  if (retentionPercent >= MASTER_RETENTION_THRESHOLD) return 0;
+  if (retentionPercent >= 70) return 1;
+  if (retentionPercent >= 50) return 2;
+  if (retentionPercent >= 30) return 3;
+  return 4;
+}
+
+function decayPenaltyFromCoverage(coveragePercent) {
+  if (coveragePercent >= MASTER_COVERAGE_THRESHOLD) return 0;
+  if (coveragePercent >= 50) return 1;
+  if (coveragePercent >= 30) return 2;
+  if (coveragePercent >= 15) return 3;
+  return 4;
+}
+
+function languageMasteryState(code = selectedLanguage) {
+  const lp = langState(code);
+  const reachedRow = getLvRow(lp.totalExp);
+  const retentionPercent = languageRetention(code);
+  const coveragePercent = masteryCoveragePct(code);
+  const penalty = Math.max(
+    decayPenaltyFromRetention(retentionPercent),
+    decayPenaltyFromCoverage(coveragePercent),
+  );
+  const effectiveLv = Math.max(1, reachedRow.lv - penalty);
+  const effectiveRow = levelRowByLv(effectiveLv);
+  const mastered = reachedRow.lv >= MASTER_LEVEL
+    && effectiveLv >= MASTER_LEVEL
+    && retentionPercent !== null
+    && retentionPercent >= MASTER_RETENTION_THRESHOLD
+    && coveragePercent >= MASTER_COVERAGE_THRESHOLD;
+
+  return { reachedRow, effectiveRow, effectiveLv, retentionPercent, coveragePercent, mastered };
 }
 
 function weakItems(pool) {
@@ -806,7 +866,8 @@ function updateHeroSprite(elId, row) {
 
 function refreshHeader() {
   const lang = langState();
-  const row = getLvRow(lang.totalExp);
+  const { reachedRow, effectiveRow, effectiveLv, mastered } = languageMasteryState();
+  const row = effectiveRow;
   const maxHp = row.hp;
   const maxMp = row.mp;
   if (lang.currentHp === undefined || lang.currentHp > maxHp) {
@@ -818,8 +879,8 @@ function refreshHeader() {
   updateHeroSprite('hdr-hero', row);
   updateHeroSprite('field-hero', row);
   updateHeroSprite('world-hero', row);
-  if ($('hdr-lv'))    $('hdr-lv').textContent    = row.lv;
-  if ($('hdr-title')) $('hdr-title').textContent = row.name;
+  if ($('hdr-lv'))    $('hdr-lv').textContent    = effectiveLv;
+  if ($('hdr-title')) $('hdr-title').textContent = mastered ? `${row.name}・マスター` : (reachedRow.lv > effectiveLv ? `${row.name}（復習中）` : row.name);
   if ($('hdr-hp'))    $('hdr-hp').textContent    = `${lang.currentHp}/${maxHp}`;
   if ($('hdr-mp'))    $('hdr-mp').textContent    = `${lang.currentMp}/${maxMp}`;
   if ($('hdr-gold'))  $('hdr-gold').textContent  = P.gold;
@@ -1381,7 +1442,7 @@ function localAnswerUpdate(q, ok) {
       battle.combo = 0;
     }
     const lang = langState();
-    const maxHp = getLvRow(lang.totalExp).hp;
+    const maxHp = maxHpForCurrentLanguage();
     damage = Math.max(5, Math.round(maxHp * 0.2));
     if (lang.currentHp === undefined) lang.currentHp = maxHp;
     lang.currentHp = Math.max(0, lang.currentHp - damage);
@@ -1389,7 +1450,7 @@ function localAnswerUpdate(q, ok) {
       defeated = true;
       P.gold = Math.floor(P.gold / 2);
       lang.currentHp = maxHp;
-      lang.currentMp = getLvRow(lang.totalExp).mp;
+      lang.currentMp = maxMpForCurrentLanguage();
     }
     refreshHeader();
   }
@@ -1502,7 +1563,7 @@ async function handleAnswer(userAns, userText) {
                  : '';
     msg = `${q.type==='speaking' ? '🎤 うまく はっわできた！' : '⚔️ せいかい！　モンスターにダメージ！'}${combos ? '\n' + combos : ''}`;
   } else {
-    const row = getLvRow(langState().totalExp);
+    const row = languageMasteryState().effectiveRow;
     msg = `💀 まちがい… プレイヤーに ${damage} ダメージ！ (HP:${langState().currentHp}/${row.hp})\nせいかいは「${q.type==='typing'||q.type==='speaking' ? q.ans : q.choices[q.ans]}」`;
     if (defeated) {
       battle.defeated = true;
@@ -1578,11 +1639,11 @@ function showResult() {
   $('res-exp').textContent     = `+${battle.expGained}`;
   $('res-gold').textContent    = `+${battle.goldGained}`;
 
-  const row = getLvRow(langState().totalExp);
+  const row = languageMasteryState().effectiveRow;
   updateHeroSprite('result-hero', row);
 
   let title = '', msg = '';
-  if (rate === 100) { title='かんぺきしょうり！'; msg='まおうもたじたじ！すべてのもんだいをせいかい！'; }
+  if (rate === 100) { title='かんぺきしょうり！'; msg='すべてのもんだいをせいかい！言語マスターへ大きく近づいた！'; }
   else if (rate >= 80) { title='だいしょうり！'; msg=`すばらしい！${languageWordLabel()}のちからがぐんぐんのびている！`; }
   else if (rate >= 60) { title='しょうり！'; msg='よくたたかった！にがてなもんだいをもう一度れんしゅうしよう！'; }
   else if (rate >= 40) { title='ひきわけ…'; msg='もう少し！あきらめずにもう一度ちょうせん！'; }
@@ -1799,7 +1860,7 @@ const WALKABLE_SCREENS = {
 };
 // 画面ごとの勇者位置（%）。画面を切り替えるたびに入り口の位置へリセットする
 const heroPositions = {
-  'screen-field': { x: 50, y: 50 },
+  'screen-field': { x: 50, y: 68 },
   'screen-world': { x: 50, y: 92 },
 };
 const moveKeys = new Set();
@@ -1888,7 +1949,7 @@ function getActiveWalkable() {
 
 function resetHeroPosition(screenId) {
   const region = currentWorldRegion ? WORLD_REGIONS.find(r => r.id === currentWorldRegion) : null;
-  const start = screenId === 'screen-world' ? (region?.hero || { x: 50, y: 92 }) : { x: 50, y: 50 };
+  const start = screenId === 'screen-world' ? (region?.hero || { x: 50, y: 92 }) : { x: 50, y: 68 };
   heroPositions[screenId] = { ...start };
   touchedFieldIcons.clear();
   const cfg = WALKABLE_SCREENS[screenId];
@@ -2098,7 +2159,7 @@ function stopSpeechAll() {
 function goToField() {
   stopSpeechAll();
   const lang = langState();
-  const row = getLvRow(lang.totalExp);
+  const row = languageMasteryState().effectiveRow;
   if (lang.currentHp === undefined) lang.currentHp = row.hp;
   if (lang.currentMp === undefined) lang.currentMp = row.mp;
   resetHeroPosition('screen-field');
@@ -2144,11 +2205,11 @@ function showMagicNote(text) {
 }
 
 function maxHpForCurrentLanguage() {
-  return getLvRow(langState().totalExp).hp;
+  return languageMasteryState().effectiveRow.hp;
 }
 
 function maxMpForCurrentLanguage() {
-  return getLvRow(langState().totalExp).mp;
+  return languageMasteryState().effectiveRow.mp;
 }
 
 function spendMp(cost) {
@@ -2393,12 +2454,13 @@ function renderWorldMap() {
 
   region.langs.forEach(lang => {
     const locked = !isLanguageUnlocked(lang.code) || !canEnterLanguageArea(lang.code);
+    const mastered = !locked && languageMasteryState(lang.code).mastered;
     const el = document.createElement('div');
     el.className = `field-icon world-zone-icon${locked ? ' field-icon-locked' : ''}`;
     el.dataset.lang = lang.code;
     el.style.left = `${lang.left}%`;
     el.style.top = `${lang.top}%`;
-    el.innerHTML = `<span class="field-icon-emoji">${lang.flag}</span><span class="field-icon-label">${locked ? '🔒 ' : ''}${lang.label}</span>`;
+    el.innerHTML = `<span class="field-icon-emoji">${mastered ? '👑' : lang.flag}</span><span class="field-icon-label">${locked ? '🔒 ' : mastered ? '👑 ' : ''}${lang.label}</span>`;
     layer.appendChild(el);
   });
 
@@ -2460,7 +2522,7 @@ function randomEncounterMode() {
 async function triggerRandomEncounter() {
   await ensureLanguageQuestionData();
   const mode  = randomEncounterMode();
-  const tier  = getLvRow(langState().totalExp).lv;
+  const tier  = languageMasteryState().effectiveLv;
   const qs    = buildQuestions(mode, tier, 4);
   if (qs.length === 0) return;
 
@@ -2506,7 +2568,13 @@ async function enterLanguageZone(langCode) {
   setLanguage(langCode);
   await ensureLanguageQuestionData();
 
-  const tier = getLvRow(langState(langCode).totalExp).lv;
+  if (languageMasteryState(langCode).mastered) {
+    showLanguageEnding(langCode);
+    enteringZone = false;
+    return;
+  }
+
+  const tier = languageMasteryState(langCode).effectiveLv;
   const qs = buildQuestions('smart', tier, 8);
   if (qs.length === 0) {
     alert('この地域では まだ もんだいが たりません。');
@@ -2537,6 +2605,28 @@ async function enterLanguageZone(langCode) {
   enteringZone = false;
 }
 
+function showLanguageEnding(langCode = selectedLanguage) {
+  stopSpeechAll();
+  const lang = LANGUAGE_OPTIONS.find(l => l.code === langCode) || currentLanguage();
+  const mastery = languageMasteryState(langCode);
+  updateHeroSprite('ending-hero', mastery.effectiveRow);
+  if ($('ending-title')) $('ending-title').textContent = `${lang.label} マスター！`;
+  if ($('ending-lang')) $('ending-lang').textContent = `${lang.native} のことばが きみの中にひびいている。`;
+  if ($('ending-text')) {
+    $('ending-text').textContent = `この国の人々は、きみを「ことばの旅人」としてむかえた。けれど言葉は生きている。新しい問題が増え、時間がたてば記憶はうすれる。学びを続けるかぎり、このエンディングは何度でも輝き続ける。`;
+  }
+  if ($('ending-stats')) {
+    $('ending-stats').innerHTML = `
+      <span>現在Lv.${mastery.effectiveLv}</span>
+      <span>定着度 ${mastery.retentionPercent}%</span>
+      <span>カバー率 ${mastery.coveragePercent}%</span>
+    `;
+  }
+  showScreen('screen-ending');
+  playFieldBGM();
+  spawnEffects(['✨','⭐','🌟'], 18);
+}
+
 /* ══════════════════════════════════════════════════
    やどや：単語・文法の読み返し／HP回復／にがて特訓の入り口
 ══════════════════════════════════════════════════ */
@@ -2551,7 +2641,7 @@ async function goToInn(opts = {}) {
   renderInnList(currentInnFilter);
 
   const lang = langState();
-  const row = getLvRow(lang.totalExp);
+  const row = languageMasteryState().effectiveRow;
   if (lang.currentHp === undefined) lang.currentHp = row.hp;
   if (lang.currentMp === undefined) lang.currentMp = row.mp;
   const needsRest = lang.currentHp < row.hp || lang.currentMp < row.mp;
@@ -2724,10 +2814,12 @@ function renderStatusScreen() {
   const rows = codes.map(code => {
     const lang = LANGUAGE_OPTIONS.find(l => l.code === code);
     const lp = langState(code);
-    const row = getLvRow(lp.totalExp);
-    const next = getNextLvRow(row.lv);
-    const cur = lp.totalExp - row.exp;
-    const need = next ? next.exp - row.exp : 9999;
+    const mastery = languageMasteryState(code);
+    const row = mastery.effectiveRow;
+    const reachedRow = mastery.reachedRow;
+    const next = getNextLvRow(reachedRow.lv);
+    const cur = lp.totalExp - reachedRow.exp;
+    const need = next ? next.exp - reachedRow.exp : 9999;
     const pct = next ? Math.min(100, Math.round(cur / need * 100)) : 100;
 
     // 出題数・正答率（サーバー集計があればそれを、ゲストはローカルのanswerStatsから算出）
@@ -2740,14 +2832,10 @@ function renderStatusScreen() {
     const rate = hist.totalAnswers > 0 ? Math.round(hist.totalCorrect / hist.totalAnswers * 100) : null;
 
     // 未学習・練習不足・にがて・マスター済みの内訳（全言語共通・selectedLanguageに依存しない集計）
-    const pool = [...vocabDBFor(code), ...grammarDBFor(code), ...phraseDBFor(code), ...cultureDBFor(code)];
-    const counts = { new: 0, low: 0, weak: 0, mid: 0, mastered: 0 };
-    pool.forEach(it => { counts[classifyItem(it)]++; });
-    const retentionPercent = languageRetention(code);
-
-    const mastered = row.lv >= 10;
-    return { code, lang, row, pct, cur, need, next, hist, rate, counts, retentionPercent, mastered };
-  }).sort((a, b) => b.row.lv - a.row.lv || b.cur - a.cur);
+    const counts = languageProgressCounts(code);
+    const { retentionPercent, coveragePercent, mastered, effectiveLv } = mastery;
+    return { code, lang, row, reachedRow, effectiveLv, pct, cur, need, next, hist, rate, counts, retentionPercent, coveragePercent, mastered };
+  }).sort((a, b) => b.effectiveLv - a.effectiveLv || b.cur - a.cur);
 
   if (summaryEl) {
     const masteredCount = rows.filter(r => r.mastered).length;
@@ -2760,7 +2848,7 @@ function renderStatusScreen() {
   }
 
   listEl.innerHTML = '';
-  rows.forEach(({ code, lang, row, pct, hist, rate, counts, retentionPercent, mastered }) => {
+  rows.forEach(({ code, lang, row, reachedRow, effectiveLv, pct, hist, rate, counts, retentionPercent, coveragePercent, mastered }) => {
     const card = document.createElement('div');
     card.className = 'status-lang-card' + (mastered ? ' status-lang-mastered' : '');
     const rateText = rate === null ? 'みがくしゅう' : `${rate}%`;
@@ -2770,11 +2858,13 @@ function renderStatusScreen() {
       <div class="status-lang-head">
         <span class="status-lang-hero">${row.hero}</span>
         <span class="status-lang-name">${lang ? `${lang.label}（${lang.native}）` : code}</span>
-        <span class="status-lang-lv">Lv.${row.lv} ${row.name}</span>
-        ${mastered ? '<span class="status-lang-master-badge">👑 マスター</span>' : ''}
+        <span class="status-lang-lv">現在Lv.${effectiveLv} ${row.name}</span>
+        <span class="status-lang-reached">到達Lv.${reachedRow.lv}</span>
+        ${mastered ? '<span class="status-lang-master-badge">👑 エンディング解放</span>' : ''}
       </div>
       <div class="status-lang-expbar-track"><div class="status-lang-expbar-fill" style="width:${pct}%;"></div></div>
       <div class="status-lang-retention ${retClass}">🧠 総合定着度: <b>${retText}</b>${retentionPercent !== null ? '（忘却曲線で時間とともに低下します）' : ''}</div>
+      <div class="status-lang-retention">📌 マスター条件: 現在Lv.10 / 定着度${MASTER_RETENTION_THRESHOLD}%以上 / 既存問題カバー率${MASTER_COVERAGE_THRESHOLD}%以上　現在カバー率: <b>${coveragePercent}%</b></div>
       <div class="status-lang-stats">
         <div class="status-lang-stat"><span class="status-lang-stat-val">${hist.totalAnswers}</span><span class="status-lang-stat-lbl">出題数</span></div>
         <div class="status-lang-stat"><span class="status-lang-stat-val">${rateText}</span><span class="status-lang-stat-lbl">正答率</span></div>
@@ -2891,6 +2981,7 @@ LATIN_QWERTY_LANGS.forEach(code => { KEYBOARD_LAYOUTS[code] = KEYBOARD_LAYOUTS.e
 
 let keyboardState = null; // {stage, sequence, idx, correct, mistakes, startTime}
 let keyboardComposing = false;
+let keyboardInputMode = localStorage.getItem('languageQuest_keyboardMode') || 'pc';
 
 function currentKeyboardAlphabet() {
   return LANGUAGE_ALPHABETS[selectedLanguage] || LANGUAGE_ALPHABETS.en;
@@ -2927,6 +3018,47 @@ function keyboardBestKey(stageId) {
   return `kbDojo_best_${selectedLanguage}_${stageId}`;
 }
 
+function keyboardLayoutName(code = selectedLanguage) {
+  const names = {
+    en: 'US QWERTY', ja: '日本語ローマ字入力 / JIS', fr: 'フランス語 AZERTY',
+    de: 'ドイツ語 QWERTZ', tr: 'トルコ語 F配列', ru: 'ロシア語 ЙЦУКЕН',
+    el: 'ギリシャ語', ar: 'アラビア語', th: 'タイ語 Kedmanee', ko: '韓国語 2-Set',
+    zh: '中国語 Pinyin IME', yue: '広東語 Jyutping/Cangjie IME',
+    hi: 'ヒンディー語 InScript', ne: 'ネパール語 InScript', bn: 'ベンガル語 InScript',
+    ta: 'タミル語 Tamil99/InScript', my: 'ミャンマー語', si: 'シンハラ語',
+  };
+  return names[code] || 'QWERTY';
+}
+
+function keyboardSetupGuideText() {
+  const lang = currentLanguage();
+  const layout = keyboardLayoutName(lang.code);
+  if (keyboardInputMode === 'mobile') {
+    return `${lang.label}のスマホ入力モード。下の画面キーをタップすれば、端末のキーボード設定なしで練習できます。実機では多くの言語でOSの「キーボード追加」から ${lang.label} を追加して入力します。`;
+  }
+  return `PC配列モード: ${layout}。ブラウザからOSのキーボード設定は自動変更できないため、アプリ内では設定済み扱いにして、実キー入力または下の画面キークリックで練習できます。実機で入力する場合はOSの入力設定に ${lang.label} / ${layout} を追加してください。`;
+}
+
+function renderKeyboardAssist() {
+  document.querySelectorAll('.kb-mode-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.id === `kb-mode-${keyboardInputMode}`);
+  });
+  if ($('keyboard-setup-title')) $('keyboard-setup-title').textContent = `⌨️ ${keyboardLayoutName()} / ${keyboardInputMode === 'mobile' ? 'スマホ入力' : 'PC配列'}`;
+  if ($('keyboard-setup-text')) $('keyboard-setup-text').textContent = keyboardSetupGuideText();
+  if ($('kb-layout-hint')) {
+    $('kb-layout-hint').textContent = keyboardInputMode === 'mobile'
+      ? '青いキーをタップして練習。スマホでもPC配列の位置感を覚えられます。'
+      : '青いキーが次に打つ文字。実キー入力でも、下のキーをクリックしても練習できます。';
+  }
+}
+
+function setKeyboardInputMode(mode) {
+  keyboardInputMode = mode === 'mobile' ? 'mobile' : 'pc';
+  localStorage.setItem('languageQuest_keyboardMode', keyboardInputMode);
+  renderKeyboardAssist();
+  renderVirtualKeyboard(keyboardState?.sequence?.[keyboardState.idx] || null);
+}
+
 function normalizeKeyboardChar(value) {
   return String(value || '').trim().toLocaleUpperCase(currentLanguage().speechLang || undefined);
 }
@@ -2937,12 +3069,13 @@ function goToKeyboard() {
   playFieldBGM();
   keyboardState = null;
   if ($('keyboard-msg-text')) {
-    $('keyboard-msg-text').textContent = `キーボードどうじょうへ ようこそ！ ${currentLanguage().label}の${keyboardCharLabel()}と タイピングを れんしゅうしよう。じっさいの キーボードで うってね。`;
+    $('keyboard-msg-text').textContent = `キーボードどうじょうへ ようこそ！ ${currentLanguage().label}の${keyboardCharLabel()}と タイピングを れんしゅうしよう。設定していなくても画面キーで入力できる。`;
   }
   $('keyboard-stage-select')?.classList.remove('hidden');
   $('keyboard-practice')?.classList.add('hidden');
   $('keyboard-result')?.classList.add('hidden');
   renderKeyboardStageList();
+  renderKeyboardAssist();
   renderVirtualKeyboard(null);
 }
 
@@ -3007,16 +3140,25 @@ function updateKeyboardPracticeUI() {
 function renderVirtualKeyboard(targetKey) {
   const container = $('virtual-keyboard');
   if (!container) return;
-  const rows = KEYBOARD_LAYOUTS[selectedLanguage] || KEYBOARD_LAYOUTS.en;
-  container.innerHTML = rows.map(row => `
+  const rows = keyboardInputMode === 'mobile'
+    ? chunkArray(currentKeyboardAlphabet(), 8)
+    : (KEYBOARD_LAYOUTS[selectedLanguage] || KEYBOARD_LAYOUTS.en);
+  const visibleRows = rows.some(row => row.some(k => normalizeKeyboardChar(k) === normalizeKeyboardChar(targetKey)))
+    || !targetKey
+    ? rows
+    : [[targetKey], ...rows];
+  container.innerHTML = visibleRows.map(row => `
     <div class="kb-row">
       ${row.map(k => {
         const cls = ['kb-key'];
         if (normalizeKeyboardChar(k) === normalizeKeyboardChar(targetKey)) cls.push('kb-key-target');
-        return `<span class="${cls.join(' ')}" data-key="${k}">${k}</span>`;
+        return `<button type="button" class="${cls.join(' ')}" data-key="${k}">${k}</button>`;
       }).join('')}
     </div>
   `).join('');
+  container.querySelectorAll('.kb-key').forEach(keyEl => {
+    keyEl.addEventListener('click', () => processKeyboardInput(keyEl.dataset.key));
+  });
 }
 
 function processKeyboardInput(rawKey) {
@@ -3195,6 +3337,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (currentWorldRegion) leaveWorldRegion();
     else goToField();
   });
+  $('ending-world-btn')?.addEventListener('click', () => {
+    showScreen('screen-world');
+    renderWorldMap();
+    resetHeroPosition('screen-world');
+  });
+  $('ending-keep-learning-btn')?.addEventListener('click', () => goToInn());
   $('shop-back-btn')?.addEventListener('click', goToField);
   $('status-back-btn')?.addEventListener('click', goToField);
   $('keyboard-back-btn')?.addEventListener('click', goToField);
@@ -3210,6 +3358,8 @@ document.addEventListener('DOMContentLoaded', () => {
   $('keyboard-msg-close')?.addEventListener('click', () => $('keyboard-msg')?.classList.add('hidden'));
 
   /* ── キーボードどうじょう ── */
+  $('kb-mode-pc')?.addEventListener('click', () => setKeyboardInputMode('pc'));
+  $('kb-mode-mobile')?.addEventListener('click', () => setKeyboardInputMode('mobile'));
   document.addEventListener('keydown', handleKeyboardKeydown);
   $('kb-typing-input')?.addEventListener('input', handleKeyboardTextInput);
   $('kb-typing-input')?.addEventListener('compositionstart', () => {
