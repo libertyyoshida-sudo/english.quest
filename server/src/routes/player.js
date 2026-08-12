@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { prisma } from '../db.js';
 import { authenticateToken } from '../middleware/auth.js';
-import { getLvRow } from '../../../shared/gameData.js';
+import { ITEM_DB, SHOP_ITEM_IDS, getLvRow } from '../../../shared/gameData.js';
 
 const router = Router();
 
@@ -120,6 +120,65 @@ router.post('/rest', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Rest error:', error);
     res.status(500).json({ error: '休憩処理に失敗しました。' });
+  }
+});
+
+// Shop購入：Goldを消費して装備・消耗品・通行証を入手する
+router.post('/shop/buy', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { itemId } = req.body;
+    const item = ITEM_DB[itemId];
+    if (!item || !SHOP_ITEM_IDS.includes(itemId)) {
+      return res.status(400).json({ error: 'このアイテムは購入できません。' });
+    }
+
+    const profile = await prisma.playerProfile.findUnique({ where: { userId } });
+    if (!profile) return res.status(404).json({ error: 'プロファイルが見つかりません。' });
+    if (profile.gold < item.price) return res.status(400).json({ error: 'Goldが足りません。' });
+
+    const owned = await prisma.userItem.findUnique({
+      where: { userId_itemId: { userId, itemId } },
+    });
+    if (owned && item.type !== 'consumable') {
+      return res.status(400).json({ error: 'すでに持っています。' });
+    }
+
+    const updatedProfile = await prisma.playerProfile.update({
+      where: { userId },
+      data: { gold: profile.gold - item.price },
+    });
+
+    await prisma.userItem.upsert({
+      where: { userId_itemId: { userId, itemId } },
+      create: { userId, itemId },
+      update: { acquiredAt: new Date() },
+    });
+
+    const items = await prisma.userItem.findMany({ where: { userId } });
+    res.json({ profile: updatedProfile, items });
+  } catch (error) {
+    console.error('Shop buy error:', error);
+    res.status(500).json({ error: '購入処理に失敗しました。' });
+  }
+});
+
+// 無料練習の報酬付与（キーボード道場など）
+router.post('/reward', authenticateToken, async (req, res) => {
+  try {
+    const amount = Math.max(0, Math.min(50, Number(req.body.amount) || 0));
+    const userId = req.user.userId;
+    const profile = await prisma.playerProfile.findUnique({ where: { userId } });
+    if (!profile) return res.status(404).json({ error: 'プロファイルが見つかりません。' });
+
+    const updatedProfile = await prisma.playerProfile.update({
+      where: { userId },
+      data: { gold: profile.gold + amount },
+    });
+    res.json({ profile: updatedProfile });
+  } catch (error) {
+    console.error('Reward error:', error);
+    res.status(500).json({ error: '報酬付与に失敗しました。' });
   }
 });
 

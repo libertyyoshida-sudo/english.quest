@@ -4,20 +4,60 @@
 ══════════════════════════════════════════════════ */
 
 export const ITEM_DB = {
-  w1: { type: 'weapon', id: 'w1', name: 'ひのきのぼう', icon: '🪵', atk: 0, expMult: 1.0 },
-  w2: { type: 'weapon', id: 'w2', name: 'どうのつるぎ', icon: '⚔️', atk: 1, expMult: 1.1 },
-  w3: { type: 'weapon', id: 'w3', name: 'てつのつるぎ', icon: '🗡️', atk: 2, expMult: 1.2 },
-  w4: { type: 'weapon', id: 'w4', name: 'はがねのつるぎ', icon: '💎', atk: 3, expMult: 1.3 },
-  w5: { type: 'weapon', id: 'w5', name: '伝説のつるぎ', icon: '👑', atk: 5, expMult: 1.5 },
-  a1: { type: 'armor', id: 'a1', name: 'ぬののふく', icon: '👘', def: 0, goldMult: 1.0 },
-  a2: { type: 'armor', id: 'a2', name: 'かわのよろい', icon: '🛡️', def: 1, goldMult: 1.1 },
-  a3: { type: 'armor', id: 'a3', name: 'くさりかたびら', icon: '⛓️', def: 2, goldMult: 1.2 },
-  a4: { type: 'armor', id: 'a4', name: 'てつのよろい', icon: '🔩', def: 3, goldMult: 1.3 },
-  a5: { type: 'armor', id: 'a5', name: '伝説のよろい', icon: '👑', def: 5, goldMult: 1.5 },
-  c1: { type: 'consumable', id: 'c1', name: 'やくそう', icon: '🌿', effect: 'expBoost', value: 1.5 },
-  c2: { type: 'consumable', id: 'c2', name: 'まほうのほん', icon: '📖', effect: 'expBoost', value: 1.3 },
-  c3: { type: 'consumable', id: 'c3', name: 'エリクサー', icon: '🧪', effect: 'comboShield', value: 1 },
+  w1: { type: 'weapon', id: 'w1', name: 'ことばの小枝', icon: '🪵', atk: 0, expMult: 1.0, price: 0 },
+  w2: { type: 'weapon', id: 'w2', name: 'ひらめきペン', icon: '✒️', atk: 1, expMult: 1.1, price: 35 },
+  w3: { type: 'weapon', id: 'w3', name: '星読みのペン', icon: '🖋️', atk: 2, expMult: 1.2, price: 80 },
+  w4: { type: 'weapon', id: 'w4', name: 'オーロラ辞書', icon: '📘', atk: 3, expMult: 1.3, price: 140 },
+  w5: { type: 'weapon', id: 'w5', name: 'ことば灯台', icon: '🏮', atk: 5, expMult: 1.5, price: 240 },
+  a1: { type: 'armor', id: 'a1', name: '旅人のケープ', icon: '🧣', def: 0, goldMult: 1.0, price: 0 },
+  a2: { type: 'armor', id: 'a2', name: '集音マント', icon: '🧥', def: 1, goldMult: 1.1, price: 40 },
+  a3: { type: 'armor', id: 'a3', name: '記憶のベスト', icon: '🎽', def: 2, goldMult: 1.2, price: 90 },
+  a4: { type: 'armor', id: 'a4', name: '航海ジャケット', icon: '🦺', def: 3, goldMult: 1.3, price: 150 },
+  a5: { type: 'armor', id: 'a5', name: '暁のローブ', icon: '🥻', def: 5, goldMult: 1.5, price: 260 },
+  c1: { type: 'consumable', id: 'c1', name: '集中ミント', icon: '🌿', effect: 'expBoost', value: 1.5, price: 18 },
+  c2: { type: 'consumable', id: 'c2', name: '復習しおり', icon: '🔖', effect: 'expBoost', value: 1.3, price: 15 },
+  c3: { type: 'consumable', id: 'c3', name: 'コンボのお守り', icon: '🪬', effect: 'comboShield', value: 1, price: 25 },
+  p_smart: { type: 'permit', id: 'p_smart', name: 'スマート学習免許', icon: '🧠', price: 60, desc: 'スマート学習を開放' },
+  p_world: { type: 'permit', id: 'p_world', name: '世界地図通行証', icon: '🗺️', price: 80, desc: 'まちの外へ出られる' },
+  p_desert: { type: 'permit', id: 'p_desert', name: '砂風のコンパス', icon: '🧭', price: 70, desc: '中東・南アジア方面へ入れる' },
+  p_snow: { type: 'permit', id: 'p_snow', name: '雪明かりランタン', icon: '🏮', price: 70, desc: '寒い地域へ入れる' },
+  p_ocean: { type: 'permit', id: 'p_ocean', name: '潮読みチケット', icon: '🎫', price: 70, desc: '島しょ・海路の地域へ入れる' },
 };
+
+const LANGUAGE_PERMIT_ITEMS = {
+  lang_fr: { type: 'permit', id: 'lang_fr', name: 'フランス語入門書', icon: '📗', price: 35, desc: 'フランス語を学べる' },
+  lang_es: { type: 'permit', id: 'lang_es', name: 'スペイン語入門書', icon: '📗', price: 35, desc: 'スペイン語を学べる' },
+  lang_pt: { type: 'permit', id: 'lang_pt', name: 'ポルトガル語入門書', icon: '📗', price: 35, desc: 'ポルトガル語を学べる' },
+  lang_de: { type: 'permit', id: 'lang_de', name: 'ドイツ語入門書', icon: '📗', price: 40, desc: 'ドイツ語を学べる' },
+  lang_it: { type: 'permit', id: 'lang_it', name: 'イタリア語入門書', icon: '📗', price: 40, desc: 'イタリア語を学べる' },
+  lang_nl: { type: 'permit', id: 'lang_nl', name: 'オランダ語入門書', icon: '📗', price: 45, desc: 'オランダ語を学べる' },
+  lang_pl: { type: 'permit', id: 'lang_pl', name: 'ポーランド語入門書', icon: '📗', price: 50, desc: 'ポーランド語を学べる' },
+  lang_el: { type: 'permit', id: 'lang_el', name: 'ギリシャ語入門書', icon: '📗', price: 50, desc: 'ギリシャ語を学べる' },
+  lang_ru: { type: 'permit', id: 'lang_ru', name: 'ロシア語入門書', icon: '📗', price: 55, desc: 'ロシア語を学べる' },
+  lang_ar: { type: 'permit', id: 'lang_ar', name: 'アラビア語入門書', icon: '📗', price: 55, desc: 'アラビア語を学べる' },
+  lang_tr: { type: 'permit', id: 'lang_tr', name: 'トルコ語入門書', icon: '📗', price: 50, desc: 'トルコ語を学べる' },
+  lang_hi: { type: 'permit', id: 'lang_hi', name: 'ヒンディー語入門書', icon: '📗', price: 55, desc: 'ヒンディー語を学べる' },
+  lang_bn: { type: 'permit', id: 'lang_bn', name: 'ベンガル語入門書', icon: '📗', price: 60, desc: 'ベンガル語を学べる' },
+  lang_ne: { type: 'permit', id: 'lang_ne', name: 'ネパール語入門書', icon: '📗', price: 60, desc: 'ネパール語を学べる' },
+  lang_ta: { type: 'permit', id: 'lang_ta', name: 'タミル語入門書', icon: '📗', price: 60, desc: 'タミル語を学べる' },
+  lang_si: { type: 'permit', id: 'lang_si', name: 'シンハラ語入門書', icon: '📗', price: 60, desc: 'シンハラ語を学べる' },
+  lang_zh: { type: 'permit', id: 'lang_zh', name: '中国語入門書', icon: '📗', price: 55, desc: '中国語を学べる' },
+  lang_yue: { type: 'permit', id: 'lang_yue', name: '広東語入門書', icon: '📗', price: 60, desc: '広東語を学べる' },
+  lang_ko: { type: 'permit', id: 'lang_ko', name: '韓国語入門書', icon: '📗', price: 55, desc: '韓国語を学べる' },
+  lang_th: { type: 'permit', id: 'lang_th', name: 'タイ語入門書', icon: '📗', price: 60, desc: 'タイ語を学べる' },
+  lang_vi: { type: 'permit', id: 'lang_vi', name: 'ベトナム語入門書', icon: '📗', price: 60, desc: 'ベトナム語を学べる' },
+  lang_tl: { type: 'permit', id: 'lang_tl', name: 'タガログ語入門書', icon: '📗', price: 60, desc: 'タガログ語を学べる' },
+  lang_id: { type: 'permit', id: 'lang_id', name: 'インドネシア語入門書', icon: '📗', price: 60, desc: 'インドネシア語を学べる' },
+  lang_my: { type: 'permit', id: 'lang_my', name: 'ミャンマー語入門書', icon: '📗', price: 65, desc: 'ミャンマー語を学べる' },
+};
+
+Object.assign(ITEM_DB, LANGUAGE_PERMIT_ITEMS);
+
+export const SHOP_ITEM_IDS = [
+  'p_smart','p_world','p_desert','p_snow','p_ocean',
+  ...Object.keys(LANGUAGE_PERMIT_ITEMS),
+  'w2','w3','w4','a2','a3','a4','c1','c2','c3',
+];
 
 export const LEVEL_TABLE = [
   { lv: 1, exp: 0, hero: '🧙', name: 'みならいまほうつかい', hp: 20, mp: 5 },

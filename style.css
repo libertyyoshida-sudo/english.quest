@@ -362,6 +362,8 @@ body {
 /* まちの外へ出るアイコン（世界マップへの入り口） */
 .field-icon-exit .field-icon-emoji { filter: drop-shadow(0 0 8px var(--dq-gold)); }
 .field-icon-exit .field-icon-label { color: var(--dq-gold); }
+.field-icon-locked { opacity: .58; filter: grayscale(.55); }
+.field-icon-locked .field-icon-label { color: var(--dq-gray); }
 
 /* せかいマップの言語ゾーンアイコン（国旗＋現地語ラベル） */
 .world-zone-icon { z-index: 7; }
@@ -462,6 +464,8 @@ body {
 }
 .dq-cmd-btn:hover  { background: #223366; border-color: var(--dq-gold); transform: translateX(4px); }
 .dq-cmd-btn:active { transform: translateX(1px); }
+.dq-cmd-btn.cmd-locked { opacity: .55; border-color: var(--dq-gray); }
+.dq-cmd-btn.cmd-locked .cmd-exp { color: var(--dq-gray); }
 .cmd-icon { font-size: 1rem; flex-shrink: 0; }
 .cmd-exp  { margin-left: auto; font-size: .72rem; color: var(--dq-exp); }
 
@@ -638,9 +642,40 @@ body {
 .speak-result { font-size: .88rem; color: var(--dq-white); min-height: 24px; }
 
 /* バトルメッセージ */
-.battle-msg-window { }
-.battle-msg-text { font-size: .95rem; line-height: 1.9; color: var(--dq-white); margin-bottom: 8px; }
-.battle-exp-gain { font-size: .85rem; color: var(--dq-exp); margin-bottom: 12px; min-height: 20px; }
+.battle-msg-window {
+  margin-top: 4px;
+  padding: 12px 14px;
+  border-color: var(--dq-gold);
+}
+.battle-msg-window:not(.hidden) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "msg next"
+    "gain next";
+  align-items: center;
+  column-gap: 14px;
+  row-gap: 4px;
+}
+.battle-msg-text {
+  grid-area: msg;
+  font-size: .9rem;
+  line-height: 1.55;
+  color: var(--dq-white);
+}
+.battle-exp-gain {
+  grid-area: gain;
+  font-size: .8rem;
+  color: var(--dq-exp);
+  min-height: 18px;
+}
+#next-btn {
+  grid-area: next;
+  min-width: 120px;
+  min-height: 46px;
+  padding: 9px 16px;
+  box-shadow: 0 0 10px #ffd70044;
+}
 
 /* ==========================================
    ボタン共通
@@ -779,9 +814,14 @@ body {
   .speaking-wrap { margin-top: 8px; gap: 6px; }
   .speaking-target { font-size: 1.05rem; padding: 6px; }
 
-  .battle-msg-window { padding: 10px 14px; }
-  .battle-msg-text { font-size: .8rem; line-height: 1.5; margin-bottom: 6px; }
-  .battle-exp-gain { font-size: .72rem; margin-bottom: 8px; min-height: 16px; }
+  .battle-msg-window { padding: 9px 12px; margin-top: 4px; }
+  .battle-msg-window:not(.hidden) {
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 10px;
+  }
+  .battle-msg-text { font-size: .78rem; line-height: 1.42; }
+  .battle-exp-gain { font-size: .7rem; min-height: 15px; }
+  #next-btn { min-width: 102px; min-height: 42px; padding: 8px 12px; }
 
   /* やどや */
   .inn-filter-btn { font-size: .7rem; padding: 5px 10px; }
@@ -801,6 +841,21 @@ body {
   .status-grid     { grid-template-columns: repeat(2,1fr); }
   .typing-wrap     { flex-direction: column; }
   .battle-flee-btn { top: 74px; right: 6px; font-size: .6rem; padding: 5px 8px; }
+}
+
+@media (max-width: 360px) {
+  .battle-msg-window:not(.hidden) {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "msg"
+      "gain"
+      "next";
+    row-gap: 6px;
+  }
+  #next-btn {
+    width: 100%;
+    justify-self: stretch;
+  }
 }
 
 /* ==========================================
@@ -1066,6 +1121,32 @@ body {
 .status-lang-train-btn { font-size: .74rem; padding: 6px 14px; }
 .status-lang-note { color: var(--dq-gray); font-size: .74rem; margin-top: 8px; text-align: center; }
 
+/* Shop */
+.shop-window { margin-top: 10px; }
+.shop-gold { float: right; color: var(--dq-exp); font-size: .76rem; }
+.shop-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 8px;
+}
+.shop-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  background: #111133;
+  border: 2px solid var(--dq-blue);
+  padding: 8px 10px;
+}
+.shop-row-owned { border-color: var(--dq-gray); opacity: .72; }
+.shop-icon { font-size: 1.3rem; }
+.shop-main { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.shop-name { color: var(--dq-yellow); font-size: .82rem; }
+.shop-desc { color: var(--dq-blue-l); font-size: .68rem; line-height: 1.35; }
+.shop-price { color: var(--dq-exp); font-size: .78rem; white-space: nowrap; }
+.shop-buy-btn { padding: 6px 10px; font-size: .72rem; }
+.shop-buy-btn:disabled { opacity: .4; cursor: not-allowed; }
+
 /* キーボードどうじょう */
 .kb-stage-list {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px;
@@ -1307,19 +1388,14 @@ body {
     font-size: .82rem;
     line-height: 1.3;
   }
-  .battle-msg-window {
-    margin-top: auto;
-    margin-bottom: 0;
-  }
+  .battle-msg-window { margin-top: 4px; margin-bottom: 0; }
   .battle-msg-text {
     font-size: .84rem;
     line-height: 1.55;
-    margin-bottom: 6px;
   }
   .battle-exp-gain {
     font-size: .76rem;
     min-height: 16px;
-    margin-bottom: 8px;
   }
 
   .result-window {

@@ -6,7 +6,7 @@
 'use strict';
 
 import {
-  ITEM_DB, LEVEL_TABLE, TITLE_DEFS, EXP_BASE, GOLD_BASE,
+  ITEM_DB, SHOP_ITEM_IDS, LEVEL_TABLE, TITLE_DEFS, EXP_BASE, GOLD_BASE,
   comboMult, getLvRow, getNextLvRow, toeicLabel, retentionScore,
 } from './shared/gameData.js';
 import {
@@ -53,6 +53,16 @@ function applyLanguageProfile(language, lp) {
   P.languages[language] = { totalExp: lp.totalExp, level: lp.level, currentHp: lp.currentHp };
 }
 
+function applyInventoryItems(items = []) {
+  const owned = items
+    .map(row => ITEM_DB[row.itemId])
+    .filter(Boolean)
+    .map(item => ({ ...item }));
+  P.inventory = owned;
+  if (!P.inventory.some(item => item.id === 'w1')) P.inventory.unshift({ ...ITEM_DB.w1 });
+  if (!P.inventory.some(item => item.id === 'a1')) P.inventory.unshift({ ...ITEM_DB.a1 });
+}
+
 // 未初期化の言語は初回アクセス時にデフォルト値で作成して返す
 function langState(code = selectedLanguage) {
   if (!P.languages[code]) {
@@ -65,6 +75,7 @@ function langState(code = selectedLanguage) {
 async function loadFullProfile() {
   const data = await apiFetch('/player/profile');
   applyProfile(data.profile);
+  applyInventoryItems(data.items || []);
   P.titles = new Set((data.titles || []).map(t => t.titleId));
   for (const k in answerStats) delete answerStats[k];
   Object.assign(answerStats, data.answerStats || {});
@@ -309,16 +320,16 @@ function recordStat(id, ok) {
    5. 敵データ
 ══════════════════════════════════════════════════ */
 const ENEMIES = [
-  { name:'スライム',     sprite:'🟦', lv:1, expRate:1.0 },
-  { name:'ドラキー',     sprite:'🦇', lv:2, expRate:1.1 },
-  { name:'おおガラス',   sprite:'🐦', lv:3, expRate:1.2 },
-  { name:'メラゴースト', sprite:'👻', lv:4, expRate:1.3 },
-  { name:'ゴーレム',     sprite:'🗿', lv:5, expRate:1.5 },
-  { name:'キメラ',       sprite:'🦅', lv:6, expRate:1.7 },
-  { name:'バーサーカー', sprite:'👹', lv:7, expRate:2.0 },
-  { name:'ドラゴン',     sprite:'🐉', lv:8, expRate:2.5 },
-  { name:'まおうのてさき',sprite:'😈', lv:9, expRate:3.0 },
-  { name:'だいまおう',   sprite:'💀', lv:10,expRate:4.0 },
+  { name:'モジぷるん',       sprite:'🔷', lv:1, expRate:1.0 },
+  { name:'コトバット',       sprite:'🦇', lv:2, expRate:1.1 },
+  { name:'ノートスニーカー', sprite:'🪽', lv:3, expRate:1.2 },
+  { name:'ミミックエコー',   sprite:'👻', lv:4, expRate:1.3 },
+  { name:'ブンセキ石像',     sprite:'🗿', lv:5, expRate:1.5 },
+  { name:'アクセントホーク', sprite:'🪶', lv:6, expRate:1.7 },
+  { name:'ミスリード番長',   sprite:'👺', lv:7, expRate:2.0 },
+  { name:'シンタックス竜',   sprite:'🐲', lv:8, expRate:2.5 },
+  { name:'ノイズ伯爵',       sprite:'😈', lv:9, expRate:3.0 },
+  { name:'忘却のアーカイブ', sprite:'💀', lv:10,expRate:4.0 },
 ];
 
 // 学習言語ごとに、その地域の神話・民話にちなんだ名前で敵を表示する（スプライト・強さはENEMIESを流用）
@@ -357,8 +368,7 @@ function pickEnemy(tier, langCode = selectedLanguage) {
   const spread = Math.floor(Math.random() * 3) - 1; // -1〜+1でばらつきを持たせる
   const idx = Math.min(9, Math.max(0, baseTier - 1 + spread));
   const base = ENEMIES[idx];
-  const regionNames = REGION_ENEMY_NAMES[langCode];
-  return regionNames ? { ...base, name: regionNames[idx] } : base;
+  return base;
 }
 
 
@@ -382,6 +392,51 @@ const shuffle = arr => {
 
 function currentLanguage() {
   return LANGUAGE_OPTIONS.find(lang => lang.code === selectedLanguage) || LANGUAGE_OPTIONS[0];
+}
+
+const FREE_LANGUAGE_CODES = ['ja', 'en'];
+const FREE_COMMAND_MODES = ['vocab', 'grammar', 'typing', 'keyboard', 'inn', 'review', 'shop', 'status'];
+const COMMAND_REQUIREMENTS = {
+  smart: { itemId: 'p_smart', label: 'スマート学習免許' },
+  weak: { itemId: 'p_smart', label: 'スマート学習免許' },
+  phrase: { itemId: 'p_smart', label: 'スマート学習免許' },
+  culture: { itemId: 'p_smart', label: 'スマート学習免許' },
+  listening: { itemId: 'p_smart', label: 'スマート学習免許' },
+  speaking: { itemId: 'p_smart', label: 'スマート学習免許' },
+  world: { itemId: 'p_world', label: '世界地図通行証' },
+};
+const LANGUAGE_ENTRY_REQUIREMENTS = {
+  ar: 'p_desert', tr: 'p_desert', hi: 'p_desert', bn: 'p_desert', ne: 'p_desert', ta: 'p_desert', si: 'p_desert',
+  ru: 'p_snow', pl: 'p_snow',
+  yue: 'p_ocean', tl: 'p_ocean', id: 'p_ocean', my: 'p_ocean', vi: 'p_ocean',
+};
+
+function hasItem(itemId) {
+  return P.inventory.some(item => item.id === itemId);
+}
+
+function languagePermitId(code) {
+  return `lang_${code}`;
+}
+
+function isLanguageUnlocked(code) {
+  return FREE_LANGUAGE_CODES.includes(code) || hasItem(languagePermitId(code));
+}
+
+function canUseCommand(mode) {
+  if (FREE_COMMAND_MODES.includes(mode)) return true;
+  const req = COMMAND_REQUIREMENTS[mode];
+  return !req || hasItem(req.itemId);
+}
+
+function commandLockMessage(mode) {
+  const req = COMMAND_REQUIREMENTS[mode];
+  return req ? `${req.label}が必要です。Shopで購入できます。` : '';
+}
+
+function canEnterLanguageArea(code) {
+  const req = LANGUAGE_ENTRY_REQUIREMENTS[code];
+  return !req || hasItem(req);
 }
 
 function currentVocabDB() {
@@ -501,7 +556,8 @@ function populateLanguageSelect() {
   languages.forEach(lang => {
     const opt = document.createElement('option');
     opt.value = lang.code;
-    opt.textContent = `${lang.label}（${lang.native}）${lang.status ? ` - ${lang.status}` : ''}`;
+    const locked = !isLanguageUnlocked(lang.code);
+    opt.textContent = `${locked ? '🔒 ' : ''}${lang.label}（${lang.native}）${lang.status ? ` - ${lang.status}` : ''}${locked ? ' - Shopで解放' : ''}`;
     select.appendChild(opt);
   });
   if (languages.some(lang => lang.code === selectedLanguage)) {
@@ -525,6 +581,7 @@ function refreshLanguageText() {
   }
   if ($('typing-input')) $('typing-input').placeholder = `${lang.label}でうってね（Enterでかいとう）`;
   refreshLevelOptions();
+  refreshCommandLocks();
 }
 
 function refreshLevelOptions() {
@@ -562,6 +619,16 @@ function setLanguage(code) {
   populateLanguageSelect();
   refreshHeader();
   refreshExpBar();
+  refreshCommandLocks();
+}
+
+function refreshCommandLocks() {
+  document.querySelectorAll('.dq-cmd-btn').forEach(btn => {
+    const mode = btn.dataset.mode;
+    const locked = !canUseCommand(mode);
+    btn.classList.toggle('cmd-locked', locked);
+    btn.title = locked ? commandLockMessage(mode) : '';
+  });
 }
 
 // level-select の値（'auto' | 'all' | '1'〜'10'）を実際のティア（'all' か 1〜10の数値）に解決する
@@ -759,6 +826,15 @@ function refreshField() {
   if ($('st-correct')) $('st-correct').textContent = correct;
   if ($('st-rate'))    $('st-rate').textContent    = total>0 ? Math.round(correct/total*100)+'%' : '―';
   if ($('st-gold'))    $('st-gold').textContent    = P.gold;
+  document.querySelectorAll('#field-canvas .field-icon').forEach(icon => {
+    const mode = icon.dataset.mode;
+    const locked = mode && !canUseCommand(mode);
+    icon.classList.toggle('field-icon-locked', locked);
+    const label = icon.querySelector('.field-icon-label');
+    if (label && locked && !label.textContent.startsWith('🔒')) label.textContent = `🔒 ${label.textContent}`;
+    if (label && !locked) label.textContent = label.textContent.replace(/^🔒\s*/, '');
+  });
+  refreshCommandLocks();
   renderTitleBadges();
 }
 
@@ -1636,6 +1712,7 @@ function renderInventoryWindow() {
     else if (item.type === 'armor') stat = `GOLD×${item.goldMult}`;
     else if (item.effect === 'expBoost') stat = `EXP×${item.value}`;
     else if (item.effect === 'comboShield') stat = `コンボ保護`;
+    else if (item.type === 'permit') stat = '解放済み';
 
     const isEquipped =
       (item.type === 'weapon' && P.equipment.weapon?.id === item.id) ||
@@ -1653,12 +1730,17 @@ function renderInventoryWindow() {
       btn.textContent = 'そうびする';
       btn.addEventListener('click', () => equipItem(idx));
       row.appendChild(btn);
-    } else {
+    } else if (item.type === 'consumable') {
       const btn = document.createElement('button');
       btn.className   = 'dq-btn dq-btn-green inv-btn';
       btn.textContent = 'つかう';
       btn.addEventListener('click', () => useItem(idx));
       row.appendChild(btn);
+    } else {
+      const badge = document.createElement('span');
+      badge.className = 'inv-equipped';
+      badge.textContent = '所持';
+      row.appendChild(badge);
     }
 
     container.appendChild(row);
@@ -1993,10 +2075,16 @@ function goToField() {
 
 // フィールドのコマンド選択（アイコン接触／ボタンクリック共通の入り口）
 function enterCommand(mode) {
+  if (!canUseCommand(mode)) {
+    alert(commandLockMessage(mode));
+    goToShop();
+    return;
+  }
   if (mode === 'inn' || mode === 'review') goToInn();
   else if (mode === 'world') goToWorld();
   else if (mode === 'status') goToStatus();
   else if (mode === 'keyboard') goToKeyboard();
+  else if (mode === 'shop') goToShop();
   else startBattle(mode);
 }
 
@@ -2009,6 +2097,91 @@ function setupCommandPagination() {
   commandPageMax = Math.max(1, Math.ceil(buttons.length / COMMANDS_PER_PAGE));
   buttons.forEach((btn, idx) => {
     btn.dataset.commandPage = String(Math.floor(idx / COMMANDS_PER_PAGE) + 1);
+  });
+}
+
+function shopItems() {
+  return SHOP_ITEM_IDS.map(id => ITEM_DB[id]).filter(Boolean);
+}
+
+function itemStatText(item) {
+  if (item.type === 'weapon') return `EXP倍率 ${item.expMult}`;
+  if (item.type === 'armor') return `Gold倍率 ${item.goldMult}`;
+  if (item.type === 'consumable' && item.effect === 'expBoost') return `次バトルEXP x${item.value}`;
+  if (item.type === 'consumable' && item.effect === 'comboShield') return '次バトルのミス1回を保護';
+  return item.desc || '学びの道をひらく';
+}
+
+function goToShop() {
+  stopSpeechAll();
+  showScreen('screen-shop');
+  playFieldBGM();
+  renderShop();
+}
+
+async function buyShopItem(itemId) {
+  const item = ITEM_DB[itemId];
+  if (!item) return;
+  if (hasItem(itemId) && item.type !== 'consumable') {
+    alert('すでに持っています。');
+    return;
+  }
+  if (P.gold < item.price) {
+    alert(`Goldが足りません。必要Gold: ${item.price}`);
+    return;
+  }
+
+  if (authToken) {
+    try {
+      const result = await apiFetch('/player/shop/buy', {
+        method: 'POST',
+        body: JSON.stringify({ itemId }),
+      });
+      applyProfile(result.profile);
+      applyInventoryItems(result.items || []);
+    } catch (err) {
+      alert(err.message);
+      return;
+    }
+  } else {
+    P.gold -= item.price;
+    addToInventory(item);
+  }
+
+  refreshHeader();
+  refreshField();
+  populateLanguageSelect();
+  refreshCommandLocks();
+  renderInventoryWindow();
+  renderShop();
+  playSoundItem();
+}
+
+function renderShop() {
+  const list = $('shop-list');
+  if (!list) return;
+  if ($('shop-gold')) $('shop-gold').textContent = P.gold;
+  list.innerHTML = '';
+
+  shopItems().forEach(item => {
+    const owned = hasItem(item.id) && item.type !== 'consumable';
+    const row = document.createElement('div');
+    row.className = `shop-row${owned ? ' shop-row-owned' : ''}`;
+    row.innerHTML = `
+      <span class="shop-icon">${item.icon}</span>
+      <span class="shop-main">
+        <span class="shop-name">${item.name}</span>
+        <span class="shop-desc">${itemStatText(item)}</span>
+      </span>
+      <span class="shop-price">${owned ? '所持済み' : `${item.price}G`}</span>
+    `;
+    const btn = document.createElement('button');
+    btn.className = 'dq-btn dq-btn-gold shop-buy-btn';
+    btn.textContent = owned ? 'OK' : '買う';
+    btn.disabled = owned || P.gold < item.price;
+    btn.addEventListener('click', () => buyShopItem(item.id));
+    row.appendChild(btn);
+    list.appendChild(row);
   });
 }
 
@@ -2083,12 +2256,13 @@ function renderWorldMap() {
   }
 
   region.langs.forEach(lang => {
+    const locked = !isLanguageUnlocked(lang.code) || !canEnterLanguageArea(lang.code);
     const el = document.createElement('div');
-    el.className = 'field-icon world-zone-icon';
+    el.className = `field-icon world-zone-icon${locked ? ' field-icon-locked' : ''}`;
     el.dataset.lang = lang.code;
     el.style.left = `${lang.left}%`;
     el.style.top = `${lang.top}%`;
-    el.innerHTML = `<span class="field-icon-emoji">${lang.flag}</span><span class="field-icon-label">${lang.label}</span>`;
+    el.innerHTML = `<span class="field-icon-emoji">${lang.flag}</span><span class="field-icon-label">${locked ? '🔒 ' : ''}${lang.label}</span>`;
     layer.appendChild(el);
   });
 
@@ -2179,6 +2353,18 @@ let enteringZone = false; // ゾーンが密集しているため、遷移中に
 async function enterLanguageZone(langCode) {
   if (enteringZone) return;
   if (!LANGUAGE_OPTIONS.some(l => l.code === langCode)) return;
+  const lang = LANGUAGE_OPTIONS.find(l => l.code === langCode);
+  if (!isLanguageUnlocked(langCode)) {
+    alert(`${lang?.label || 'この言語'}に入るには、Shopで入門書を購入してください。`);
+    goToShop();
+    return;
+  }
+  if (!canEnterLanguageArea(langCode)) {
+    const req = ITEM_DB[LANGUAGE_ENTRY_REQUIREMENTS[langCode]];
+    alert(`${lang?.label || 'この地域'}へ行くには「${req?.name || '通行アイテム'}」が必要です。Shopで購入できます。`);
+    goToShop();
+    return;
+  }
   enteringZone = true;
   stopSpeechAll();
   setLanguage(langCode);
@@ -2204,9 +2390,9 @@ async function enterLanguageZone(langCode) {
     isRegionZone: true, zoneLang: langCode,
   };
 
-  const lang = currentLanguage();
+  const currentLang = currentLanguage();
   const msgEl = $('world-msg-text');
-  if (msgEl) msgEl.textContent = `${lang.label}の ちいきに とうちゃく！ ${enemy.sprite} ${enemy.name}が あらわれた！`;
+  if (msgEl) msgEl.textContent = `${currentLang.label}の ちいきに とうちゃく！ ${enemy.sprite} ${enemy.name}が あらわれた！`;
   $('world-msg')?.classList.remove('hidden');
 
   setupBattleScreenUI(enemy);
@@ -2447,16 +2633,39 @@ function renderStatusScreen() {
     `;
     card.querySelector('.status-lang-detail-btn')?.addEventListener('click', ev => {
       ev.stopPropagation();
+      if (!isLanguageUnlocked(code)) {
+        alert(`${lang.label}はまだ学べません。Shopで入門書を購入してください。`);
+        goToShop();
+        return;
+      }
       setLanguage(code);
       goToInn();
     });
     card.querySelector('.status-lang-train-btn')?.addEventListener('click', async ev => {
       ev.stopPropagation();
+      if (!isLanguageUnlocked(code)) {
+        alert(`${lang.label}はまだ学べません。Shopで入門書を購入してください。`);
+        goToShop();
+        return;
+      }
+      if (!canUseCommand('smart')) {
+        alert(commandLockMessage('smart'));
+        goToShop();
+        return;
+      }
       setLanguage(code);
       await ensureLanguageQuestionData();
       startBattle('smart');
     });
-    card.addEventListener('click', () => { setLanguage(code); goToInn(); });
+    card.addEventListener('click', () => {
+      if (!isLanguageUnlocked(code)) {
+        alert(`${lang.label}はまだ学べません。Shopで入門書を購入してください。`);
+        goToShop();
+        return;
+      }
+      setLanguage(code);
+      goToInn();
+    });
     listEl.appendChild(card);
   });
 
@@ -2703,17 +2912,35 @@ function finishKeyboardStage() {
   const total = correct + mistakes;
   const accuracy = total > 0 ? Math.round(correct / total * 100) : 100;
   const cpm = Math.round(correct / elapsedSec * 60);
+  const goldReward = Math.max(1, Math.round(accuracy / 12));
+  P.gold += goldReward;
 
   const bestKey = keyboardBestKey(stage.id);
   const prevBest = Number(localStorage.getItem(bestKey) || 0);
   if (accuracy > prevBest) localStorage.setItem(bestKey, String(accuracy));
+
+  if (authToken) {
+    apiFetch('/player/reward', {
+      method: 'POST',
+      body: JSON.stringify({ amount: goldReward, reason: 'keyboard' }),
+    })
+      .then(result => applyProfile(result.profile))
+      .catch(err => console.error('キーボード道場報酬の同期に失敗しました:', err))
+      .finally(() => {
+        refreshHeader();
+        refreshField();
+      });
+  } else {
+    refreshHeader();
+    refreshField();
+  }
 
   $('keyboard-practice')?.classList.add('hidden');
   $('keyboard-result')?.classList.remove('hidden');
   if ($('kb-result-title'))     $('kb-result-title').textContent = `${stage.label} クリア！`;
   if ($('kb-result-accuracy'))  $('kb-result-accuracy').textContent = `${accuracy}%`;
   if ($('kb-result-cpm'))       $('kb-result-cpm').textContent = `${cpm}`;
-  if ($('kb-result-mistakes'))  $('kb-result-mistakes').textContent = `${mistakes}`;
+  if ($('kb-result-mistakes'))  $('kb-result-mistakes').textContent = `${mistakes} / +${goldReward}G`;
 
   keyboardState.finishedStageId = stage.id;
 }
@@ -2727,6 +2954,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   $('language-select')?.addEventListener('change', e => {
     if (e.target.selectedOptions[0]?.disabled) return;
+    if (!isLanguageUnlocked(e.target.value)) {
+      const lang = LANGUAGE_OPTIONS.find(l => l.code === e.target.value);
+      alert(`${lang?.label || 'この言語'}はまだ学べません。Shopで入門書を購入してください。`);
+      populateLanguageSelect();
+      return;
+    }
     setLanguage(e.target.value);
     ensureLanguageQuestionData().then(() => {
       renderLanguageProfile();
@@ -2805,6 +3038,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (currentWorldRegion) leaveWorldRegion();
     else goToField();
   });
+  $('shop-back-btn')?.addEventListener('click', goToField);
   $('status-back-btn')?.addEventListener('click', goToField);
   $('keyboard-back-btn')?.addEventListener('click', goToField);
 
