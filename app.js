@@ -1740,7 +1740,7 @@ const WORLD_MAP_BASE = `
   <polygon points="14,18 22,10 32,8 42,10 50,7 58,9 64,14 68,22 70,30 72,38 70,46 72,52 66,56 60,58 54,52 50,56 44,52 40,56 34,50 28,54 22,48 16,42 12,34 10,26" fill="#ef8fa0"/>
   <polygon points="20,40 26,38 30,44 29,54 32,62 30,72 26,84 20,88 15,80 13,68 12,56 14,46" fill="#f6d76e"/>
   <polygon points="78,14 86,8 94,12 97,20 96,30 90,36 92,42 84,44 78,38 76,26 77,18" fill="#f2ab6c"/>
-  <polygon points="80,48 86,46 90,54 91,64 89,74 86,84 82,86 78,78 77,66 76,56" fill="#7398cf"/>
+  <polygon points="80,42 86,44 90,54 91,64 89,74 86,84 82,86 78,78 77,64 76,52" fill="#7398cf"/>
   <polygon points="54,66 64,63 73,68 75,76 68,83 57,81 51,74" fill="#8ec570"/>
   <polygon points="0,92 15,90 30,94 45,91 60,95 75,90 90,94 100,91 100,100 0,100" fill="#c3c9cf"/>
 `;
@@ -2136,8 +2136,6 @@ function goToWorld(regionId = null) {
 // リザルト画面「フィールドへ」の戻り先判定：
 // せかいマップ発のバトルに勝利／終了したときだけ、続けて探索できるようせかいマップへ戻す。
 // それ以外（通常のコマンドバトル）はまちへ戻る。
-// ※「にげる」ボタンは常にまちへ確実に戻す（下のイベントリスナー参照）。
-//   せかいマップに戻す仕様だと、ランダムエンカウントが連続してまちに戻れなくなる問題があったため。
 function returnFromBattle() {
   if (battle && battle.returnTo === 'screen-world') goToWorld(battle.returnRegion || null);
   else goToField();
@@ -2801,8 +2799,7 @@ document.addEventListener('DOMContentLoaded', () => {
   requestAnimationFrame(fieldLoop);
 
   /* ── フィールドへもどる（バトル中断） ── */
-  // 「にげる」は必ずまちへ戻す（せかいマップへ戻すと連続エンカウントで詰むため、確実な避難先として固定）
-  $('battle-flee-btn')?.addEventListener('click', goToField);
+  $('battle-flee-btn')?.addEventListener('click', returnFromBattle);
   $('inn-flee-btn')?.addEventListener('click', goToField);
   $('world-back-btn')?.addEventListener('click', () => {
     if (currentWorldRegion) leaveWorldRegion();
