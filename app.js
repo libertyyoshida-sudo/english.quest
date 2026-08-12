@@ -452,6 +452,51 @@ const I18N = {
     learningLanguage: '学習言語',
     difficulty: '難易度',
     questionCount: '問題数',
+    fieldHint: '矢印キー / WASD / 十字ボタン / フリック操作で うごいて アイコンに ふれよう！',
+    adventureLog: '▶ ぼうけんのきろく',
+    tapDetails: '（タップでくわしく）',
+    battles: 'たたかった数',
+    wins: 'かった数',
+    winRate: 'しょうりりつ',
+    gold: 'ゴールド',
+    titles: '▶ かくとくした称号',
+    itemEquip: '▶ アイテム / そうび',
+    weapon: '武器:',
+    armor: '防具:',
+    effects: '効果:',
+    none: 'なし',
+    noItems: 'アイテムをもっていない',
+    noTitles: 'まだ称号をかくとくしていない',
+    equipped: '★装備',
+    comboShield: 'コンボ保護',
+    choiceCut: value => `選択肢-${value}`,
+    unlocked: '解放済み',
+    innWelcome: 'やどやの　おばあさんが　むかえてくれた。「ここで　むかしの　たんごや　ぶんぽうを　よみかえすと　こころも　からだも　やすまるじゃろう」',
+    innMenu: '▼ 復習メニュー',
+    level: 'レベル',
+    autoSpeak: '▶ Auto読み上げ',
+    stop: '■ 停止',
+    speed: rate => `速度 ${rate}`,
+    noCategoryItems: 'このカテゴリーには まだ もんだいが ありません。',
+    answerLabel: 'こたえ',
+    unstudied: 'みがくしゅう',
+    retention: pct => `🧠 定着度${pct}%`,
+    train: 'とっくん',
+    innRested: charged => `やどやで ひとやすみ。${charged ? '10Gを はらって ' : ''}HPとMPが ぜんかいふく した！`,
+    innFull: 'やどやの おばあさんが ほほえんだ。HPもMPも まんたんだ！',
+    innNoGold: '宿屋に泊まるには10G必要です。無料練習でGoldをためましょう。',
+    shopWelcome: 'Shopへ ようこそ。無料練習でためたGoldを、学びの道具や通行証にかえられる。',
+    ownedGold: '所持Gold',
+    statusMsg: 'ぼうけんのしょに、これまでの あゆみが きろくされている。',
+    keyboardStages: '▶ れんしゅうステージを えらぼう',
+    keyboardTarget: 'つぎに うつ文字',
+    accuracy: '正答率',
+    cpm: 'CPM(1分あたり)',
+    mistakesGold: 'ミス / Gold',
+    worldGlobalMsg: 'せかいちずが ひろがった！ まずは5大陸からえらぼう。大陸マップに入ると、主要なことばの国旗が見えるぞ。',
+    worldSubregionMsg: region => `${region}は大きい！ ヨーロッパ・中東・東アジアから行き先をえらぼう。`,
+    worldRegionMsg: region => `${region}のマップに入った！ 国旗の場所へ行くと、そのことばの てきが あらわれる。`,
+    worldArrivedMsg: (lang, sprite, enemy) => `${lang}の ちいきに とうちゃく！ ${sprite} ${enemy}が あらわれた！`,
     searchLanguage: '言語を検索',
     command: '▶ コマンド',
     countSuffix: '問',
@@ -555,6 +600,51 @@ const I18N = {
     learningLanguage: 'Learning language',
     difficulty: 'Difficulty',
     questionCount: 'Questions',
+    fieldHint: 'Use arrow keys, WASD, D-pad, swipes, or tap an icon to move there.',
+    adventureLog: '▶ Adventure Log',
+    tapDetails: '(tap for details)',
+    battles: 'Battles',
+    wins: 'Wins',
+    winRate: 'Win rate',
+    gold: 'Gold',
+    titles: '▶ Titles Earned',
+    itemEquip: '▶ Items / Equipment',
+    weapon: 'Weapon:',
+    armor: 'Armor:',
+    effects: 'Effects:',
+    none: 'None',
+    noItems: 'No items yet',
+    noTitles: 'No titles earned yet',
+    equipped: '★Equipped',
+    comboShield: 'Combo shield',
+    choiceCut: value => `Choices -${value}`,
+    unlocked: 'Unlocked',
+    innWelcome: 'The innkeeper welcomes you. "Review old words and grammar here, and both mind and body will recover."',
+    innMenu: '▼ Review menu',
+    level: 'Level',
+    autoSpeak: '▶ Auto speech',
+    stop: '■ Stop',
+    speed: rate => `Speed ${rate}`,
+    noCategoryItems: 'No questions in this category yet.',
+    answerLabel: 'Answer',
+    unstudied: 'New',
+    retention: pct => `🧠 Retention ${pct}%`,
+    train: 'Train',
+    innRested: charged => `You rested at the inn. ${charged ? 'Paid 10G. ' : ''}HP and MP fully recovered!`,
+    innFull: 'The innkeeper smiles. HP and MP are already full!',
+    innNoGold: 'You need 10G to stay at the inn. Earn Gold through free practice.',
+    shopWelcome: 'Welcome to the Shop. Spend Gold from free practice on learning tools and travel passes.',
+    ownedGold: 'Gold',
+    statusMsg: 'Your adventure log records your learning journey so far.',
+    keyboardStages: '▶ Choose a practice stage',
+    keyboardTarget: 'Next character',
+    accuracy: 'Accuracy',
+    cpm: 'CPM',
+    mistakesGold: 'Misses / Gold',
+    worldGlobalMsg: 'The world map opens! Choose one of the five continents first. Regional maps show major language flags.',
+    worldSubregionMsg: region => `${region} is huge! Choose Europe, the Middle East, or East Asia.`,
+    worldRegionMsg: region => `You entered the ${region} map. Move to a flag to meet that language's challenger.`,
+    worldArrivedMsg: (lang, sprite, enemy) => `You arrived in the ${lang} area! ${sprite} ${enemy} appeared!`,
     searchLanguage: 'Search languages',
     command: '▶ Commands',
     countSuffix: ' questions',
@@ -629,13 +719,23 @@ function setUiLanguage(lang) {
   localStorage.setItem('languageQuest_uiLang', uiLang);
   applyUiLanguage();
   refreshLanguageText();
+  refreshField();
+  refreshEquipmentDisplay();
+  renderInventoryWindow();
+  if ($('screen-inn')?.classList.contains('active')) {
+    renderInnList(currentInnFilter);
+    renderLanguageProfile();
+  }
+  if ($('screen-world')?.classList.contains('active')) renderWorldMap();
+  renderShop();
   renderGoogleButton();
 }
 
 function applyUiLanguage() {
   document.documentElement.lang = uiLang === 'en' ? 'en' : 'ja';
   document.querySelectorAll('.ui-lang-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.id === `ui-lang-${uiLang}`);
+    const lang = btn.dataset.uiLang || btn.id?.replace('ui-lang-', '');
+    btn.classList.toggle('active', lang === uiLang);
   });
   const titleSubs = document.querySelectorAll('.title-logo-sub');
   if (titleSubs[0]) titleSubs[0].textContent = tr('appSub');
@@ -678,6 +778,47 @@ function applyUiLanguage() {
   setText('kb-retry-btn', tr('retryIcon'));
   setText('kb-back-to-stages-btn', tr('stageSelect'));
   setText('hero-name-save-btn', tr('heroNameSave'));
+  setText('inn-msg-text', tr('innWelcome'));
+  setText('shop-msg-text', tr('shopWelcome'));
+  setText('status-msg-text', tr('statusMsg'));
+  setText('inn-tools-toggle', tr('innMenu'));
+  setText('inn-auto-speak-btn', tr('autoSpeak'));
+  setText('inn-auto-stop-btn', tr('stop'));
+  const shopTitle = document.querySelector('.shop-window .status-title');
+  if (shopTitle) shopTitle.innerHTML = `▶ Shop <span class="shop-gold">${tr('ownedGold')}: <b id="shop-gold">${P.gold}</b></span>`;
+  const kbStageTitle = $('keyboard-stage-select')?.querySelector('.status-title');
+  if (kbStageTitle) kbStageTitle.textContent = tr('keyboardStages');
+  const kbTargetLabel = document.querySelector('.kb-target-label');
+  if (kbTargetLabel) kbTargetLabel.textContent = tr('keyboardTarget');
+  const kbResultLabels = document.querySelectorAll('.kb-result-lbl');
+  if (kbResultLabels[0]) kbResultLabels[0].textContent = tr('accuracy');
+  if (kbResultLabels[1]) kbResultLabels[1].textContent = tr('cpm');
+  if (kbResultLabels[2]) kbResultLabels[2].textContent = tr('mistakesGold');
+  document.querySelectorAll('.field-hint').forEach(el => {
+    if (el.closest('#screen-world')) return;
+    el.textContent = tr('fieldHint');
+  });
+  const statusTitle = $('status-window-btn')?.querySelector('.status-title');
+  if (statusTitle) statusTitle.innerHTML = `${tr('adventureLog')} <span class="status-window-hint">${tr('tapDetails')}</span>`;
+  const statLabels = document.querySelectorAll('#status-window-btn .si-lbl');
+  if (statLabels[0]) statLabels[0].textContent = tr('battles');
+  if (statLabels[1]) statLabels[1].textContent = tr('wins');
+  if (statLabels[2]) statLabels[2].textContent = tr('winRate');
+  if (statLabels[3]) statLabels[3].textContent = tr('gold');
+  const titleWindowTitle = document.querySelector('.title-list-window .status-title');
+  if (titleWindowTitle) titleWindowTitle.textContent = tr('titles');
+  const itemWindowTitle = document.querySelector('.item-window .status-title');
+  if (itemWindowTitle) itemWindowTitle.textContent = tr('itemEquip');
+  const equipLabels = document.querySelectorAll('.equipment-display .equip-label');
+  if (equipLabels[0]) equipLabels[0].textContent = tr('weapon');
+  if (equipLabels[1]) equipLabels[1].textContent = tr('armor');
+  if (equipLabels[2]) equipLabels[2].textContent = tr('effects');
+  const innLevelLabel = $('inn-level-select')?.closest('.inn-control')?.querySelector('span');
+  if (innLevelLabel) innLevelLabel.textContent = tr('level');
+  const speechRateLabel = $('speech-rate-label');
+  const speechRateText = speechRateLabel?.textContent || `${speechRate}x`;
+  const speechRateWrap = $('speech-rate-range')?.closest('.inn-control')?.querySelector('span');
+  if (speechRateWrap) speechRateWrap.innerHTML = `${uiLang === 'en' ? 'Speed' : '速度'} <b id="speech-rate-label">${speechRateText}</b>`;
   const heroNameTitle = $('status-name-window')?.querySelector('.status-title');
   if (heroNameTitle) heroNameTitle.textContent = `▶ ${tr('heroName')}`;
   const commandTitle = $('command-page-btn')?.querySelector('span:first-child');
@@ -687,7 +828,9 @@ function applyUiLanguage() {
   if (labels[1]) labels[1].textContent = tr('difficulty');
   if (labels[2]) labels[2].textContent = tr('questionCount');
   updateCommandButtonLabels();
+  updateFieldIconLabels();
   updateFilterButtonLabels();
+  renderTitleBadges();
   refreshCountOptions();
   const note = $('google-login-note');
   if (note && !note.classList.contains('hidden') && !note.dataset.configured) {
@@ -702,6 +845,17 @@ function updateCommandButtonLabels() {
     if (!pair) return;
     const icon = btn.querySelector('.cmd-icon')?.textContent || '';
     btn.innerHTML = `<span class="cmd-icon">${icon}</span> ${pair[0]}<span class="cmd-exp">${pair[1]}</span>`;
+  });
+}
+
+function updateFieldIconLabels() {
+  const labels = tr('commandLabels');
+  document.querySelectorAll('#field-canvas .field-icon').forEach(icon => {
+    const label = icon.querySelector('.field-icon-label');
+    const pair = labels?.[icon.dataset.mode];
+    if (!label || !pair) return;
+    const locked = icon.dataset.mode && !canUseCommand(icon.dataset.mode);
+    label.textContent = `${locked ? '🔒 ' : ''}${pair[0]}`;
   });
 }
 
@@ -1310,6 +1464,9 @@ function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   const el = $(id);
   if (el) el.classList.add('active');
+  document.querySelectorAll('.hdr-language-toggle').forEach(toggle => {
+    toggle.classList.toggle('hidden', id === 'screen-title');
+  });
 }
 
 /* ══════════════════════════════════════════════════
@@ -1422,10 +1579,8 @@ function refreshField() {
     const mode = icon.dataset.mode;
     const locked = mode && !canUseCommand(mode);
     icon.classList.toggle('field-icon-locked', locked);
-    const label = icon.querySelector('.field-icon-label');
-    if (label && locked && !label.textContent.startsWith('🔒')) label.textContent = `🔒 ${label.textContent}`;
-    if (label && !locked) label.textContent = label.textContent.replace(/^🔒\s*/, '');
   });
+  updateFieldIconLabels();
   refreshCommandLocks();
   renderTitleBadges();
 }
@@ -1434,7 +1589,7 @@ function renderTitleBadges() {
   const container = $('title-badges');
   if (!container) return;
   if (P.titles.size === 0) {
-    container.innerHTML = '<span class="no-badge-msg">まだ称号をかくとくしていない</span>';
+    container.innerHTML = `<span class="no-badge-msg">${tr('noTitles')}</span>`;
     return;
   }
   container.innerHTML = '';
@@ -1444,9 +1599,9 @@ function renderTitleBadges() {
     const equipped = P.equipment.title?.id === tid;
     const chip = document.createElement('span');
     chip.className   = 'badge-chip' + (equipped ? ' badge-equipped' : '');
-    chip.title        = 'タップして見た目に反映（もう一度タップで解除）';
+    chip.title        = uiLang === 'en' ? 'Tap to equip visually. Tap again to remove.' : 'タップして見た目に反映（もう一度タップで解除）';
     chip.textContent = `${def.icon} ${def.name}`;
-    if (equipped) chip.insertAdjacentHTML('beforeend', '<span class="badge-equipped-mark">✓装備中</span>');
+    if (equipped) chip.insertAdjacentHTML('beforeend', `<span class="badge-equipped-mark">${uiLang === 'en' ? '✓Equipped' : '✓装備中'}</span>`);
     chip.addEventListener('click', () => equipTitle(tid));
     container.appendChild(chip);
   }
@@ -2415,13 +2570,13 @@ async function useItem(itemIdx) {
 function refreshEquipmentDisplay() {
   const weapEl = $('equip-weapon-name');
   const armEl  = $('equip-armor-name');
-  if (weapEl) weapEl.textContent = P.equipment.weapon ? `${P.equipment.weapon.icon} ${P.equipment.weapon.name}` : 'なし';
-  if (armEl)  armEl.textContent  = P.equipment.armor  ? `${P.equipment.armor.icon} ${P.equipment.armor.name}`   : 'なし';
+  if (weapEl) weapEl.textContent = P.equipment.weapon ? `${P.equipment.weapon.icon} ${P.equipment.weapon.name}` : tr('none');
+  if (armEl)  armEl.textContent  = P.equipment.armor  ? `${P.equipment.armor.icon} ${P.equipment.armor.name}`   : tr('none');
 
   const effEl = $('active-effects-display');
   if (effEl) {
     if (P.activeEffects.length === 0) {
-      effEl.textContent = 'なし';
+      effEl.textContent = tr('none');
     } else {
       effEl.textContent = P.activeEffects.map(e => `${e.icon}${e.name}`).join('、');
     }
@@ -2434,7 +2589,7 @@ function renderInventoryWindow() {
   refreshEquipmentDisplay();
 
   if (P.inventory.length === 0) {
-    container.innerHTML = '<div class="inv-empty">アイテムをもっていない</div>';
+    container.innerHTML = `<div class="inv-empty">${tr('noItems')}</div>`;
     return;
   }
 
@@ -2447,10 +2602,10 @@ function renderInventoryWindow() {
     if (item.type === 'weapon') stat = `EXP×${item.expMult}`;
     else if (item.type === 'armor') stat = `GOLD×${item.goldMult}`;
     else if (item.effect === 'expBoost') stat = `EXP×${item.value}`;
-    else if (item.effect === 'comboShield') stat = `コンボ保護`;
+    else if (item.effect === 'comboShield') stat = tr('comboShield');
     else if (item.effect === 'healHp') stat = `HP+${item.value}`;
-    else if (item.effect === 'choiceCut') stat = `選択肢-${item.value}`;
-    else if (item.type === 'permit') stat = '解放済み';
+    else if (item.effect === 'choiceCut') stat = tr('choiceCut', item.value);
+    else if (item.type === 'permit') stat = tr('unlocked');
 
     const isEquipped =
       (item.type === 'weapon' && P.equipment.weapon?.id === item.id) ||
@@ -2458,7 +2613,7 @@ function renderInventoryWindow() {
 
     row.innerHTML = `
       <span class="inv-icon">${item.icon}</span>
-      <span class="inv-name">${item.name}${isEquipped ? ' <span class="inv-equipped">★装備</span>' : ''}</span>
+      <span class="inv-name">${item.name}${isEquipped ? ` <span class="inv-equipped">${tr('equipped')}</span>` : ''}</span>
       <span class="inv-stat">${stat}</span>
     `;
 
@@ -2832,7 +2987,7 @@ function enterCommand(mode) {
 
 let commandPage = 1;
 let commandPageMax = 1;
-const COMMANDS_PER_PAGE = 6;
+const COMMANDS_PER_PAGE = 5;
 
 function setupCommandPagination() {
   const buttons = Array.from(document.querySelectorAll('.dq-cmd-btn'));
@@ -3047,6 +3202,9 @@ function showCommandPage(page) {
   const commandWindow = $('command-window');
   const pageIndicator = $('command-page-indicator');
   if (commandWindow) commandWindow.dataset.page = String(commandPage);
+  document.querySelectorAll('.dq-cmd-btn').forEach(btn => {
+    btn.hidden = btn.dataset.commandPage !== String(commandPage);
+  });
   if (pageIndicator) pageIndicator.textContent = `${commandPage}/${commandPageMax}`;
 }
 
@@ -3080,7 +3238,7 @@ function renderWorldMap() {
       layer.appendChild(el);
     });
     if ($('world-msg-text')) {
-      $('world-msg-text').textContent = 'せかいちずが ひろがった！ まずは5大陸からえらぼう。大陸マップに入ると、主要なことばの国旗が見えるぞ。';
+      $('world-msg-text').textContent = tr('worldGlobalMsg');
     }
     if ($('world-back-btn')) $('world-back-btn').textContent = tr('backTown');
     return;
@@ -3106,7 +3264,7 @@ function renderWorldMap() {
       });
 
     if ($('world-msg-text')) {
-      $('world-msg-text').textContent = `${region.label}は大きい！ ヨーロッパ・中東・東アジアから行き先をえらぼう。`;
+      $('world-msg-text').textContent = tr('worldSubregionMsg', region.label);
     }
     if ($('world-back-btn')) $('world-back-btn').textContent = uiLang === 'en' ? '◀ World map' : '◀ せかいちずへ';
     return;
@@ -3125,7 +3283,7 @@ function renderWorldMap() {
   });
 
   if ($('world-msg-text')) {
-    $('world-msg-text').textContent = `${region.label}のマップに入った！ 国旗の場所へ行くと、そのことばの てきが あらわれる。`;
+    $('world-msg-text').textContent = tr('worldRegionMsg', region.label);
   }
   if ($('world-back-btn')) $('world-back-btn').textContent = region.parent ? '◀ ユーラシアへ' : '◀ せかいちずへ';
 }
@@ -3256,7 +3414,7 @@ async function enterLanguageZone(langCode) {
 
   const currentLang = currentLanguage();
   const msgEl = $('world-msg-text');
-  if (msgEl) msgEl.textContent = `${currentLang.label}の ちいきに とうちゃく！ ${enemy.sprite} ${enemy.name}が あらわれた！`;
+  if (msgEl) msgEl.textContent = tr('worldArrivedMsg', currentLang.label, enemy.sprite, enemy.name);
   $('world-msg')?.classList.remove('hidden');
 
   setupBattleScreenUI(enemy);
@@ -3312,7 +3470,7 @@ async function goToInn(opts = {}) {
   const shouldCharge = opts.charge !== false && needsRest;
 
   if (shouldCharge && P.gold < 10) {
-    alert('宿屋に泊まるには10G必要です。無料練習でGoldをためましょう。');
+    alert(tr('innNoGold'));
     return;
   }
 
@@ -3343,8 +3501,8 @@ async function goToInn(opts = {}) {
   const msgEl = $('inn-msg-text');
   if (msgEl) {
     msgEl.textContent = needsRest
-      ? `やどやで ひとやすみ。${shouldCharge ? '10Gを はらって ' : ''}HPとMPが ぜんかいふく した！`
-      : 'やどやの おばあさんが ほほえんだ。HPもMPも まんたんだ！';
+      ? tr('innRested', shouldCharge)
+      : tr('innFull');
   }
   $('inn-msg')?.classList.remove('hidden');
 }
@@ -3362,15 +3520,15 @@ function renderInnList(filter) {
 
   container.innerHTML = '';
   if (items.length === 0) {
-    container.innerHTML = '<p class="inn-empty">このカテゴリーには まだ もんだいが ありません。</p>';
+    container.innerHTML = `<p class="inn-empty">${tr('noCategoryItems')}</p>`;
     return;
   }
 
   const CLASS_BADGE = {
-    new:      '<span class="inn-status-badge inn-status-new">🆕 未学習</span>',
-    low:      '<span class="inn-status-badge inn-status-low">📖 練習不足</span>',
-    weak:     '<span class="inn-weak-badge">🔥 にがて</span>',
-    mastered: '<span class="inn-status-badge inn-status-mastered">✅ マスター</span>',
+    new:      `<span class="inn-status-badge inn-status-new">${tr('filterLabels').new}</span>`,
+    low:      `<span class="inn-status-badge inn-status-low">${tr('filterLabels').low}</span>`,
+    weak:     `<span class="inn-weak-badge">${tr('filterLabels').weak}</span>`,
+    mastered: `<span class="inn-status-badge inn-status-mastered">${tr('filterLabels').mastered}</span>`,
   };
 
   items.forEach(item => {
@@ -3400,11 +3558,11 @@ function renderInnList(filter) {
          <div class="inn-item-jp">${meaningForUi(item)}</div>`;
     } else {
       mainHtml = `<div class="inn-item-q">${item.q}</div>
-         <div class="inn-item-jp">こたえ: ${item.choices[item.ans]}</div>
+         <div class="inn-item-jp">${tr('answerLabel')}: ${item.choices[item.ans]}</div>
          <div class="inn-item-ex">${item.exp}</div>`;
     }
 
-    const rateText  = rate === null ? 'みがくしゅう' : `${rate}%（${r.correct}/${r.attempts}）`;
+    const rateText  = rate === null ? tr('unstudied') : `${rate}%（${r.correct}/${r.attempts}）`;
     const rateClass = rate === null ? 'inn-rate-none' : rate >= 80 ? 'inn-rate-good' : rate >= 50 ? 'inn-rate-mid' : 'inn-rate-bad';
     const retPct = retentionPct(item);
     const retClass = retPct === null ? '' : retPct >= 80 ? 'inn-rate-good' : retPct >= 50 ? 'inn-rate-mid' : 'inn-rate-bad';
@@ -3414,9 +3572,9 @@ function renderInnList(filter) {
       <div class="inn-item-side">
         <span class="inn-tier-badge">${itemDifficultyLabel(item)}</span>
         <span class="inn-rate ${rateClass}">${rateText}</span>
-        ${retPct !== null ? `<span class="inn-retention ${retClass}">🧠 定着度${retPct}%</span>` : ''}
+        ${retPct !== null ? `<span class="inn-retention ${retClass}">${tr('retention', retPct)}</span>` : ''}
         ${cls !== 'mid' ? CLASS_BADGE[cls] : ''}
-        ${trainable ? '<button type="button" class="dq-btn dq-btn-blue inn-train-btn">とっくん</button>' : ''}
+        ${trainable ? `<button type="button" class="dq-btn dq-btn-blue inn-train-btn">${tr('train')}</button>` : ''}
       </div>
     `;
 
@@ -3999,17 +4157,12 @@ document.addEventListener('DOMContentLoaded', () => {
   initGoogleLogin();
   setupSpeechControls();
 
-  $('ui-lang-ja')?.addEventListener('click', () => {
-    setUiLanguage('ja');
-    populateLanguageSelect();
-    renderShop();
-    renderKeyboardAssist();
-  });
-  $('ui-lang-en')?.addEventListener('click', () => {
-    setUiLanguage('en');
-    populateLanguageSelect();
-    renderShop();
-    renderKeyboardAssist();
+  document.querySelectorAll('[data-ui-lang]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      setUiLanguage(btn.dataset.uiLang);
+      populateLanguageSelect();
+      renderKeyboardAssist();
+    });
   });
 
   $('language-select')?.addEventListener('change', e => {

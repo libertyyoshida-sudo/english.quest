@@ -188,20 +188,21 @@ body {
 @keyframes screen-in { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 
 @media (min-width: 641px) {
-  body { overflow-y: hidden; display: flex; flex-direction: column; height: 100svh; }
+  body { overflow-y: auto; display: flex; flex-direction: column; min-height: 100svh; }
 
   .dq-header { min-height: 54px; }
+  .hdr-language-toggle { display: inline-flex; }
 
   .dq-main {
     flex: 1; min-height: 0;
     max-width: min(1120px, 100vw);
     padding: 10px 12px 14px;
-    overflow: hidden;
+    overflow: visible;
   }
 
   .screen.active {
-    height: 100%;
-    overflow: hidden;
+    min-height: 0;
+    overflow: visible;
   }
 
   .dq-window {
@@ -259,6 +260,21 @@ body {
   color: #1a1200;
   background: var(--dq-gold);
   border-color: #fff1a8;
+}
+.hdr-language-toggle {
+  display: none;
+  padding: 2px;
+  gap: 3px;
+  border-width: 1px;
+  box-shadow: none;
+}
+.hdr-language-toggle .ui-lang-btn {
+  min-width: 58px;
+  padding: 4px 6px;
+  font-size: .62rem;
+}
+@media (min-width: 641px) {
+  .hdr-language-toggle:not(.hidden) { display: inline-flex; }
 }
 .login-box {
   display: flex; flex-direction: column; align-items: center; gap: 8px;
@@ -1432,7 +1448,7 @@ body {
   #screen-field.active {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-rows: auto auto auto;
     gap: 10px;
   }
 
@@ -1461,7 +1477,8 @@ body {
 
   .field-canvas {
     aspect-ratio: 16 / 9;
-    max-height: min(32vh, 300px);
+    max-height: none;
+    min-height: 220px;
   }
 
   .field-dpad { display: none; }
@@ -1472,11 +1489,11 @@ body {
   .world-region-label { font-size: .58rem; padding: 4px 7px; }
   .world-area-title { font-size: .68rem; padding: 4px 9px; top: 7px; }
 
-  .command-window { gap: 3px; min-height: 0; overflow-y: auto; }
+  .command-window { gap: 4px; min-height: 0; overflow: visible; }
   .cmd-title { margin-bottom: 3px; flex-shrink: 0; }
   .dq-cmd-btn {
-    min-height: 0;
-    padding: 5px 9px;
+    min-height: 34px;
+    padding: 6px 10px;
     font-size: .75rem;
     line-height: 1.25;
   }
@@ -1508,7 +1525,7 @@ body {
   .si-lbl { font-size: .58rem; }
   .title-badges,
   .inventory-scroll {
-    max-height: 148px;
+    max-height: 190px;
     overflow-y: auto;
   }
 
