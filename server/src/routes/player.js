@@ -171,6 +171,35 @@ router.post('/rest', authenticateToken, async (req, res) => {
   }
 });
 
+// HP回復同期：魔法・アイテムによる回復を言語別HPへ反映する
+router.post('/heal', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const lang = req.body.language || 'en';
+    const amount = Math.max(0, Math.floor(Number(req.body.amount) || 0));
+
+    const langProfile = await prisma.languageProfile.upsert({
+      where: { userId_language: { userId, language: lang } },
+      create: { userId, language: lang },
+      update: {},
+    });
+
+    const maxHp = getLvRow(langProfile.totalExp).hp;
+    const beforeHp = Math.min(maxHp, Math.max(0, Number(langProfile.currentHp) || maxHp));
+    const currentHp = Math.min(maxHp, beforeHp + amount);
+
+    const updatedLangProfile = await prisma.languageProfile.update({
+      where: { userId_language: { userId, language: lang } },
+      data: { currentHp },
+    });
+
+    res.json({ healed: currentHp - beforeHp, languageProfile: updatedLangProfile });
+  } catch (error) {
+    console.error('Heal sync error:', error);
+    res.status(500).json({ error: 'HP回復の同期に失敗しました。' });
+  }
+});
+
 // Shop購入：Goldを消費して装備・消耗品・通行証を入手する
 router.post('/shop/buy', authenticateToken, async (req, res) => {
   try {

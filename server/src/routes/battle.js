@@ -59,6 +59,7 @@ router.post('/answer', authenticateToken, async (req, res) => {
 
     totalAnswers += 1;
     const beforeMaxHp = getLvRow(totalExp).hp;
+    currentHp = Math.min(beforeMaxHp, Math.max(1, Number(currentHp) || beforeMaxHp));
 
     if (isCorrect) {
       totalCorrect += 1;

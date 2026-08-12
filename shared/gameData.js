@@ -106,6 +106,62 @@ export function toeicLabel(tier) {
   return row ? `TOEIC${row.toeic}` : '';
 }
 
+export const EXAM_LEVEL_SYSTEMS = {
+  en: {
+    name: 'TOEIC L&R',
+    labels: ['TOEIC 300','TOEIC 400','TOEIC 500','TOEIC 600','TOEIC 700','TOEIC 730','TOEIC 800','TOEIC 860','TOEIC 900','TOEIC 990'],
+  },
+  ja: {
+    name: 'JLPT',
+    labels: ['JLPT N5 入門','JLPT N5 基礎','JLPT N4 基礎','JLPT N4 応用','JLPT N3 入門','JLPT N3 実用','JLPT N2 入門','JLPT N2 実用','JLPT N1 入門','JLPT N1 上級'],
+  },
+  zh: {
+    name: 'HSK',
+    labels: ['HSK 1','HSK 1-2','HSK 2','HSK 3','HSK 3-4','HSK 4','HSK 5','HSK 5','HSK 6','HSK 6+'],
+  },
+  ko: {
+    name: 'TOPIK',
+    labels: ['TOPIK I 1級','TOPIK I 1級','TOPIK I 2級','TOPIK I 2級','TOPIK II 3級','TOPIK II 4級','TOPIK II 4級','TOPIK II 5級','TOPIK II 6級','TOPIK II 6級+'],
+  },
+  fr: {
+    name: 'DELF/DALF',
+    labels: ['DELF A1','DELF A1','DELF A2','DELF A2','DELF B1','DELF B1','DELF B2','DELF B2','DALF C1','DALF C2'],
+  },
+  es: {
+    name: 'DELE',
+    labels: ['DELE A1','DELE A1','DELE A2','DELE A2','DELE B1','DELE B1','DELE B2','DELE B2','DELE C1','DELE C2'],
+  },
+  de: {
+    name: 'Goethe',
+    labels: ['A1','A1','A2','A2','B1','B1','B2','B2','C1','C2'],
+  },
+  it: {
+    name: 'CILS/CELI',
+    labels: ['A1','A1','A2','A2','B1','B1','B2','B2','C1','C2'],
+  },
+  pt: {
+    name: 'CAPLE',
+    labels: ['A1','A1','A2','A2','B1','B1','B2','B2','C1','C2'],
+  },
+  ru: {
+    name: 'TORFL',
+    labels: ['A1','A1','A2','A2','B1','B1','B2','B2','C1','C2'],
+  },
+  ar: {
+    name: 'ALPT/CEFR',
+    labels: ['A1','A1','A2','A2','B1','B1','B2','B2','C1','C2'],
+  },
+};
+
+const CEFR_DEFAULT_LABELS = ['CEFR A1','CEFR A1','CEFR A2','CEFR A2','CEFR B1','CEFR B1','CEFR B2','CEFR B2','CEFR C1','CEFR C2'];
+
+export function examLevelLabel(language, tier) {
+  const lv = Math.max(1, Math.min(10, Number(tier) || 1));
+  const system = EXAM_LEVEL_SYSTEMS[language];
+  if (system) return system.labels[lv - 1] || `Lv.${lv}`;
+  return CEFR_DEFAULT_LABELS[lv - 1] || `Lv.${lv}`;
+}
+
 export const EXP_BASE = { vocab: 10, grammar: 15, typing: 12, listening: 18, speaking: 20, weak: 25, boss: 35, phrase: 16, smart: 22, culture: 18 };
 export const GOLD_BASE = { vocab: 2, grammar: 3, typing: 2, listening: 4, speaking: 5, weak: 6, boss: 10, phrase: 3, smart: 5, culture: 4 };
 

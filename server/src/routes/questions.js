@@ -1,7 +1,14 @@
 import { Router } from 'express';
 import { prisma } from '../db.js';
+import { examLevelLabel } from '../../../shared/gameData.js';
 
 const router = Router();
+
+function examMeta(language, level) {
+  return {
+    label: examLevelLabel(language, Number(level)),
+  };
+}
 
 function toClientQuestion(question) {
   if (question.category === 'grammar') {
@@ -14,6 +21,7 @@ function toClientQuestion(question) {
       choices: meta.choices || [],
       ans: meta.ans ?? 0,
       exp: meta.exp || question.exampleSentence || '',
+      exam: examMeta(question.language, question.level),
     };
   }
 
@@ -27,6 +35,7 @@ function toClientQuestion(question) {
       choices: meta.choices || [],
       ans: meta.ans ?? 0,
       exp: meta.exp || question.exampleSentence || '',
+      exam: examMeta(question.language, question.level),
     };
   }
 
@@ -40,6 +49,7 @@ function toClientQuestion(question) {
       phrase: question.word,
       pron: question.pronunciation || undefined,
       jp: question.japanese,
+      exam: examMeta(question.language, question.level),
     };
   }
 
@@ -51,6 +61,7 @@ function toClientQuestion(question) {
     pron: question.pronunciation || undefined,
     jp: question.japanese,
     ex: question.exampleSentence || '',
+    exam: examMeta(question.language, question.level),
   };
 }
 

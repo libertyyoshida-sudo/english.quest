@@ -7,7 +7,7 @@
 
 import {
   ITEM_DB, SHOP_ITEM_IDS, LEVEL_TABLE, TITLE_DEFS, EXP_BASE, GOLD_BASE,
-  comboMult, getLvRow, getNextLvRow, toeicLabel, retentionScore,
+  comboMult, getLvRow, getNextLvRow, examLevelLabel, retentionScore,
 } from './shared/gameData.js';
 import {
   LANGUAGE_OPTIONS, LANGUAGE_PROFILES, PHRASE_CATEGORIES,
@@ -936,20 +936,22 @@ async function ensureLocalQuestionData() {
 }
 
 function cacheLocalQuestionData(language) {
+  const withExam = item => ({ ...item, exam: item.exam || { label: examLevelLabel(language, item.lv) } });
   questionDataCache[language] = {
-    vocab: language === 'en' ? VOCAB_DB : (MULTI_VOCAB_DB[language] || VOCAB_DB),
-    grammar: language === 'en' ? GRAMMAR_DB : (MULTI_GRAMMAR_DB[language] || []),
-    phrase: language === 'en' ? PHRASE_DB : (MULTI_PHRASE_DB[language] || PHRASE_DB),
-    culture: MULTI_CULTURE_DB[language] || [],
+    vocab: (language === 'en' ? VOCAB_DB : (MULTI_VOCAB_DB[language] || VOCAB_DB)).map(withExam),
+    grammar: (language === 'en' ? GRAMMAR_DB : (MULTI_GRAMMAR_DB[language] || [])).map(withExam),
+    phrase: (language === 'en' ? PHRASE_DB : (MULTI_PHRASE_DB[language] || PHRASE_DB)).map(withExam),
+    culture: (MULTI_CULTURE_DB[language] || []).map(withExam),
   };
 }
 
 function cacheQuestionData(language, questions) {
+  const withExam = item => ({ ...item, exam: item.exam || { label: examLevelLabel(language, item.lv) } });
   questionDataCache[language] = {
-    vocab: questions.filter(q => q.category === 'vocab'),
-    grammar: questions.filter(q => q.category === 'grammar'),
-    phrase: questions.filter(q => q.category === 'phrase'),
-    culture: questions.filter(q => q.category === 'culture'),
+    vocab: questions.filter(q => q.category === 'vocab').map(withExam),
+    grammar: questions.filter(q => q.category === 'grammar').map(withExam),
+    phrase: questions.filter(q => q.category === 'phrase').map(withExam),
+    culture: questions.filter(q => q.category === 'culture').map(withExam),
   };
 }
 
@@ -988,7 +990,11 @@ function wordWithPron(item) {
 }
 
 function difficultyLabel(lv) {
-  return selectedLanguage === 'en' ? toeicLabel(lv) : `Lv.${lv}`;
+  return examLevelLabel(selectedLanguage, lv);
+}
+
+function itemDifficultyLabel(item) {
+  return item.exam?.label || difficultyLabel(item.lv);
 }
 
 // やどやの言語紹介カードは既定で折りたたみ、開閉状態はセッション中は維持する
@@ -1081,16 +1087,11 @@ function refreshLevelOptions() {
   if (!select) return;
   const options = [
     ['auto', 'Auto (matches hero level)', 'おまかせ（ゆうしゃレベルに連動）'],
-    ['1', 'Lv.1（TOEIC300）', 'Lv.1（入門）'],
-    ['2', 'Lv.2（TOEIC400）', 'Lv.2（基礎）'],
-    ['3', 'Lv.3（TOEIC500）', 'Lv.3（初級）'],
-    ['4', 'Lv.4（TOEIC600）', 'Lv.4（初中級）'],
-    ['5', 'Lv.5（TOEIC700）', 'Lv.5（中級）'],
-    ['6', 'Lv.6（TOEIC730）', 'Lv.6（中上級）'],
-    ['7', 'Lv.7（TOEIC800）', 'Lv.7（上級）'],
-    ['8', 'Lv.8（TOEIC860）', 'Lv.8（実践）'],
-    ['9', 'Lv.9（TOEIC900）', 'Lv.9（熟練）'],
-    ['10', 'Lv.10（TOEIC990）', 'Lv.10（達人）'],
+    ...Array.from({ length: 10 }, (_, idx) => {
+      const lv = idx + 1;
+      const label = examLevelLabel(selectedLanguage, lv);
+      return [String(lv), `Lv.${lv} (${label})`, `Lv.${lv}（${label}）`];
+    }),
     ['all', 'All levels (random)', 'ぜんぶ（ランダム混合）'],
   ];
   const currentValue = select.value || 'auto';
@@ -2278,11 +2279,17 @@ async function equipItem(itemIdx) {
   }
 }
 
-function useItem(itemIdx) {
+async function useItem(itemIdx) {
   const item = P.inventory[itemIdx];
   if (!item || item.type !== 'consumable') return;
   if (item.effect === 'healHp') {
     const healed = healHp(item.value || 0);
+    try {
+      await syncHealHp(healed);
+    } catch (err) {
+      console.error('HP回復アイテムの同期に失敗しました:', err);
+      alert('HPは画面上で回復しましたが、サーバー同期に失敗しました。通信後にもう一度確認してください。');
+    }
     alert(healed > 0 ? `${item.name}を使った！ HPが${healed}回復した。` : 'HPはすでに まんたんです。');
   } else {
     P.activeEffects.push({ ...item });
@@ -2753,6 +2760,16 @@ function healHp(amount) {
   return lang.currentHp - before;
 }
 
+async function syncHealHp(amount) {
+  if (!authToken || amount <= 0) return;
+  const result = await apiFetch('/player/heal', {
+    method: 'POST',
+    body: JSON.stringify({ language: selectedLanguage, amount }),
+  });
+  applyLanguageProfile(selectedLanguage, result.languageProfile);
+  refreshHeader();
+}
+
 function cutWrongChoices(count = 2) {
   const q = battle.questions[battle.cur];
   if (!q || !q.choices || battle.answered) return 0;
@@ -2806,11 +2823,18 @@ function useChoiceCutMagic() {
   showMagicNote(cut > 0 ? `まほうで まちがいを${cut}つ 消した！` : 'もう消せる選択肢がない。');
 }
 
-function useHealMagic() {
+async function useHealMagic() {
   if (battle.answered) return;
   if (!spendMp(4)) return;
   const amount = Math.max(10, Math.round(maxHpForCurrentLanguage() * 0.35));
   const healed = healHp(amount);
+  try {
+    await syncHealHp(healed);
+  } catch (err) {
+    console.error('回復まほうの同期に失敗しました:', err);
+    showMagicNote('HPは画面上で回復したが、サーバー同期に失敗しました。');
+    return;
+  }
   showMagicNote(healed > 0 ? `回復まほう！ HPが${healed}回復した。` : 'HPはすでに まんたんだ。');
 }
 
@@ -3278,7 +3302,7 @@ function renderInnList(filter) {
     row.innerHTML = `
       <div class="inn-item-main">${mainHtml}</div>
       <div class="inn-item-side">
-        <span class="inn-tier-badge">${difficultyLabel(item.lv)}</span>
+        <span class="inn-tier-badge">${itemDifficultyLabel(item)}</span>
         <span class="inn-rate ${rateClass}">${rateText}</span>
         ${retPct !== null ? `<span class="inn-retention ${retClass}">🧠 定着度${retPct}%</span>` : ''}
         ${cls !== 'mid' ? CLASS_BADGE[cls] : ''}
