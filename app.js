@@ -1675,7 +1675,7 @@ const FIELD_MOVE_SPEED = 130; // px/秒（キャンバス実寸換算）
 // 「歩ける画面」の定義。まち（フィールド）とせかいマップの両方で同じ移動システムを使い回す
 const WALKABLE_SCREENS = {
   'screen-field': { canvasId: 'field-canvas', heroId: 'field-hero', onTouch: mode => enterCommand(mode) },
-  'screen-world': { canvasId: 'world-canvas', heroId: 'world-hero', onTouch: langCode => enterLanguageZone(langCode) },
+  'screen-world': { canvasId: 'world-canvas', heroId: 'world-hero', onTouch: handleWorldZoneTouch },
 };
 // 画面ごとの勇者位置（%）。画面を切り替えるたびに入り口の位置へリセットする
 const heroPositions = {
@@ -1687,6 +1687,46 @@ const touchedFieldIcons = new Set();
 let fieldLastTime = null;
 let worldEncounterTimer = 0;
 let nextEncounterAt = randomEncounterThreshold();
+let currentWorldRegion = null;
+
+const WORLD_REGIONS = [
+  { id: 'europe', label: 'ヨーロッパ', left: 35, top: 23, hero: { x: 50, y: 82 }, color: '#ef8fa0', langs: [
+    { code: 'fr', flag: '🇫🇷', label: 'Français', left: 24, top: 40 },
+    { code: 'de', flag: '🇩🇪', label: 'Deutsch', left: 38, top: 32 },
+    { code: 'nl', flag: '🇳🇱', label: 'Nederlands', left: 28, top: 26 },
+    { code: 'pl', flag: '🇵🇱', label: 'Polski', left: 52, top: 28 },
+    { code: 'it', flag: '🇮🇹', label: 'Italiano', left: 34, top: 56 },
+    { code: 'el', flag: '🇬🇷', label: 'Ελληνικά', left: 54, top: 62 },
+    { code: 'ru', flag: '🇷🇺', label: 'Русский', left: 72, top: 22 },
+  ] },
+  { id: 'middle-east', label: '中東・北アフリカ', left: 49, top: 40, hero: { x: 50, y: 82 }, color: '#f0c16e', langs: [
+    { code: 'ar', flag: '🇸🇦', label: 'العربية', left: 42, top: 48 },
+    { code: 'tr', flag: '🇹🇷', label: 'Türkçe', left: 50, top: 30 },
+  ] },
+  { id: 'south-asia', label: '南アジア', left: 60, top: 43, hero: { x: 50, y: 84 }, color: '#8ec570', langs: [
+    { code: 'hi', flag: '🇮🇳', label: 'हिन्दी', left: 36, top: 38 },
+    { code: 'bn', flag: '🇧🇩', label: 'বাংলা', left: 58, top: 36 },
+    { code: 'ne', flag: '🇳🇵', label: 'नेपाली', left: 48, top: 24 },
+    { code: 'ta', flag: '🇮🇳', label: 'தமிழ்', left: 36, top: 60 },
+    { code: 'si', flag: '🇱🇰', label: 'සිංහල', left: 54, top: 70 },
+  ] },
+  { id: 'east-se-asia', label: '東・東南アジア', left: 68, top: 38, hero: { x: 50, y: 84 }, color: '#7398cf', langs: [
+    { code: 'ja', flag: '🇯🇵', label: '日本語', left: 70, top: 24 },
+    { code: 'zh', flag: '🇨🇳', label: '中文', left: 40, top: 26 },
+    { code: 'yue', flag: '🇭🇰', label: '粵語', left: 50, top: 40 },
+    { code: 'ko', flag: '🇰🇷', label: '한국어', left: 62, top: 30 },
+    { code: 'my', flag: '🇲🇲', label: 'မြန်မာ', left: 34, top: 52 },
+    { code: 'th', flag: '🇹🇭', label: 'ไทย', left: 48, top: 58 },
+    { code: 'vi', flag: '🇻🇳', label: 'Tiếng Việt', left: 62, top: 56 },
+    { code: 'tl', flag: '🇵🇭', label: 'Tagalog', left: 72, top: 62 },
+    { code: 'id', flag: '🇮🇩', label: 'Bahasa Indonesia', left: 52, top: 76 },
+  ] },
+  { id: 'americas', label: 'アメリカ大陸', left: 85, top: 43, hero: { x: 50, y: 84 }, color: '#f2ab6c', langs: [
+    { code: 'en', flag: '🇺🇸', label: 'English', left: 46, top: 28 },
+    { code: 'es', flag: '🇲🇽', label: 'Español', left: 42, top: 56 },
+    { code: 'pt', flag: '🇧🇷', label: 'Português', left: 58, top: 68 },
+  ] },
+];
 
 function getActiveWalkable() {
   for (const [screenId, cfg] of Object.entries(WALKABLE_SCREENS)) {
@@ -1699,7 +1739,8 @@ function getActiveWalkable() {
 }
 
 function resetHeroPosition(screenId) {
-  const start = screenId === 'screen-world' ? { x: 50, y: 92 } : { x: 50, y: 50 };
+  const region = currentWorldRegion ? WORLD_REGIONS.find(r => r.id === currentWorldRegion) : null;
+  const start = screenId === 'screen-world' ? (region?.hero || { x: 50, y: 92 }) : { x: 50, y: 50 };
   heroPositions[screenId] = { ...start };
   touchedFieldIcons.clear();
   const cfg = WALKABLE_SCREENS[screenId];
@@ -1856,7 +1897,7 @@ function checkFieldIconContacts(active) {
   const leaveDist = short * FIELD_ICON_LEAVE_RATIO;
 
   canvas.querySelectorAll('.field-icon').forEach(iconEl => {
-    const key   = iconEl.dataset.mode || iconEl.dataset.lang;
+    const key   = iconEl.dataset.mode || iconEl.dataset.lang || iconEl.dataset.region;
     const iRect = iconEl.getBoundingClientRect();
     const iCx = iRect.left + iRect.width / 2;
     const iCy = iRect.top  + iRect.height / 2;
@@ -1865,7 +1906,7 @@ function checkFieldIconContacts(active) {
     if (dist < touchDist) {
       if (!touchedFieldIcons.has(key)) {
         touchedFieldIcons.add(key);
-        active.onTouch(key);
+        active.onTouch(key, iconEl);
       }
     } else if (dist > leaveDist) {
       touchedFieldIcons.delete(key);
@@ -1949,8 +1990,80 @@ function nextCommandPage() {
 /* ══════════════════════════════════════════════════
    せかいマップ：まちの外・ランダムせんとう・ボス戦
 ══════════════════════════════════════════════════ */
-function goToWorld() {
+function renderWorldMap() {
+  const canvas = $('world-canvas');
+  const layer = $('world-zone-layer');
+  if (!canvas || !layer) return;
+
+  const region = currentWorldRegion ? WORLD_REGIONS.find(r => r.id === currentWorldRegion) : null;
+  canvas.classList.toggle('world-area-mode', Boolean(region));
+  canvas.dataset.region = region?.id || 'global';
+  layer.innerHTML = '';
+
+  if (!region) {
+    WORLD_REGIONS.forEach(r => {
+      const el = document.createElement('div');
+      el.className = 'field-icon world-region-gate';
+      el.dataset.region = r.id;
+      el.style.left = `${r.left}%`;
+      el.style.top = `${r.top}%`;
+      el.innerHTML = `<span class="world-region-label">${r.label}</span>`;
+      layer.appendChild(el);
+    });
+    if ($('world-msg-text')) {
+      $('world-msg-text').textContent = 'せかいちずが ひろがった！ まずは地域をえらぼう。地域マップに入ると、主要なことばの国旗が見えるぞ。';
+    }
+    if ($('world-back-btn')) $('world-back-btn').textContent = '◀ まちへもどる';
+    return;
+  }
+
+  const title = document.createElement('div');
+  title.className = 'world-area-title';
+  title.textContent = region.label;
+  layer.appendChild(title);
+
+  region.langs.forEach(lang => {
+    const el = document.createElement('div');
+    el.className = 'field-icon world-zone-icon';
+    el.dataset.lang = lang.code;
+    el.style.left = `${lang.left}%`;
+    el.style.top = `${lang.top}%`;
+    el.innerHTML = `<span class="field-icon-emoji">${lang.flag}</span><span class="field-icon-label">${lang.label}</span>`;
+    layer.appendChild(el);
+  });
+
+  if ($('world-msg-text')) {
+    $('world-msg-text').textContent = `${region.label}のマップに入った！ 国旗の場所へ行くと、そのことばの てきが あらわれる。`;
+  }
+  if ($('world-back-btn')) $('world-back-btn').textContent = '◀ せかいちずへ';
+}
+
+function enterWorldRegion(regionId) {
+  if (!WORLD_REGIONS.some(r => r.id === regionId)) return;
+  currentWorldRegion = regionId;
+  renderWorldMap();
+  resetHeroPosition('screen-world');
+  worldEncounterTimer = 0;
+  nextEncounterAt = randomEncounterThreshold();
+}
+
+function leaveWorldRegion() {
+  currentWorldRegion = null;
+  renderWorldMap();
+  resetHeroPosition('screen-world');
+  worldEncounterTimer = 0;
+  nextEncounterAt = randomEncounterThreshold();
+}
+
+function handleWorldZoneTouch(key, iconEl) {
+  if (iconEl?.dataset.region) enterWorldRegion(iconEl.dataset.region);
+  else if (iconEl?.dataset.lang) enterLanguageZone(iconEl.dataset.lang);
+}
+
+function goToWorld(regionId = null) {
   stopSpeechAll();
+  currentWorldRegion = regionId;
+  renderWorldMap();
   resetHeroPosition('screen-world');
   worldEncounterTimer = 0;
   nextEncounterAt = randomEncounterThreshold();
@@ -1965,7 +2078,7 @@ function goToWorld() {
 // ※「にげる」ボタンは常にまちへ確実に戻す（下のイベントリスナー参照）。
 //   せかいマップに戻す仕様だと、ランダムエンカウントが連続してまちに戻れなくなる問題があったため。
 function returnFromBattle() {
-  if (battle && battle.returnTo === 'screen-world') goToWorld();
+  if (battle && battle.returnTo === 'screen-world') goToWorld(battle.returnRegion || null);
   else goToField();
 }
 
@@ -1989,7 +2102,8 @@ async function triggerRandomEncounter() {
     combo: 0, expGained: 0, goldGained: 0,
     answered: false, enemy,
     activeEffects: [], comboShield: false, comboShieldUsed: false,
-    returnTo: 'screen-world', isRandomEncounter: true,
+    returnTo: 'screen-world', returnRegion: currentWorldRegion,
+    isRandomEncounter: true,
   };
 
   const msgEl = $('world-msg-text');
@@ -2027,7 +2141,8 @@ async function enterLanguageZone(langCode) {
     combo: 0, expGained: 0, goldGained: 0,
     answered: false, enemy,
     activeEffects: [], comboShield: false, comboShieldUsed: false,
-    returnTo: 'screen-world', isRegionZone: true, zoneLang: langCode,
+    returnTo: 'screen-world', returnRegion: currentWorldRegion,
+    isRegionZone: true, zoneLang: langCode,
   };
 
   const lang = currentLanguage();
@@ -2292,34 +2407,88 @@ function renderStatusScreen() {
 }
 
 /* ══════════════════════════════════════════════════
-   キーボードどうじょう：アルファベット・QWERTY配列タイピングの基礎練習
+   キーボードどうじょう：選択言語のアルファベット・文字タイピング練習
    （RPGのレベル/EXPとは無関係の独立した練習コーナー。成績はブラウザに保存）
 ══════════════════════════════════════════════════ */
-// 実際のキーボードはQWERTY配列（アルファベットの並びはUS/JIS共通）でレンダリングする
-const KEYBOARD_LAYOUT = [
-  ['1','2','3','4','5','6','7','8','9','0'],
-  ['Q','W','E','R','T','Y','U','I','O','P'],
-  ['A','S','D','F','G','H','J','K','L'],
-  ['Z','X','C','V','B','N','M'],
-];
-const KEYBOARD_HOME_KEYS = ['F', 'J']; // 指を置く基準となる、突起のあるキー
-
-const KEYBOARD_STAGES = [
-  { id: 'alphabet', label: 'アルファベット', desc: 'A〜Zの文字になれよう',           keys: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('') },
-  { id: 'home',     label: 'ホームポジション', desc: '指を置く基本の位置（A S D F  J K L）', keys: 'ASDFJKL'.split('') },
-  { id: 'top',      label: '上の段',         desc: 'Q〜Pの列',                     keys: 'QWERTYUIOP'.split('') },
-  { id: 'bottom',   label: '下の段',         desc: 'Z〜Mの列',                     keys: 'ZXCVBNM'.split('') },
-  { id: 'number',   label: 'すうじ',         desc: '1〜0の列',                     keys: '1234567890'.split('') },
-  { id: 'mix',      label: 'そうごう練習',    desc: 'ぜんぶの文字キーをランダムに',    keys: 'QWERTYUIOPASDFGHJKLZXCVBNM'.split('') },
-];
+const LANGUAGE_ALPHABETS = {
+  ja: 'あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん'.split(''),
+  en: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''),
+  fr: 'ABCDEFGHIJKLMNOPQRSTUVWXYZÀÂÆÇÉÈÊËÎÏÔŒÙÛÜŸ'.split(''),
+  es: 'ABCDEFGHIJKLMNÑOPQRSTUVWXYZÁÉÍÓÚÜ'.split(''),
+  pt: 'ABCDEFGHIJKLMNOPQRSTUVWXYZÁÂÃÀÇÉÊÍÓÔÕÚ'.split(''),
+  ru: 'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ'.split(''),
+  de: 'ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÜẞ'.split(''),
+  ar: 'ابتثجحخدذرزسشصضطظعغفقكلمنهوي'.split(''),
+  tr: 'ABCÇDEFGĞHIİJKLMNOÖPRSŞTUÜVYZ'.split(''),
+  th: 'กขฃคฅฆงจฉชซฌญฎฏฐฑฒณดตถทธนบปผฝพฟภมยรลวศษสหฬอฮะาิีึืุูเแโใไ'.split(''),
+  zh: '的一是在不了有和人这中大为上个国我以要他时来用们生到作地于出就分对成会可主发年动同工也能下过子说产种面而方'.split(''),
+  yue: '嘅一係咗唔有我你佢哋呢個人中大上國要時嚟用生到做地出就分對成會可講食飲去返睇聽'.split(''),
+  ko: '가나다라마바사아자차카타파하거너더러머버서어저처커터퍼허고노도로모보소오조초코토포호구누두루무부수우주추쿠투푸후'.split(''),
+  pl: 'AĄBCĆDEĘFGHIJKLŁMNŃOÓPRSŚTUWYZŹŻ'.split(''),
+  nl: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''),
+  el: 'ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ'.split(''),
+  tl: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''),
+  id: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''),
+  it: 'ABCDEFGHIJKLMNOPQRSTUVWXYZÀÈÉÌÍÎÒÓÙÚ'.split(''),
+  vi: 'AĂÂBCDĐEÊGHIKLMNOÔƠPQRSTUƯVXYÁÀẢÃẠẤẦẨẪẬẮẰẲẴẶÉÈẺẼẸẾỀỂỄỆÍÌỈĨỊÓÒỎÕỌỐỒỔỖỘỚỜỞỠỢÚÙỦŨỤỨỪỬỮỰÝỲỶỸỴ'.split(''),
+  bn: 'অআইঈউঊঋএঐওঔকখগঘঙচছজঝঞটঠডঢণতথদধনপফবভমযরলশষসহড়ঢ়য়'.split(''),
+  my: 'ကခဂဃငစဆဇဈညဋဌဍဎဏတထဒဓနပဖဗဘမယရလဝသဟအဣဤဥဦဧဩဪ'.split(''),
+  si: 'අආඇඈඉඊඋඌඑඒඓඔඕඖකඛගඝචඡජඣටඨඩඪණතථදධනපඵබභමයරලවශෂසහළෆ'.split(''),
+  ta: 'அஆஇஈஉஊஎஏஐஒஓஔகஙசஜஞடணதநனபமயரலவழளறனஷஸஹ'.split(''),
+  hi: 'अआइईउऊऋएऐओऔकखगघङचछजझञटठडढणतथदधनपफबभमयरलवशषसह'.split(''),
+  ne: 'अआइईउऊऋएऐओऔकखगघङचछजझञटठडढणतथदधनपफबभमयरलवशषसह'.split(''),
+};
 
 let keyboardState = null; // {stage, sequence, idx, correct, mistakes, startTime}
+let keyboardComposing = false;
+
+function currentKeyboardAlphabet() {
+  return LANGUAGE_ALPHABETS[selectedLanguage] || LANGUAGE_ALPHABETS.en;
+}
+
+function keyboardCharLabel() {
+  return ['zh', 'yue', 'ja', 'ko'].includes(selectedLanguage) ? '文字' : 'アルファベット';
+}
+
+function chunkArray(arr, size) {
+  const rows = [];
+  for (let i = 0; i < arr.length; i += size) rows.push(arr.slice(i, i + size));
+  return rows;
+}
+
+function keyboardStagesForCurrentLanguage() {
+  const chars = currentKeyboardAlphabet();
+  const label = keyboardCharLabel();
+  const stages = [
+    { id: 'alphabet', label: `${currentLanguage().label}の${label}`, desc: `${chars.length}文字を順番にれんしゅう`, keys: chars, ordered: true },
+    { id: 'random', label: 'ランダム練習', desc: `${currentLanguage().label}の文字をランダムに`, keys: chars },
+  ];
+  if (chars.length > 16) {
+    const split = Math.ceil(chars.length / 2);
+    stages.splice(1, 0,
+      { id: 'first-half', label: '前半の文字', desc: `最初の${split}文字を集中れんしゅう`, keys: chars.slice(0, split) },
+      { id: 'second-half', label: '後半の文字', desc: `後半の${chars.length - split}文字を集中れんしゅう`, keys: chars.slice(split) },
+    );
+  }
+  return stages;
+}
+
+function keyboardBestKey(stageId) {
+  return `kbDojo_best_${selectedLanguage}_${stageId}`;
+}
+
+function normalizeKeyboardChar(value) {
+  return String(value || '').trim().toLocaleUpperCase(currentLanguage().speechLang || undefined);
+}
 
 function goToKeyboard() {
   stopSpeechAll();
   showScreen('screen-keyboard');
   playFieldBGM();
   keyboardState = null;
+  if ($('keyboard-msg-text')) {
+    $('keyboard-msg-text').textContent = `キーボードどうじょうへ ようこそ！ ${currentLanguage().label}の${keyboardCharLabel()}と タイピングを れんしゅうしよう。じっさいの キーボードで うってね。`;
+  }
   $('keyboard-stage-select')?.classList.remove('hidden');
   $('keyboard-practice')?.classList.add('hidden');
   $('keyboard-result')?.classList.add('hidden');
@@ -2331,8 +2500,8 @@ function renderKeyboardStageList() {
   const container = $('keyboard-stage-list');
   if (!container) return;
   container.innerHTML = '';
-  KEYBOARD_STAGES.forEach(stage => {
-    const best = Number(localStorage.getItem(`kbDojo_best_${stage.id}`) || 0);
+  keyboardStagesForCurrentLanguage().forEach(stage => {
+    const best = Number(localStorage.getItem(keyboardBestKey(stage.id)) || 0);
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'dq-btn kb-stage-btn';
@@ -2353,16 +2522,24 @@ function buildKeySequence(keys, count) {
 }
 
 function startKeyboardStage(stageId) {
-  const stage = KEYBOARD_STAGES.find(s => s.id === stageId);
+  const stage = keyboardStagesForCurrentLanguage().find(s => s.id === stageId);
   if (!stage) return;
+  const sequence = stage.ordered
+    ? stage.keys.slice()
+    : buildKeySequence(stage.keys, Math.min(30, Math.max(20, stage.keys.length)));
   keyboardState = {
-    stage, sequence: buildKeySequence(stage.keys, 20),
+    stage, sequence,
     idx: 0, correct: 0, mistakes: 0, startTime: Date.now(),
   };
+  if ($('kb-typing-input')) {
+    $('kb-typing-input').value = '';
+    $('kb-typing-input').placeholder = `${currentLanguage().label}でうってね`;
+  }
   $('keyboard-stage-select')?.classList.add('hidden');
   $('keyboard-result')?.classList.add('hidden');
   $('keyboard-practice')?.classList.remove('hidden');
   updateKeyboardPracticeUI();
+  setTimeout(() => $('kb-typing-input')?.focus(), 50);
 }
 
 function updateKeyboardPracticeUI() {
@@ -2380,30 +2557,30 @@ function updateKeyboardPracticeUI() {
 function renderVirtualKeyboard(targetKey) {
   const container = $('virtual-keyboard');
   if (!container) return;
-  container.innerHTML = KEYBOARD_LAYOUT.map(row => `
+  const rows = chunkArray(currentKeyboardAlphabet(), 10);
+  container.innerHTML = rows.map(row => `
     <div class="kb-row">
       ${row.map(k => {
         const cls = ['kb-key'];
         if (k === targetKey) cls.push('kb-key-target');
-        if (KEYBOARD_HOME_KEYS.includes(k)) cls.push('kb-key-home');
         return `<span class="${cls.join(' ')}" data-key="${k}">${k}</span>`;
       }).join('')}
     </div>
   `).join('');
 }
 
-function handleKeyboardKeydown(e) {
+function processKeyboardInput(rawKey) {
   if (!keyboardState) return;
   const screenEl = $('screen-keyboard');
   if (!screenEl || !screenEl.classList.contains('active')) return;
-  if (e.key.length !== 1) return; // Shift・Enterなどの装飾キーは無視
-  const key = e.key.toUpperCase();
-  e.preventDefault();
+  const key = normalizeKeyboardChar(rawKey);
+  if (!key) return;
 
   const target = keyboardState.sequence[keyboardState.idx];
-  const keyEl = document.querySelector(`.kb-key[data-key="${key}"]`);
+  const normalizedTarget = normalizeKeyboardChar(target);
+  const keyEl = Array.from(document.querySelectorAll('.kb-key')).find(el => normalizeKeyboardChar(el.dataset.key) === key);
 
-  if (key === target) {
+  if (key === normalizedTarget) {
     keyboardState.correct++;
     keyEl?.classList.add('kb-key-correct');
     setTimeout(() => keyEl?.classList.remove('kb-key-correct'), 150);
@@ -2420,6 +2597,22 @@ function handleKeyboardKeydown(e) {
   }
 }
 
+function handleKeyboardKeydown(e) {
+  if (e.target?.id === 'kb-typing-input' || e.isComposing) return;
+  if (!keyboardState) return;
+  if (e.key.length !== 1) return; // Shift・Enterなどの装飾キーは無視
+  e.preventDefault();
+  processKeyboardInput(e.key);
+}
+
+function handleKeyboardTextInput(e) {
+  if (!keyboardState || keyboardComposing || e.isComposing) return;
+  const value = e.target.value;
+  if (!value) return;
+  processKeyboardInput(Array.from(value).at(-1));
+  e.target.value = '';
+}
+
 function finishKeyboardStage() {
   const { stage, correct, mistakes, startTime } = keyboardState;
   const elapsedSec = Math.max(1, (Date.now() - startTime) / 1000);
@@ -2427,7 +2620,7 @@ function finishKeyboardStage() {
   const accuracy = total > 0 ? Math.round(correct / total * 100) : 100;
   const cpm = Math.round(correct / elapsedSec * 60);
 
-  const bestKey = `kbDojo_best_${stage.id}`;
+  const bestKey = keyboardBestKey(stage.id);
   const prevBest = Number(localStorage.getItem(bestKey) || 0);
   if (accuracy > prevBest) localStorage.setItem(bestKey, String(accuracy));
 
@@ -2524,7 +2717,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // 「にげる」は必ずまちへ戻す（せかいマップへ戻すと連続エンカウントで詰むため、確実な避難先として固定）
   $('battle-flee-btn')?.addEventListener('click', goToField);
   $('inn-flee-btn')?.addEventListener('click', goToField);
-  $('world-back-btn')?.addEventListener('click', goToField);
+  $('world-back-btn')?.addEventListener('click', () => {
+    if (currentWorldRegion) leaveWorldRegion();
+    else goToField();
+  });
   $('status-back-btn')?.addEventListener('click', goToField);
   $('keyboard-back-btn')?.addEventListener('click', goToField);
 
@@ -2540,6 +2736,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* ── キーボードどうじょう ── */
   document.addEventListener('keydown', handleKeyboardKeydown);
+  $('kb-typing-input')?.addEventListener('input', handleKeyboardTextInput);
+  $('kb-typing-input')?.addEventListener('compositionstart', () => {
+    keyboardComposing = true;
+  });
+  $('kb-typing-input')?.addEventListener('compositionend', e => {
+    keyboardComposing = false;
+    handleKeyboardTextInput(e);
+  });
   $('kb-retry-btn')?.addEventListener('click', () => {
     if (keyboardState?.stage) startKeyboardStage(keyboardState.stage.id);
   });
