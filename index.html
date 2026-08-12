@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Language Quest</title>
-  <script type="module" crossorigin src="./assets/index-Dtzq_TGo.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-D8XYQgi0.css">
+  <script type="module" crossorigin src="./assets/index-DD0jSXGY.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-Zyv8diEq.css">
 </head>
 <body>
 
@@ -214,6 +214,10 @@
             <span class="cmd-icon">💬</span> フレーズ練習
             <span class="cmd-exp">+16EXP</span>
           </button>
+          <button class="dq-cmd-btn" data-mode="culture" data-command-page="2">
+            <span class="cmd-icon">🏛️</span> 文化・地理クイズ
+            <span class="cmd-exp">+18EXP</span>
+          </button>
           <button class="dq-cmd-btn" data-mode="review" data-command-page="2">
             <span class="cmd-icon">📚</span> まなびの図書館
             <span class="cmd-exp">よみ返し</span>
@@ -221,6 +225,10 @@
           <button class="dq-cmd-btn" data-mode="inn" data-command-page="2">
             <span class="cmd-icon">🏨</span> やどや
             <span class="cmd-exp">HP回復</span>
+          </button>
+          <button class="dq-cmd-btn" data-mode="keyboard" data-command-page="2">
+            <span class="cmd-icon">⌨️</span> キーボードどうじょう
+            <span class="cmd-exp">タイピング基礎</span>
           </button>
           <button class="dq-cmd-btn" data-mode="world" data-command-page="2">
             <span class="cmd-icon">🗺️</span> まちの外へ（せかいマップ）
@@ -324,6 +332,56 @@
     </section>
 
     <!-- ────────────────────────────────
+         キーボードどうじょう（アルファベット・QWERTY配列タイピング練習）
+    ──────────────────────────────── -->
+    <section id="screen-keyboard" class="screen">
+      <button id="keyboard-back-btn" class="dq-btn dq-btn-blue inn-back-btn" type="button">◀ まちへ</button>
+
+      <div class="dq-window msg-window" id="keyboard-msg">
+        <p id="keyboard-msg-text">キーボードどうじょうへ ようこそ！ きほんのアルファベットと、キーボードの配置・タイピングを れんしゅうしよう。じっさいの キーボードで うってね。</p>
+        <button type="button" id="keyboard-msg-close" class="msg-window-close" aria-label="メッセージを閉じる">✕</button>
+      </div>
+
+      <div class="dq-window kb-stage-window" id="keyboard-stage-select">
+        <div class="status-title">▶ れんしゅうステージを えらぼう</div>
+        <div class="kb-stage-list" id="keyboard-stage-list"></div>
+      </div>
+
+      <div class="dq-window kb-practice-window hidden" id="keyboard-practice">
+        <div class="kb-progress-row">
+          <span id="kb-progress-text">0/20</span>
+          <div class="kb-progress-track"><div class="kb-progress-fill" id="kb-progress-fill"></div></div>
+        </div>
+        <div class="kb-target-display">
+          <span class="kb-target-label">つぎに うつキー</span>
+          <div class="kb-target-char" id="kb-target-char">A</div>
+        </div>
+        <div class="kb-stats-row">
+          <span>⭕ <span id="kb-correct-count">0</span></span>
+          <span>❌ <span id="kb-miss-count">0</span></span>
+        </div>
+      </div>
+
+      <div class="dq-window kb-result-window hidden" id="keyboard-result">
+        <div class="status-title" id="kb-result-title">クリア！</div>
+        <div class="kb-result-stats">
+          <div class="kb-result-stat"><span class="kb-result-val" id="kb-result-accuracy">0%</span><span class="kb-result-lbl">正答率</span></div>
+          <div class="kb-result-stat"><span class="kb-result-val" id="kb-result-cpm">0</span><span class="kb-result-lbl">CPM(1分あたり)</span></div>
+          <div class="kb-result-stat"><span class="kb-result-val" id="kb-result-mistakes">0</span><span class="kb-result-lbl">ミス数</span></div>
+        </div>
+        <div class="kb-result-actions">
+          <button type="button" id="kb-retry-btn" class="dq-btn dq-btn-gold">🔁 もういちど</button>
+          <button type="button" id="kb-back-to-stages-btn" class="dq-btn">◀ ステージ選択へ</button>
+        </div>
+      </div>
+
+      <div class="dq-window virtual-keyboard-window">
+        <div class="virtual-keyboard" id="virtual-keyboard"></div>
+        <div class="kb-hint">🟡 = 突起のあるホームポジション(F・J)　🔵 = つぎに うつキー</div>
+      </div>
+    </section>
+
+    <!-- ────────────────────────────────
          やどや（単語・文法の読み返し／HP回復／にがて特訓）
     ──────────────────────────────── -->
     <section id="screen-inn" class="screen">
@@ -337,6 +395,7 @@
         <button class="dq-btn inn-filter-btn" data-filter="vocab">たんご</button>
         <button class="dq-btn inn-filter-btn" data-filter="grammar">ぶんぽう</button>
         <button class="dq-btn inn-filter-btn" data-filter="phrase">💬 フレーズ</button>
+        <button class="dq-btn inn-filter-btn" data-filter="culture">🏛️ 文化</button>
         <button class="dq-btn inn-filter-btn" data-filter="new">🆕 未学習</button>
         <button class="dq-btn inn-filter-btn" data-filter="low">📖 練習不足</button>
         <button class="dq-btn dq-btn-red inn-filter-btn" data-filter="weak">🔥 にがて</button>
@@ -355,24 +414,48 @@
       <button id="world-back-btn" class="dq-btn dq-btn-blue inn-back-btn" type="button">◀ まちへもどる</button>
 
       <div class="dq-window msg-window" id="world-msg">
-        <p id="world-msg-text">まちの外は きけんな せかいだ。あるいていると まものが とつぜん あらわれる…！　★の場所には つよい ぬしが すんでいる。</p>
+        <p id="world-msg-text">せかいちずが ひろがった！ 国旗の場所へ あるいていくと、その国のことばの てきが あらわれる。うろつくだけでも まものが とつぜん あらわれる…！</p>
         <button type="button" id="world-msg-close" class="msg-window-close" aria-label="メッセージを閉じる">✕</button>
       </div>
 
       <div class="field-map">
         <div class="field-canvas" id="world-canvas">
-          <div class="field-icon world-boss-icon" data-boss="forest" style="left:18%;top:28%;">
-            <span class="field-icon-emoji">🌲👹</span><span class="field-icon-label">もりのぬし</span>
-          </div>
-          <div class="field-icon world-boss-icon" data-boss="cave" style="left:80%;top:22%;">
-            <span class="field-icon-emoji">🕳️🦅</span><span class="field-icon-label">どうくつのぬし</span>
-          </div>
-          <div class="field-icon world-boss-icon" data-boss="mountain" style="left:14%;top:80%;">
-            <span class="field-icon-emoji">⛰️🐉</span><span class="field-icon-label">やまのドラゴン</span>
-          </div>
-          <div class="field-icon world-boss-icon" data-boss="castle" style="left:84%;top:82%;">
-            <span class="field-icon-emoji">🏰💀</span><span class="field-icon-label">まおうのしろ</span>
-          </div>
+          <svg class="world-map-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+            <rect x="0" y="0" width="100" height="100" fill="#bfe3f2"/>
+            <polygon points="14,18 22,10 32,8 42,10 50,7 58,9 64,14 68,22 70,30 72,38 70,46 72,52 66,56 60,58 54,52 50,56 44,52 40,56 34,50 28,54 22,48 16,42 12,34 10,26" fill="#ef8fa0"/>
+            <polygon points="20,40 26,38 30,44 29,54 32,62 30,72 26,84 20,88 15,80 13,68 12,56 14,46" fill="#f6d76e"/>
+            <polygon points="78,14 86,8 94,12 97,20 96,30 90,36 92,42 84,44 78,38 76,26 77,18" fill="#f2ab6c"/>
+            <polygon points="80,48 86,46 90,54 91,64 89,74 86,84 82,86 78,78 77,66 76,56" fill="#7398cf"/>
+            <polygon points="66,64 76,62 84,66 86,74 80,80 70,80 64,74" fill="#8ec570"/>
+            <polygon points="0,92 15,90 30,94 45,91 60,95 75,90 90,94 100,91 100,100 0,100" fill="#c3c9cf"/>
+          </svg>
+
+          <div class="field-icon world-zone-icon" data-lang="fr" style="left:30%;top:22%;"><span class="field-icon-emoji">🇫🇷</span><span class="field-icon-label">Français</span></div>
+          <div class="field-icon world-zone-icon" data-lang="de" style="left:36%;top:18%;"><span class="field-icon-emoji">🇩🇪</span><span class="field-icon-label">Deutsch</span></div>
+          <div class="field-icon world-zone-icon" data-lang="nl" style="left:33%;top:16%;"><span class="field-icon-emoji">🇳🇱</span><span class="field-icon-label">Nederlands</span></div>
+          <div class="field-icon world-zone-icon" data-lang="pl" style="left:40%;top:15%;"><span class="field-icon-emoji">🇵🇱</span><span class="field-icon-label">Polski</span></div>
+          <div class="field-icon world-zone-icon" data-lang="it" style="left:34%;top:28%;"><span class="field-icon-emoji">🇮🇹</span><span class="field-icon-label">Italiano</span></div>
+          <div class="field-icon world-zone-icon" data-lang="el" style="left:40%;top:30%;"><span class="field-icon-emoji">🇬🇷</span><span class="field-icon-label">Ελληνικά</span></div>
+          <div class="field-icon world-zone-icon" data-lang="tr" style="left:46%;top:32%;"><span class="field-icon-emoji">🇹🇷</span><span class="field-icon-label">Türkçe</span></div>
+          <div class="field-icon world-zone-icon" data-lang="ru" style="left:52%;top:12%;"><span class="field-icon-emoji">🇷🇺</span><span class="field-icon-label">Русский</span></div>
+          <div class="field-icon world-zone-icon" data-lang="ar" style="left:48%;top:38%;"><span class="field-icon-emoji">🇸🇦</span><span class="field-icon-label">العربية</span></div>
+          <div class="field-icon world-zone-icon" data-lang="hi" style="left:58%;top:40%;"><span class="field-icon-emoji">🇮🇳</span><span class="field-icon-label">हिन्दी</span></div>
+          <div class="field-icon world-zone-icon" data-lang="bn" style="left:63%;top:38%;"><span class="field-icon-emoji">🇧🇩</span><span class="field-icon-label">বাংলা</span></div>
+          <div class="field-icon world-zone-icon" data-lang="ne" style="left:60%;top:34%;"><span class="field-icon-emoji">🇳🇵</span><span class="field-icon-label">नेपाली</span></div>
+          <div class="field-icon world-zone-icon" data-lang="ta" style="left:57%;top:48%;"><span class="field-icon-emoji">🇮🇳</span><span class="field-icon-label">தமிழ்</span></div>
+          <div class="field-icon world-zone-icon" data-lang="si" style="left:58%;top:52%;"><span class="field-icon-emoji">🇱🇰</span><span class="field-icon-label">සිංහල</span></div>
+          <div class="field-icon world-zone-icon" data-lang="my" style="left:62%;top:42%;"><span class="field-icon-emoji">🇲🇲</span><span class="field-icon-label">မြန်မာ</span></div>
+          <div class="field-icon world-zone-icon" data-lang="th" style="left:64%;top:46%;"><span class="field-icon-emoji">🇹🇭</span><span class="field-icon-label">ไทย</span></div>
+          <div class="field-icon world-zone-icon" data-lang="vi" style="left:67%;top:44%;"><span class="field-icon-emoji">🇻🇳</span><span class="field-icon-label">Tiếng Việt</span></div>
+          <div class="field-icon world-zone-icon" data-lang="zh" style="left:63%;top:28%;"><span class="field-icon-emoji">🇨🇳</span><span class="field-icon-label">中文</span></div>
+          <div class="field-icon world-zone-icon" data-lang="yue" style="left:65%;top:34%;"><span class="field-icon-emoji">🇭🇰</span><span class="field-icon-label">粵語</span></div>
+          <div class="field-icon world-zone-icon" data-lang="ko" style="left:68%;top:24%;"><span class="field-icon-emoji">🇰🇷</span><span class="field-icon-label">한국어</span></div>
+          <div class="field-icon world-zone-icon" data-lang="tl" style="left:70%;top:48%;"><span class="field-icon-emoji">🇵🇭</span><span class="field-icon-label">Tagalog</span></div>
+          <div class="field-icon world-zone-icon" data-lang="id" style="left:68%;top:54%;"><span class="field-icon-emoji">🇮🇩</span><span class="field-icon-label">Bahasa Indonesia</span></div>
+          <div class="field-icon world-zone-icon" data-lang="en" style="left:88%;top:20%;"><span class="field-icon-emoji">🇺🇸</span><span class="field-icon-label">English</span></div>
+          <div class="field-icon world-zone-icon" data-lang="es" style="left:84%;top:54%;"><span class="field-icon-emoji">🇲🇽</span><span class="field-icon-label">Español</span></div>
+          <div class="field-icon world-zone-icon" data-lang="pt" style="left:89%;top:62%;"><span class="field-icon-emoji">🇧🇷</span><span class="field-icon-label">Português</span></div>
+
           <div class="field-hero" id="world-hero">🧙</div>
         </div>
         <div class="field-dpad" id="world-dpad">
