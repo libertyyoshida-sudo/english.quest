@@ -297,6 +297,21 @@ export const GRAMMAR_DB = [
    exp:'Not until〜 が文頭 → 倒置（did + 主語 + 動詞原形）'},
 ];
 
+function appendEnglishGrammarItems(rows) {
+  GRAMMAR_DB.push(...rows.map(([lv, q, choices, ans, exp], idx) => ({
+    id: `g${String(GRAMMAR_DB.length + idx + 1).padStart(3, '0')}`,
+    lv, q, choices, ans, exp,
+  })));
+}
+
+appendEnglishGrammarItems([
+  [6, 'Please let us know if you _____ any issues.', ['encounter','encounters','encountered yesterday','encountering'], 0, 'if節の現在形。you + 動詞原形。'],
+  [7, 'The proposal is worth _____ carefully.', ['reviewing','review','to review','reviewed'], 0, 'be worth + 動名詞。'],
+  [8, 'Only after the audit _____ we understand the risk.', ['did','do','have','were'], 0, 'Only after が文頭 → 倒置 did we understand。'],
+  [9, 'The more data we collect, _____ accurate the forecast becomes.', ['the more','more','most','the most'], 0, 'The 比較級, the 比較級 の構文。'],
+  [10, 'Had we identified the issue earlier, we _____ the loss.', ['could have avoided','can avoid','avoid','are avoiding'], 0, '仮定法過去完了 → could have + 過去分詞。'],
+]);
+
 export const LANGUAGE_OPTIONS = [
   { code:'ja', label:'日本語', native:'日本語', speechLang:'ja-JP', status:'母語', aliases:['Japanese'] },
   { code:'en', label:'英語', native:'English', speechLang:'en-US' },
@@ -1749,6 +1764,184 @@ Object.entries({
     [3, 'म साथी_____ पढ्छु।', ['सँग','बाट','का लागि','सम्म'], 0, '一緒には सँग。'],
     [4, 'म चाँडै उठेँ, _____ नास्ता बनाएँ।', ['त्यसैले','तर','वा','किनकि बाट'], 0, '結果は त्यसैले。'],
     [5, 'आरक्षण पुष्टि गरेपछि हामी _____.', ['जाऔँ','हिजो गयौँ','पिऔँ हिजो','किनौँ हिजो'], 0, '提案は जाऔँ。'],
+  ],
+}).forEach(([code, rows]) => appendGrammarItems(code, rows));
+
+Object.entries({
+  ja: [
+    [6, '問題があれば、すぐに知らせて_____.', ['ください','くれました','あげる','しました'], 0, '依頼は「知らせてください」。'],
+    [7, 'この資料は確認する_____があります。', ['価値','価値に','価値で','価値を'], 0, '「〜する価値がある」で評価を表す。'],
+    [8, '監査が終わって_____、リスクが分かりました。', ['初めて','だけ','まで','ほど'], 0, '「〜て初めて」で条件成立後を表す。'],
+    [9, 'データが多い_____、予測は正確になります。', ['ほど','だけに','までに','として'], 0, '比例変化は「〜ほど」。'],
+    [10, '早く問題を見つけていれば、損失を避け_____でしょう。', ['られた','ます','ている','る'], 0, '仮定法的表現は「避けられたでしょう」。'],
+  ],
+  es: [
+    [6, 'Avísenos si _____ algún problema.', ['encuentra','encontró ayer','encontrando','encontrar'], 0, 'si + 現在で条件を表す。'],
+    [7, 'Vale la pena _____ la propuesta con cuidado.', ['revisar','revisó','revisa','revisando'], 0, 'vale la pena + 不定詞。'],
+    [8, 'Solo después de la auditoría _____ el riesgo.', ['entendimos','entender','entendiendo','entendido'], 0, '過去の理解は entendimos。'],
+    [9, 'Cuantos más datos reunimos, _____ precisa es la previsión.', ['más','muy','muchos','tanto'], 0, '比例比較は cuantos más... más。'],
+    [10, 'Si hubiéramos detectado el problema antes, _____ la pérdida.', ['habríamos evitado','evitamos','evitaremos','evitar'], 0, '過去反実仮想 → habríamos + participio。'],
+  ],
+  fr: [
+    [6, 'Veuillez nous informer si vous _____ un problème.', ['rencontrez','rencontré','rencontrer','rencontrant'], 0, 'si + 現在。'],
+    [7, 'Cette proposition mérite d’être _____ avec soin.', ['examinée','examiner','examine','examinant'], 0, '受動的に être + 過去分詞。'],
+    [8, 'Ce n’est qu’après l’audit que nous _____ le risque.', ['avons compris','comprendre','comprenant','compris hier'], 0, '強調構文後の過去完了的表現。'],
+    [9, 'Plus nous collectons de données, plus la prévision devient _____.', ['précise','précisément','précision','préciser'], 0, 'prévision は女性名詞なので précise。'],
+    [10, 'Si nous avions identifié le problème plus tôt, nous _____ la perte.', ['aurions évité','évitons','éviterons','éviter'], 0, '過去反実仮想 → aurions + participe。'],
+  ],
+  pt: [
+    [6, 'Informe-nos se você _____ algum problema.', ['encontrar','encontrou ontem','encontrando','encontra ontem'], 0, '条件では futuro do subjuntivo encontrar。'],
+    [7, 'Vale a pena _____ a proposta com cuidado.', ['revisar','revisou','revisa','revisando'], 0, 'vale a pena + 不定詞。'],
+    [8, 'Só depois da auditoria _____ o risco.', ['entendemos','entender','entendendo','entendido'], 0, '過去の理解は entendemos。'],
+    [9, 'Quanto mais dados coletamos, _____ precisa fica a previsão.', ['mais','muito','muitos','tanto'], 0, '比例比較は quanto mais... mais。'],
+    [10, 'Se tivéssemos identificado o problema antes, _____ a perda.', ['teríamos evitado','evitamos','evitaremos','evitar'], 0, '過去反実仮想 → teríamos + particípio。'],
+  ],
+  ru: [
+    [6, 'Сообщите нам, если вы _____ проблему.', ['заметите','заметили вчера','замечая','заметить вчера'], 0, '条件文では未来形 заметите。'],
+    [7, 'Предложение стоит внимательно _____.', ['рассмотреть','рассмотрел','рассматривает','рассматривая'], 0, 'стоить + 不定詞。'],
+    [8, 'Только после аудита мы _____ риск.', ['поняли','понимать','понимая','понятый'], 0, '過去の理解は поняли。'],
+    [9, 'Чем больше данных мы собираем, тем _____ прогноз.', ['точнее','точный','точность','точно'], 0, '比例比較は чем... тем。'],
+    [10, 'Если бы мы выявили проблему раньше, мы _____ убытка.', ['избежали бы','избегаем','избежим','избежать'], 0, '仮定法は 動詞過去 + бы。'],
+  ],
+  de: [
+    [6, 'Informieren Sie uns, falls Sie Probleme _____.', ['feststellen','festgestellt gestern','feststellend','feststellt gestern'], 0, 'falls節では Sie + 動詞原形。'],
+    [7, 'Der Vorschlag ist es wert, sorgfältig geprüft zu _____.', ['werden','wird','wurde','worden'], 0, '受動の不定詞は geprüft zu werden。'],
+    [8, 'Erst nach der Prüfung _____ wir das Risiko.', ['verstanden','verstehen','verstehend','verstanden gestern'], 0, '過去形の文脈。'],
+    [9, 'Je mehr Daten wir sammeln, desto _____ wird die Prognose.', ['genauer','genau','genaue','Genauigkeit'], 0, '比例比較は je... desto + 比較級。'],
+    [10, 'Hätten wir das Problem früher erkannt, hätten wir den Verlust _____.', ['vermeiden können','vermeiden','vermieden können','vermeidet'], 0, '仮定法過去完了 + können。'],
+  ],
+  ar: [
+    [6, 'أبلغونا إذا _____ أي مشكلة.', ['واجهتم','واجهت أمس','مواجهة','تواجهون أمس'], 0, '条件には إذا + 動詞。'],
+    [7, 'تستحق الخطة أن _____ بعناية.', ['تراجع','راجعنا','مراجعة','يراجعون'], 0, 'تستحق أن + 動詞。'],
+    [8, 'بعد التدقيق فقط _____ الخطر.', ['فهمنا','نفهم أمس','فهم','مفهوم'], 0, '過去の理解は فهمنا。'],
+    [9, 'كلما جمعنا بيانات أكثر، أصبح التوقع _____ دقة.', ['أكثر','كثير','كثيرة','كثيرون'], 0, '比例比較は كلما... أصبح أكثر。'],
+    [10, 'لو اكتشفنا المشكلة مبكراً، _____ الخسارة.', ['لتجنبنا','نتجنب','سنتجنب','تجنب'], 0, '反実仮想は لو + 過去, لَـ + 過去。'],
+  ],
+  tr: [
+    [6, 'Bir sorunla karşılaşırsanız bize haber _____.', ['verin','verdiniz dün','vermek','vererek'], 0, '丁寧な命令は verin。'],
+    [7, 'Teklifi dikkatle incelemeye _____.', ['değer','değdi dün','değmek','değerli'], 0, '〜meye değer = 〜する価値がある。'],
+    [8, 'Ancak denetimden sonra riski _____.', ['anladık','anlamak','anlayarak','anlaşılan'], 0, '過去の理解は anladık。'],
+    [9, 'Ne kadar çok veri toplarsak tahmin o kadar _____ olur.', ['doğru','doğruluk','doğruca','doğruyu'], 0, '比例比較は ne kadar... o kadar。'],
+    [10, 'Sorunu daha erken belirleseydik zararı _____.', ['önleyebilirdik','önleriz','önleyeceğiz','önlemek'], 0, '反実仮想は -seydik + -ebilirdik。'],
+  ],
+  th: [
+    [6, 'ถ้าพบปัญหา กรุณา_____เรา', ['แจ้ง','ดื่ม','ซื้อ','ไป'], 0, '「知らせる」は แจ้ง。'],
+    [7, 'ข้อเสนอนี้ควร_____อย่างรอบคอบ', ['พิจารณา','ดื่ม','ซื้อ','ไป'], 0, 'ควร + 動詞。'],
+    [8, 'หลังการตรวจสอบเท่านั้น เราจึง_____ความเสี่ยง', ['เข้าใจ','ดื่ม','ซื้อ','ไป'], 0, '「理解する」は เข้าใจ。'],
+    [9, 'ยิ่งมีข้อมูลมาก การคาดการณ์ยิ่ง_____ขึ้น', ['แม่นยำ','ดื่ม','ซื้อ','ไป'], 0, '比例表現は ยิ่ง...ยิ่ง。'],
+    [10, 'ถ้าเราพบปัญหาเร็วกว่านี้ เราคง_____ความเสียหายได้', ['หลีกเลี่ยง','ดื่ม','ซื้อ','ไป'], 0, '反実仮想的に คง + 動詞 + ได้。'],
+  ],
+  zh: [
+    [6, '如果发现问题，请_____我们。', ['通知','喝','购买','去'], 0, '「知らせる」は 通知。'],
+    [7, '这个提案值得仔细_____.', ['审查','喝','购买','去'], 0, '值得 + 動詞。'],
+    [8, '只有审计之后，我们才_____风险。', ['理解','喝','购买','去'], 0, '只有...才 の構文。'],
+    [9, '数据越多，预测就越_____.', ['准确','喝','购买','去'], 0, '越...越 の比例構文。'],
+    [10, '如果早点发现问题，我们本可以_____损失。', ['避免','喝','购买','去'], 0, '本可以 + 動詞で「できたはず」。'],
+  ],
+  yue: [
+    [6, '如果發現問題，請_____我哋。', ['通知','飲','買','去'], 0, '「知らせる」は 通知。'],
+    [7, '呢個提案值得仔細_____.', ['審查','飲','買','去'], 0, '值得 + 動詞。'],
+    [8, '只有審計之後，我哋先_____風險。', ['理解','飲','買','去'], 0, '只有...先 の構文。'],
+    [9, '數據越多，預測就越_____.', ['準確','飲','買','去'], 0, '越...越 の比例構文。'],
+    [10, '如果早啲發現問題，我哋本可以_____損失。', ['避免','飲','買','去'], 0, '本可以 + 動詞。'],
+  ],
+  ko: [
+    [6, '문제가 있으면 저희에게 알려 _____.', ['주세요','마셨어요','샀어요','갔어요'], 0, '丁寧な依頼は -아/어 주세요。'],
+    [7, '그 제안은 신중히 검토할 _____가 있습니다.', ['가치','마실','살','갈'], 0, '〜할 가치가 있다。'],
+    [8, '감사 후에야 우리는 위험을 _____.', ['이해했습니다','마셨습니다','샀습니다','갔습니다'], 0, '後に初めては -후에야。'],
+    [9, '데이터가 많을수록 예측은 더 _____.', ['정확해집니다','마십니다','삽니다','갑니다'], 0, '比例は -을수록 더。'],
+    [10, '문제를 더 일찍 발견했다면 손실을 _____ 수 있었습니다.', ['피할','마실','살','갈'], 0, '仮定 + 可能は -ㄹ 수 있었습니다。'],
+  ],
+  pl: [
+    [6, 'Jeśli zauważysz problem, proszę nas _____.', ['poinformować','pić','kupić','iść'], 0, 'proszę + 不定詞。'],
+    [7, 'Propozycja jest warta dokładnego _____.', ['sprawdzenia','picia','kupienia','pójścia'], 0, 'warta + 名詞化。'],
+    [8, 'Dopiero po audycie _____ ryzyko.', ['zrozumieliśmy','pić','kupić','iść'], 0, 'Dopiero po... + 過去。'],
+    [9, 'Im więcej danych zbieramy, tym _____ jest prognoza.', ['dokładniejsza','dokładnie','dokładność','dokładny'], 0, '比例比較は im... tym。'],
+    [10, 'Gdybyśmy wcześniej wykryli problem, _____ straty.', ['uniknęlibyśmy','unikamy','unikniemy','unikać'], 0, '反実仮想は -byśmy。'],
+  ],
+  nl: [
+    [6, 'Laat het ons weten als u problemen _____.', ['tegenkomt','tegenkwam gisteren','tegenkomen gisteren','tegenkomend'], 0, 'als節で u + tegenkomt。'],
+    [7, 'Het voorstel is het waard om zorgvuldig te _____.', ['beoordelen','beoordeeld','beoordeelt','beoordelend'], 0, 'waard om te + 不定詞。'],
+    [8, 'Pas na de audit _____ we het risico.', ['begrepen','begrijpen','begrijpend','begrepen gisteren'], 0, '過去形の文脈。'],
+    [9, 'Hoe meer gegevens we verzamelen, hoe _____ de voorspelling wordt.', ['nauwkeuriger','nauwkeurig','nauwkeurigheid','nauwkeurige'], 0, '比例比較は hoe... hoe。'],
+    [10, 'Als we het probleem eerder hadden gevonden, hadden we het verlies kunnen _____.', ['vermijden','vermeden','vermijdt','vermijdend'], 0, 'hadden kunnen + 不定詞。'],
+  ],
+  el: [
+    [6, 'Αν βρείτε πρόβλημα, παρακαλώ _____ μας.', ['ενημερώστε','πιείτε','αγοράστε','πηγαίνετε'], 0, '丁寧な依頼は ενημερώστε。'],
+    [7, 'Η πρόταση αξίζει να _____ προσεκτικά.', ['εξεταστεί','πίνει','αγοράζει','πηγαίνει'], 0, 'αξίζει να + 動詞。'],
+    [8, 'Μόνο μετά τον έλεγχο _____ τον κίνδυνο.', ['καταλάβαμε','πίνουμε','αγοράζουμε','πηγαίνουμε'], 0, '過去の理解は καταλάβαμε。'],
+    [9, 'Όσο περισσότερα δεδομένα συλλέγουμε, τόσο πιο _____ γίνεται η πρόβλεψη.', ['ακριβής','ακριβώς','ακρίβεια','ακριβό'], 0, '比例比較は όσο... τόσο。'],
+    [10, 'Αν είχαμε εντοπίσει το πρόβλημα νωρίτερα, θα _____ τη ζημία.', ['είχαμε αποφύγει','αποφεύγουμε','αποφύγουμε','αποφυγή'], 0, '過去反実仮想 → θα είχαμε + 過去分詞相当。'],
+  ],
+  tl: [
+    [6, 'Kung may makita kang problema, paki_____ kami.', ['sabihan','uminom','bumili','pumunta'], 0, '「知らせる」は sabihan。'],
+    [7, 'Karapat-dapat na _____ nang mabuti ang proposal.', ['suriin','uminom','bilhin','puntahan'], 0, 'karapat-dapat na + 動詞。'],
+    [8, 'Pagkatapos lamang ng audit, _____ namin ang panganib.', ['naunawaan','uminom','bumili','pumunta'], 0, '「理解した」は naunawaan。'],
+    [9, 'Habang mas marami ang datos, mas _____ ang forecast.', ['tumpak','uminom','bumili','pumunta'], 0, '比例は mas... mas。'],
+    [10, 'Kung mas maaga naming nakita ang problema, naiwasan sana namin ang _____.', ['pagkalugi','tubig','libro','presyo'], 0, '反実仮想には sana。'],
+  ],
+  id: [
+    [6, 'Jika Anda menemukan masalah, harap _____ kami.', ['memberi tahu','minum','membeli','pergi'], 0, 'harap + 動詞。'],
+    [7, 'Proposal itu layak untuk _____ dengan hati-hati.', ['ditinjau','minum','dibeli','pergi'], 0, '受動は di-。'],
+    [8, 'Baru setelah audit, kami _____ risikonya.', ['memahami','minum','membeli','pergi'], 0, 'Baru setelah... で「〜して初めて」。'],
+    [9, 'Semakin banyak data, semakin _____ perkiraannya.', ['akurat','minum','membeli','pergi'], 0, '比例は semakin... semakin。'],
+    [10, 'Jika kami menemukan masalah lebih awal, kami bisa _____ kerugian.', ['menghindari','minum','membeli','pergi'], 0, 'bisa + 動詞。'],
+  ],
+  it: [
+    [6, 'Ci informi se _____ problemi.', ['riscontra','riscontrato ieri','riscontrare','riscontrando'], 0, '丁寧な Lei への命令・接続法は riscontri/riscontra。'],
+    [7, 'La proposta vale la pena di essere _____ con attenzione.', ['esaminata','esaminare','esamina','esaminando'], 0, '受動は essere + 過去分詞。'],
+    [8, 'Solo dopo la revisione _____ il rischio.', ['abbiamo capito','capire','capendo','capito ieri'], 0, '過去の理解は abbiamo capito。'],
+    [9, 'Più dati raccogliamo, più _____ diventa la previsione.', ['accurata','accuratamente','accuratezza','accurato'], 0, 'previsione は女性名詞なので accurata。'],
+    [10, 'Se avessimo individuato prima il problema, _____ la perdita.', ['avremmo evitato','evitiamo','eviteremo','evitare'], 0, '過去反実仮想 → avremmo + participio。'],
+  ],
+  vi: [
+    [6, 'Nếu bạn gặp vấn đề, vui lòng _____ chúng tôi.', ['báo cho','uống','mua','đi'], 0, 'vui lòng + 動詞。'],
+    [7, 'Đề xuất này đáng được _____ cẩn thận.', ['xem xét','uống','mua','đi'], 0, 'đáng được + 動詞。'],
+    [8, 'Chỉ sau kiểm toán, chúng tôi mới _____ rủi ro.', ['hiểu','uống','mua','đi'], 0, 'Chỉ sau..., mới... の構文。'],
+    [9, 'Càng nhiều dữ liệu, dự báo càng _____.', ['chính xác','uống','mua','đi'], 0, '比例は càng... càng。'],
+    [10, 'Nếu phát hiện sớm hơn, chúng tôi đã có thể _____ tổn thất.', ['tránh','uống','mua','đi'], 0, 'đã có thể + 動詞。'],
+  ],
+  bn: [
+    [6, 'সমস্যা পেলে আমাদের _____।', ['জানান','খান','কিনুন','যান'], 0, '丁寧な命令は জানান。'],
+    [7, 'প্রস্তাবটি মনোযোগ দিয়ে _____ মূল্যবান।', ['পর্যালোচনা করা','খাওয়া','কেনা','যাওয়া'], 0, '価値判断には名詞化表現。'],
+    [8, 'অডিটের পরেই আমরা ঝুঁকি _____.', ['বুঝেছি','খেয়েছি','কিনেছি','গিয়েছি'], 0, '「理解した」は বুঝেছি。'],
+    [9, 'যত বেশি তথ্য, পূর্বাভাস তত _____.', ['সঠিক','খাওয়া','কেনা','যাওয়া'], 0, '比例は যত... তত।'],
+    [10, 'আগে সমস্যা ধরতে পারলে আমরা ক্ষতি _____ পারতাম।', ['এড়াতে','খেতে','কিনতে','যেতে'], 0, '反実仮想的な可能は পারতাম。'],
+  ],
+  my: [
+    [6, 'ပြဿနာတွေ့ရင် ကျွန်တော်တို့ကို _____။', ['အကြောင်းကြားပါ','သောက်ပါ','ဝယ်ပါ','သွားပါ'], 0, '「知らせてください」は အကြောင်းကြားပါ。'],
+    [7, 'အဆိုပြုချက်ကို သေချာ _____ သင့်တယ်။', ['သုံးသပ်','သောက်','ဝယ်','သွား'], 0, 'သင့်တယ် の前は動詞。'],
+    [8, 'စစ်ဆေးပြီးမှသာ အန္တရာယ်ကို _____.', ['နားလည်ခဲ့တယ်','သောက်တယ်','ဝယ်တယ်','သွားတယ်'], 0, '「理解した」は နားလည်ခဲ့တယ်。'],
+    [9, 'အချက်အလက်များလေလေ ခန့်မှန်းချက်က _____ လေလေ။', ['တိကျ','သောက်','ဝယ်','သွား'], 0, '比例は 〜လေလေ。'],
+    [10, 'ပြဿနာကို စောစောတွေ့ခဲ့ရင် ဆုံးရှုံးမှုကို _____ နိုင်ခဲ့မယ်။', ['ရှောင်ရှား','သောက်','ဝယ်','သွား'], 0, '反実仮想的な可能。'],
+  ],
+  si: [
+    [6, 'ගැටලුවක් තිබුණොත් අපට _____ දෙන්න.', ['දැනුම්','වතුර','පොත','මිල'], 0, '「知らせる」は දැනුම් දෙන්න。'],
+    [7, 'යෝජනාව හොඳින් _____ වටිනවා.', ['සමාලෝචනය කරන්න','බොන්න','ගන්න','යන්න'], 0, '価値判断には 動詞 + වටිනවා。'],
+    [8, 'විගණනයෙන් පසුව පමණක් අපි අවදානම _____.', ['තේරුම් ගත්තා','බොන්න','ගන්න','යන්න'], 0, '「理解した」は තේරුම් ගත්තා。'],
+    [9, 'දත්ත වැඩි වන තරමට අනාවැකිය _____ වේ.', ['නිවැරදි','බොන','ගන්න','යන'], 0, '比例は තරමට。'],
+    [10, 'ගැටලුව කලින් හඳුනාගත්තේ නම් පාඩුව _____ හැකිවුණා.', ['වළක්වා ගන්න','බොන්න','ගන්න','යන්න'], 0, '反実仮想的な可能。'],
+  ],
+  ta: [
+    [6, 'பிரச்சனை இருந்தால் எங்களுக்கு _____ செய்யுங்கள்.', ['தெரிவிப்பு','தண்ணீர்','வாங்கு','செல்'], 0, '「知らせる」は தெரிவிப்பு செய்யுங்கள்。'],
+    [7, 'முன்மொழிவை கவனமாக _____ மதிப்பு உண்டு.', ['பரிசீலிக்க','குடிக்க','வாங்க','செல்ல'], 0, '価値判断は 動詞 + மதிப்பு உண்டு。'],
+    [8, 'தணிக்கைக்கு பிறகே நாம் அபாயத்தை _____.', ['புரிந்துகொண்டோம்','குடித்தோம்','வாங்கினோம்','சென்றோம்'], 0, '「理解した」は புரிந்துகொண்டோம்。'],
+    [9, 'தரவு அதிகமானால் கணிப்பு மேலும் _____.', ['துல்லியமாகும்','குடிக்கும்','வாங்கும்','செல்லும்'], 0, '比例的変化を表す。'],
+    [10, 'பிரச்சனையை முன்கூட்டியே கண்டிருந்தால் இழப்பை _____ முடிந்திருக்கும்.', ['தவிர்க்க','குடிக்க','வாங்க','செல்ல'], 0, '反実仮想的な可能。'],
+  ],
+  hi: [
+    [6, 'यदि कोई समस्या हो, तो हमें _____।', ['बताएँ','पीएँ','खरीदें','जाएँ'], 0, '丁寧な依頼は बताएँ。'],
+    [7, 'प्रस्ताव को ध्यान से _____ लायक है।', ['समीक्षा करना','पीना','खरीदना','जाना'], 0, 'लायक は不定詞句と使う。'],
+    [8, 'ऑडिट के बाद ही हमने जोखिम _____.', ['समझा','पिया','खरीदा','गया'], 0, '「理解した」は समझा。'],
+    [9, 'जितना अधिक डेटा होगा, पूर्वानुमान उतना ही _____ होगा।', ['सटीक','पीना','खरीदना','जाना'], 0, '比例は जितना... उतना。'],
+    [10, 'अगर हमने समस्या पहले पहचान ली होती, तो नुकसान _____ सकते थे।', ['टाल','पी','खरीद','जा'], 0, '反実仮想的な可能は सकते थे。'],
+  ],
+  ne: [
+    [6, 'समस्या भएमा हामीलाई _____।', ['जानकारी दिनुहोस्','पिउनुहोस्','किन्नुहोस्','जानुहोस्'], 0, '丁寧な依頼は जानकारी दिनुहोस्।'],
+    [7, 'प्रस्तावलाई ध्यानपूर्वक _____ लायक छ।', ['समीक्षा गर्न','पिउन','किन्न','जान'], 0, 'लायक छ の前は गर्न。'],
+    [8, 'अडिटपछि मात्र हामीले जोखिम _____.', ['बुझ्यौँ','पियौँ','किन्यौँ','गयौँ'], 0, '「理解した」は बुझ्यौँ。'],
+    [9, 'जति धेरै डाटा हुन्छ, पूर्वानुमान त्यति नै _____ हुन्छ।', ['सटीक','पिउन','किन्न','जान'], 0, '比例は जति... त्यति।'],
+    [10, 'समस्या पहिले चिनेको भए हामीले घाटा _____ सक्थ्यौँ।', ['टार्न','पिउन','किन्न','जान'], 0, '反実仮想的な可能は सक्थ्यौँ。'],
   ],
 }).forEach(([code, rows]) => appendGrammarItems(code, rows));
 
