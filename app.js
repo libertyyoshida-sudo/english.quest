@@ -1180,6 +1180,7 @@ function buildQuestions(mode, level, count) {
    14. 音声合成（リスニング用）
 ══════════════════════════════════════════════════ */
 let pendingSpeechTimeouts = [];
+let cachedSpeechVoices = [];
 function scheduleSpeech(fn, delay) {
   const id = setTimeout(() => {
     pendingSpeechTimeouts = pendingSpeechTimeouts.filter(t => t !== id);
@@ -1193,16 +1194,47 @@ function clearPendingSpeech() {
   pendingSpeechTimeouts = [];
 }
 
+function refreshSpeechVoices() {
+  if (!window.speechSynthesis) return [];
+  cachedSpeechVoices = window.speechSynthesis.getVoices?.() || [];
+  return cachedSpeechVoices;
+}
+
+function pickSpeechVoice(langCode = selectedLanguage) {
+  if (!window.speechSynthesis) return null;
+  const lang = LANGUAGE_OPTIONS.find(l => l.code === langCode) || currentLanguage();
+  const voices = cachedSpeechVoices.length ? cachedSpeechVoices : refreshSpeechVoices();
+  const wanted = (lang.speechLang || '').toLowerCase();
+  const base = wanted.split('-')[0];
+  return voices.find(v => v.lang?.toLowerCase() === wanted)
+    || voices.find(v => v.lang?.toLowerCase().startsWith(`${base}-`))
+    || null;
+}
+
+function speechFallbackText(text) {
+  const vocab = currentVocabDB().find(item => item.word === text);
+  if (vocab?.pron && vocab.pron !== vocab.word) return vocab.pron;
+  const phrase = currentPhraseDB().find(item => item.phrase === text);
+  if (phrase?.pron && phrase.pron !== phrase.phrase) return phrase.pron;
+  return text;
+}
+
 function speak(text, onEnd) {
   if (!window.speechSynthesis) { if (onEnd) onEnd(); return; }
   window.speechSynthesis.cancel();
-  const utter = new SpeechSynthesisUtterance(text);
-  utter.lang  = currentLanguage().speechLang;
+  const voice = pickSpeechVoice();
+  const fallback = !voice && selectedLanguage !== 'en';
+  const utter = new SpeechSynthesisUtterance(fallback ? speechFallbackText(text) : text);
+  utter.lang  = fallback ? 'en-US' : currentLanguage().speechLang;
+  if (voice) utter.voice = voice;
   utter.rate  = 0.85;
   utter.pitch = 1.0;
   if (onEnd) utter.onend = onEnd;
   // 少し遅らせて確実に再生
-  scheduleSpeech(() => window.speechSynthesis.speak(utter), 120);
+  scheduleSpeech(() => {
+    if (!cachedSpeechVoices.length) refreshSpeechVoices();
+    window.speechSynthesis.speak(utter);
+  }, 120);
 }
 
 /* ══════════════════════════════════════════════════
@@ -3248,6 +3280,8 @@ function finishKeyboardStage() {
    23. イベントリスナー
 ══════════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', () => {
+  refreshSpeechVoices();
+  if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = refreshSpeechVoices;
   populateLanguageSelect();
   refreshLanguageText();
 
