@@ -934,7 +934,8 @@ function renderGoogleButton() {
     return;
   }
   googleScriptWaits = 0;
-  const renderKey = `${googleClientId}:${uiLang}`;
+  const buttonWidth = Math.max(240, Math.min(280, Math.floor(window.innerWidth - 32)));
+  const renderKey = `${googleClientId}:${uiLang}:${buttonWidth}`;
   if (googleButtonRenderedFor === renderKey) return;
   googleButtonRenderedFor = renderKey;
   buttonEl.innerHTML = '';
@@ -953,7 +954,7 @@ function renderGoogleButton() {
       shape: 'rectangular',
       logo_alignment: 'left',
       locale: uiLang === 'en' ? 'en' : 'ja',
-      width: 280,
+      width: buttonWidth,
     });
     setTimeout(() => {
       const rect = buttonEl.getBoundingClientRect();
@@ -4168,6 +4169,9 @@ document.addEventListener('DOMContentLoaded', () => {
       populateLanguageSelect();
       renderKeyboardAssist();
     });
+  });
+  window.addEventListener('resize', () => {
+    if (googleClientId) renderGoogleButton();
   });
 
   $('language-select')?.addEventListener('change', e => {

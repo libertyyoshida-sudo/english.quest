@@ -344,6 +344,14 @@ appendEnglishGrammarItems([
   [10, 'The report, _____ figures were reviewed twice, is reliable.', ['whose','which','who','where'], 0, '所有関係を表す関係詞は whose。'],
 ]);
 
+appendEnglishGrammarItems([
+  [6, 'The manager asked that every invoice _____ checked twice.', ['be','is','was','being'], 0, 'ask that節で要求を表す場合は仮定法現在 be。'],
+  [7, 'The software update, _____ released last night, fixed the issue.', ['which was','who was','where was','whose was'], 0, '物を受ける非制限用法は which was。'],
+  [8, 'No sooner had the notice been sent _____ customers began replying.', ['than','when','then','as'], 0, 'No sooner had... than... の構文。'],
+  [9, 'The forecast remains uncertain, _____ the recent improvement.', ['despite','although','because','unless'], 0, 'despite + 名詞句。'],
+  [10, 'Were the supplier to miss the deadline, we _____ the backup plan.', ['would activate','activate','activated','will activate'], 0, 'Were + 主語 + to do は仮定法の倒置。'],
+]);
+
 export const LANGUAGE_OPTIONS = [
   { code:'ja', label:'日本語', native:'日本語', speechLang:'ja-JP', status:'母語', aliases:['Japanese'] },
   { code:'en', label:'英語', native:'English', speechLang:'en-US' },
@@ -2842,6 +2850,21 @@ Object.entries({
   ],
 }).forEach(([code, rows]) => appendGrammarItems(code, rows));
 
+Object.entries({
+  ja: [
+    [7, '社会の変化_____、働き方も変わっている。', ['に伴って','によると','にすぎず','に限り'], 0, '「〜に伴って」は、ある変化に合わせて別の変化が起こることを表す。'],
+    [7, '契約内容_____、支払い条件を見直します。', ['に応じて','に反して','を込めて','ばかりに'], 0, '「〜に応じて」は、状況や条件に合わせる意味。'],
+    [7, 'この結論は、最新の調査_____判断された。', ['に基づいて','に限らず','にわたって','にかけて'], 0, '根拠を示すときは「〜に基づいて」。'],
+    [7, '新しい規則_____、全社員に説明会を行った。', ['に関して','に比べて','に伴い','にすぎず'], 0, '話題・対象は「〜に関して」。'],
+    [7, '資料を確認した_____、正式に返答します。', ['うえで','ものの','一方で','とはいえ'], 0, '「〜したうえで」は、前の行為を済ませてから次を行う意味。'],
+    [8, '価格は高い_____、品質は非常によい。', ['ものの','に伴って','に基づき','どころか'], 0, '「〜ものの」は逆接で、前件を認めつつ後件を述べる。'],
+    [8, '忙しい_____、締め切りは守らなければならない。', ['とはいえ','に応じて','を通じて','に限らず'], 0, '「〜とはいえ」は、そうではあるが、という逆接。'],
+    [8, 'このまま放置すると、大きな問題に_____.', ['なりかねない','なりすぎない','なりようがない','なりっぱなしだ'], 0, '「〜かねない」は悪い結果になる可能性を表す。'],
+    [8, '予算が足りず、計画を変更せ_____.', ['ざるを得ない','ずにはおかない','ないではいられない','にすぎない'], 0, '「〜ざるを得ない」は、仕方なくそうする意味。'],
+    [8, '彼の成功は、長年の努力の結果に_____.', ['ほかならない','かかわらない','すぎない','伴わない'], 0, '「〜にほかならない」は、まさに〜だと強調する表現。'],
+  ],
+}).forEach(([code, rows]) => appendGrammarItems(code, rows));
+
 const NEW_WORD_TIERS = [1,1,1,1,1,1,2,2,2,2,1,1,1,2,3,3,3,3,3,2,2,2,2,2,2,3,2,3,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,1,1,1,1,1,1,1,1,1,2,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,1,1,1,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,2,2,1,1,2,1,1,1,2,1,1,1,2,1,2,2,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,1,1,2,2,1,1,1,1,1,2,2,2,2,2,2,1];
 
 export const MULTI_VOCAB_DB = Object.fromEntries(
@@ -2862,6 +2885,37 @@ export const MULTI_VOCAB_DB = Object.fromEntries(
 // 基礎70語（あいさつ・旅行/ホテル語彙を含む）+ TOEIC単語ベースの拡張130語をあわせて保持する
 // （idの重複を避けるため拡張版は esx プレフィックスを使用）
 MULTI_VOCAB_DB.es = [...MULTI_VOCAB_DB.es, ...SPANISH_EXTENDED_VOCAB];
+
+MULTI_VOCAB_DB.ja = [
+  ...MULTI_VOCAB_DB.ja,
+  ...[
+    [7, 'に伴って', 'along with; as', '変化に合わせて別の変化が起こること'],
+    [7, 'に応じて', 'according to; depending on', '状況や条件に合わせて'],
+    [7, 'に基づいて', 'based on', '根拠にして'],
+    [7, 'に関して', 'regarding; concerning', '話題や対象について'],
+    [7, 'に対して', 'toward; against', '相手や対象に向けて'],
+    [7, 'に比べて', 'compared with', '比較すると'],
+    [7, 'を通じて', 'through; throughout', '手段や期間を表す'],
+    [7, 'をめぐって', 'over; concerning', 'ある話題を中心として'],
+    [7, 'に限らず', 'not limited to', 'それだけでなく'],
+    [7, 'にわたって', 'over; across', '広い範囲や長い期間に及ぶこと'],
+    [8, '一方で', 'on the other hand', '対比する内容を述べる表現'],
+    [8, '反面', 'on the other hand; while', '一つの面と別の面を対比する表現'],
+    [8, 'ものの', 'although; even though', '逆接を表す硬めの表現'],
+    [8, 'とはいえ', 'nevertheless; even so', '前の内容を認めつつ反対内容を述べる'],
+    [8, 'かねない', 'may; might possibly', '悪い結果になる可能性を表す'],
+    [8, 'ざるを得ない', 'cannot help but', '仕方なくそうする必要がある'],
+    [8, 'にすぎない', 'nothing more than; merely', 'それ以上ではないと限定する'],
+    [8, 'どころではない', 'be in no position to', 'そのような余裕がない'],
+    [8, 'にほかならない', 'nothing other than', 'まさにそうだと強調する'],
+    [8, 'ないではいられない', 'cannot help doing', '自然にそうしてしまう気持ちを表す'],
+  ].map(([lv, word, en, jp], idx) => ({
+    id: `jan2v${String(idx + 1).padStart(3, '0')}`,
+    lv, word, en, jp,
+    pron: word,
+    ex: `${word} = ${en}`,
+  })),
+];
 
 /* ══════════════════════════════════════════════════
    フレーズ集・フレーズ練習：実際の会話で使える定型表現
