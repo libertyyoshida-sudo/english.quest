@@ -1028,7 +1028,7 @@ const COMMAND_REQUIREMENTS = {
   world: { itemId: 'p_world', label: '世界地図通行証' },
 };
 const LANGUAGE_ENTRY_REQUIREMENTS = {
-  ar: 'p_desert', tr: 'p_desert', hi: 'p_desert', bn: 'p_desert', ne: 'p_desert', ta: 'p_desert', si: 'p_desert',
+  ar: 'p_desert', tr: 'p_desert', hi: 'p_desert', bn: 'p_desert', ne: 'p_desert', ta: 'p_desert', si: 'p_desert', ur: 'p_desert',
   ru: 'p_snow', pl: 'p_snow',
   yue: 'p_ocean', tl: 'p_ocean', id: 'p_ocean', my: 'p_ocean', vi: 'p_ocean',
 };
@@ -2811,6 +2811,7 @@ const WORLD_REGIONS = [
     { code: 'ar', flag: '🇸🇦', label: 'العربية', left: 24, top: 34 },
     { code: 'tr', flag: '🇹🇷', label: 'Türkçe', left: 42, top: 28 },
     { code: 'hi', flag: '🇮🇳', label: 'हिन्दी', left: 36, top: 38 },
+    { code: 'ur', flag: '🇵🇰', label: 'اردو', left: 32, top: 32 },
     { code: 'bn', flag: '🇧🇩', label: 'বাংলা', left: 58, top: 36 },
     { code: 'ne', flag: '🇳🇵', label: 'नेपाली', left: 48, top: 24 },
     { code: 'ta', flag: '🇮🇳', label: 'தமிழ்', left: 36, top: 60 },

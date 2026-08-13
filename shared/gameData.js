@@ -43,6 +43,7 @@ const LANGUAGE_PERMIT_ITEMS = {
   lang_ne: { type: 'permit', id: 'lang_ne', name: 'ネパール語入門書', icon: '📗', price: 60, desc: 'ネパール語を学べる' },
   lang_ta: { type: 'permit', id: 'lang_ta', name: 'タミル語入門書', icon: '📗', price: 60, desc: 'タミル語を学べる' },
   lang_si: { type: 'permit', id: 'lang_si', name: 'シンハラ語入門書', icon: '📗', price: 60, desc: 'シンハラ語を学べる' },
+  lang_ur: { type: 'permit', id: 'lang_ur', name: 'ウルドゥー語入門書', icon: '📗', price: 60, desc: 'ウルドゥー語を学べる' },
   lang_zh: { type: 'permit', id: 'lang_zh', name: '中国語入門書', icon: '📗', price: 55, desc: '中国語を学べる' },
   lang_yue: { type: 'permit', id: 'lang_yue', name: '広東語入門書', icon: '📗', price: 60, desc: '広東語を学べる' },
   lang_ko: { type: 'permit', id: 'lang_ko', name: '韓国語入門書', icon: '📗', price: 55, desc: '韓国語を学べる' },
