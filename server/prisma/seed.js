@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import {
   LANGUAGE_OPTIONS, MULTI_GRAMMAR_DB, MULTI_VOCAB_DB, VOCAB_DB, GRAMMAR_DB,
-  PHRASE_DB, MULTI_PHRASE_DB, MULTI_CULTURE_DB,
+  PHRASE_DB, MULTI_PHRASE_DB, MULTI_CULTURE_DB, MULTI_BUSINESS_DB,
 } from '../../shared/questionData.js';
 
 const prisma = new PrismaClient();
@@ -129,6 +129,35 @@ async function upsertCulture(item, language) {
   });
 }
 
+async function upsertBusiness(item, language) {
+  const choicesJson = JSON.stringify({ choices: item.choices, ans: item.ans, exp: item.exp });
+
+  await prisma.question.upsert({
+    where: { id: item.id },
+    update: {
+      language,
+      category: 'business',
+      level: String(item.lv),
+      word: item.q,
+      japanese: item.choices[item.ans],
+      pronunciation: null,
+      exampleSentence: null,
+      choicesJson,
+    },
+    create: {
+      id: item.id,
+      language,
+      category: 'business',
+      level: String(item.lv),
+      word: item.q,
+      japanese: item.choices[item.ans],
+      pronunciation: null,
+      exampleSentence: null,
+      choicesJson,
+    },
+  });
+}
+
 async function main() {
   console.log('Seeding database with questions...');
 
@@ -166,7 +195,14 @@ async function main() {
     await runInBatches(items, item => upsertCulture(item, lang.code));
   }
 
-  console.log(`Successfully seeded ${VOCAB_DB.length} English vocab + ${GRAMMAR_DB.length} English grammar + ${multiVocabCount} multilingual vocab + ${multiGrammarCount} multilingual grammar + ${phraseCount} phrase + ${cultureCount} culture questions into Database.`);
+  let businessCount = 0;
+  for (const lang of LANGUAGE_OPTIONS) {
+    const items = MULTI_BUSINESS_DB[lang.code] || [];
+    businessCount += items.length;
+    await runInBatches(items, item => upsertBusiness(item, lang.code));
+  }
+
+  console.log(`Successfully seeded ${VOCAB_DB.length} English vocab + ${GRAMMAR_DB.length} English grammar + ${multiVocabCount} multilingual vocab + ${multiGrammarCount} multilingual grammar + ${phraseCount} phrase + ${cultureCount} culture + ${businessCount} business questions into Database.`);
 }
 
 main()

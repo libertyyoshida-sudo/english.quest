@@ -33,6 +33,7 @@ let MULTI_VOCAB_DB = {};
 let PHRASE_DB = [];
 let MULTI_PHRASE_DB = {};
 let MULTI_CULTURE_DB = {};
+let MULTI_BUSINESS_DB = {};
 
 async function apiFetch(path, opts = {}) {
   const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
@@ -533,6 +534,7 @@ const I18N = {
       weak: ['よわてき集中', '+25EXP'],
       phrase: ['フレーズ練習', '+16EXP'],
       culture: ['文化・地理クイズ', '+18EXP'],
+      business: ['ビジネス・経済クイズ', '+18EXP'],
       review: ['まなびの図書館', 'よみ返し'],
       inn: ['やどや', 'HP回復'],
       keyboard: ['キーボードどうじょう', 'タイピング基礎'],
@@ -545,6 +547,7 @@ const I18N = {
       grammar: 'ぶんぽう',
       phrase: '💬 フレーズ',
       culture: '🏛️ 文化',
+      business: '💼 ビジネス',
       new: '🆕 未学習',
       low: '📖 練習不足',
       weak: '🔥 にがて',
@@ -681,6 +684,7 @@ const I18N = {
       weak: ['Weak Spot Focus', '+25EXP'],
       phrase: ['Phrase Practice', '+16EXP'],
       culture: ['Culture & Geography', '+18EXP'],
+      business: ['Business & Economy', '+18EXP'],
       review: ['Learning Library', 'Review'],
       inn: ['Inn', 'Recover HP'],
       keyboard: ['Keyboard Dojo', 'Typing basics'],
@@ -693,6 +697,7 @@ const I18N = {
       grammar: 'Grammar',
       phrase: '💬 Phrases',
       culture: '🏛️ Culture',
+      business: '💼 Business',
       new: '🆕 New',
       low: '📖 Needs practice',
       weak: '🔥 Weak spots',
@@ -1017,6 +1022,7 @@ const COMMAND_REQUIREMENTS = {
   weak: { itemId: 'p_smart', label: 'スマート学習免許' },
   phrase: { itemId: 'p_smart', label: 'スマート学習免許' },
   culture: { itemId: 'p_smart', label: 'スマート学習免許' },
+  business: { itemId: 'p_smart', label: 'スマート学習免許' },
   listening: { itemId: 'p_smart', label: 'スマート学習免許' },
   speaking: { itemId: 'p_smart', label: 'スマート学習免許' },
   world: { itemId: 'p_world', label: '世界地図通行証' },
@@ -1075,6 +1081,11 @@ function currentCultureDB() {
   return questionDataCache[selectedLanguage]?.culture || MULTI_CULTURE_DB[selectedLanguage] || [];
 }
 
+// ビジネス・経済クイズ（有名企業・産業・起業家・会計・税制）
+function currentBusinessDB() {
+  return questionDataCache[selectedLanguage]?.business || MULTI_BUSINESS_DB[selectedLanguage] || [];
+}
+
 async function ensureLocalQuestionData() {
   if (localQuestionDataLoaded) return;
   if (!localQuestionDataLoading) {
@@ -1086,6 +1097,7 @@ async function ensureLocalQuestionData() {
       PHRASE_DB = module.PHRASE_DB || [];
       MULTI_PHRASE_DB = module.MULTI_PHRASE_DB || {};
       MULTI_CULTURE_DB = module.MULTI_CULTURE_DB || {};
+      MULTI_BUSINESS_DB = module.MULTI_BUSINESS_DB || {};
       localQuestionDataLoaded = true;
     });
   }
@@ -1099,6 +1111,7 @@ function cacheLocalQuestionData(language) {
     grammar: (language === 'en' ? GRAMMAR_DB : (MULTI_GRAMMAR_DB[language] || [])).map(withExam),
     phrase: (language === 'en' ? PHRASE_DB : (MULTI_PHRASE_DB[language] || PHRASE_DB)).map(withExam),
     culture: (MULTI_CULTURE_DB[language] || []).map(withExam),
+    business: (MULTI_BUSINESS_DB[language] || []).map(withExam),
   };
 }
 
@@ -1109,6 +1122,7 @@ function cacheQuestionData(language, questions) {
     grammar: questions.filter(q => q.category === 'grammar').map(withExam),
     phrase: questions.filter(q => q.category === 'phrase').map(withExam),
     culture: questions.filter(q => q.category === 'culture').map(withExam),
+    business: questions.filter(q => q.category === 'business').map(withExam),
   };
 }
 
@@ -1738,6 +1752,15 @@ function buildCultureQ(item) {
   };
 }
 
+function buildBusinessQ(item) {
+  return {
+    id: item.id, type:'business',
+    qText: item.q,
+    choices: item.choices, ans: item.ans,
+    detail: `解説: ${item.exp}`,
+  };
+}
+
 function buildTypingQ(item) {
   return {
     id: item.id, type:'typing',
@@ -1839,6 +1862,15 @@ function buildQuestions(mode, level, count) {
       if (!seen.has(item.id)) { seen.add(item.id); questions.push(buildCultureQ(item)); }
       if (questions.length >= count) break;
     }
+  } else if (mode === 'business') {
+    const businessDB = currentBusinessDB();
+    const activeBPool = expandPoolForCount(businessDB, level, count);
+    const pool = weightedPool(activeBPool);
+    const seen = new Set();
+    for (const item of pool) {
+      if (!seen.has(item.id)) { seen.add(item.id); questions.push(buildBusinessQ(item)); }
+      if (questions.length >= count) break;
+    }
   } else if (mode === 'weak') {
     const allPool = [...vocabDB, ...grammarDB];
     const activeFiltered = expandPoolForCount(allPool, level, count);
@@ -1858,16 +1890,19 @@ function buildQuestions(mode, level, count) {
   } else if (mode === 'smart') {
     const phraseDB = currentPhraseDB();
     const cultureDB = currentCultureDB();
-    const allPool = [...vocabDB, ...grammarDB, ...phraseDB, ...cultureDB];
+    const businessDB = currentBusinessDB();
+    const allPool = [...vocabDB, ...grammarDB, ...phraseDB, ...cultureDB, ...businessDB];
     const activeFiltered = expandPoolForCount(allPool, level, count);
     const pool = smartPool(activeFiltered);
     const cultureIds = new Set(cultureDB.map(c => c.id));
+    const businessIds = new Set(businessDB.map(b => b.id));
     const seen = new Set();
     for (const item of pool) {
       if (seen.has(item.id)) continue;
       seen.add(item.id);
       if (item.situation) questions.push(buildPhraseQ(item, phraseDB));
       else if (cultureIds.has(item.id)) questions.push(buildCultureQ(item));
+      else if (businessIds.has(item.id)) questions.push(buildBusinessQ(item));
       else if (item.choices) questions.push(buildGrammarQ(item));
       else questions.push(buildVocabQ(item, activeVPool));
       if (questions.length >= count) break;
@@ -2191,13 +2226,15 @@ function setupBattleScreenUI(enemy) {
 // やどやの「とっくん」ボタンから、にがてな1問だけを集中して練習する
 function startFocusedBattle(item) {
   stopSpeechAll();
-  const mode = item.category === 'grammar' ? 'grammar'
-             : item.category === 'phrase'  ? 'phrase'
-             : item.category === 'culture' ? 'culture'
+  const mode = item.category === 'grammar'  ? 'grammar'
+             : item.category === 'phrase'   ? 'phrase'
+             : item.category === 'culture'  ? 'culture'
+             : item.category === 'business' ? 'business'
              : 'vocab';
-  const q     = item.category === 'grammar' ? buildGrammarQ(item)
-              : item.category === 'phrase'  ? buildPhraseQ(item, currentPhraseDB())
-              : item.category === 'culture' ? buildCultureQ(item)
+  const q     = item.category === 'grammar'  ? buildGrammarQ(item)
+              : item.category === 'phrase'   ? buildPhraseQ(item, currentPhraseDB())
+              : item.category === 'culture'  ? buildCultureQ(item)
+              : item.category === 'business' ? buildBusinessQ(item)
               : buildVocabQ(item, currentVocabDB());
   const enemy = pickEnemy(item.lv);
 
@@ -3681,12 +3718,14 @@ function buildInnItems(filter = currentInnFilter) {
     ...currentGrammarDB().map(it => ({ ...it, category: 'grammar' })),
     ...currentPhraseDB().map(it => ({ ...it, category: 'phrase' })),
     ...currentCultureDB().map(it => ({ ...it, category: 'culture' })),
+    ...currentBusinessDB().map(it => ({ ...it, category: 'business' })),
   ];
 
-  if (filter === 'vocab')        items = items.filter(it => it.category === 'vocab');
-  else if (filter === 'grammar') items = items.filter(it => it.category === 'grammar');
-  else if (filter === 'phrase')  items = items.filter(it => it.category === 'phrase');
-  else if (filter === 'culture') items = items.filter(it => it.category === 'culture');
+  if (filter === 'vocab')         items = items.filter(it => it.category === 'vocab');
+  else if (filter === 'grammar')  items = items.filter(it => it.category === 'grammar');
+  else if (filter === 'phrase')   items = items.filter(it => it.category === 'phrase');
+  else if (filter === 'culture')  items = items.filter(it => it.category === 'culture');
+  else if (filter === 'business') items = items.filter(it => it.category === 'business');
   else if (['new','low','weak','mastered'].includes(filter)) items = items.filter(it => classifyItem(it) === filter);
 
   if (currentInnLevel !== 'all') {
