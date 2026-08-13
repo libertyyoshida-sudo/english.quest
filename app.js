@@ -1277,6 +1277,18 @@ function populateLanguageSelect() {
   }
 }
 
+function populateInnLanguageSelect() {
+  const select = $('inn-language-select');
+  if (!select) return;
+  const owned = LANGUAGE_OPTIONS.filter(lang => isLanguageUnlocked(lang.code));
+  select.innerHTML = owned.map(lang =>
+    `<option value="${lang.code}">${lang.label}（${lang.native}）</option>`
+  ).join('');
+  if (owned.some(lang => lang.code === selectedLanguage)) {
+    select.value = selectedLanguage;
+  }
+}
+
 function refreshLanguageText() {
   const lang = currentLanguage();
   if ($('title-language-copy')) $('title-language-copy').textContent = tr('appCopy');
@@ -1968,6 +1980,8 @@ let pendingSpeechTimeouts = [];
 let cachedSpeechVoices = [];
 let speechRate = Math.min(3, Math.max(0.5, Number(localStorage.getItem('languageQuest_speechRate') || 0.85)));
 let battleAutoSpeak = localStorage.getItem('languageQuest_battleAutoSpeak') === '1';
+let speechRepeatCount = Math.min(10, Math.max(1, Number(localStorage.getItem('languageQuest_speechRepeatCount') || 1)));
+let speechRepeatAllCount = Math.min(10, Math.max(1, Number(localStorage.getItem('languageQuest_speechRepeatAllCount') || 1)));
 
 // TOEIC公式リスニングの4アクセント（米・英・加・豪）を優先し、参考としてインドを追加
 const ENGLISH_ACCENTS = [
@@ -2081,6 +2095,30 @@ function setSpeechRate(value) {
   if ($('battle-speech-rate-label')) $('battle-speech-rate-label').textContent = `${speechRate.toFixed(2).replace(/0$/, '').replace(/\.$/, '')}x`;
 }
 
+function speakRepeated(text, times, onEnd) {
+  const n = Math.min(10, Math.max(1, Number(times) || 1));
+  let count = 0;
+  const step = () => {
+    count++;
+    if (count >= n) { speak(text, onEnd); return; }
+    speak(text, () => scheduleSpeech(step, 350));
+  };
+  step();
+}
+
+function setSpeechRepeatCount(value) {
+  speechRepeatCount = Math.min(10, Math.max(1, Number(value) || 1));
+  localStorage.setItem('languageQuest_speechRepeatCount', String(speechRepeatCount));
+  if ($('speech-repeat-count')) $('speech-repeat-count').value = String(speechRepeatCount);
+  if ($('battle-speech-repeat-count')) $('battle-speech-repeat-count').value = String(speechRepeatCount);
+}
+
+function setSpeechRepeatAllCount(value) {
+  speechRepeatAllCount = Math.min(10, Math.max(1, Number(value) || 1));
+  localStorage.setItem('languageQuest_speechRepeatAllCount', String(speechRepeatAllCount));
+  if ($('speech-repeat-all-count')) $('speech-repeat-all-count').value = String(speechRepeatAllCount);
+}
+
 function setBattleAutoSpeak(enabled) {
   battleAutoSpeak = !!enabled;
   localStorage.setItem('languageQuest_battleAutoSpeak', battleAutoSpeak ? '1' : '0');
@@ -2108,6 +2146,8 @@ function populateEnglishAccentSelects() {
 function setupSpeechControls() {
   setSpeechRate(speechRate);
   setBattleAutoSpeak(battleAutoSpeak);
+  setSpeechRepeatCount(speechRepeatCount);
+  setSpeechRepeatAllCount(speechRepeatAllCount);
   populateEnglishAccentSelects();
   setEnglishAccent(englishAccent);
   refreshEnglishAccentVisibility();
@@ -2120,10 +2160,13 @@ function speakTextForReviewItem(item) {
   return null;
 }
 
+let innAutoSpeakRound = 0;
+
 function stopInnAutoSpeak() {
   innAutoSpeaking = false;
   innAutoSpeakItems = [];
   innAutoSpeakIndex = 0;
+  innAutoSpeakRound = 0;
   stopSpeechAll();
   if ($('inn-auto-speak-btn')) $('inn-auto-speak-btn').textContent = '▶ Auto読み上げ';
 }
@@ -2132,6 +2175,12 @@ function playNextInnAutoSpeak() {
   if (!innAutoSpeaking) return;
   const item = innAutoSpeakItems[innAutoSpeakIndex++];
   if (!item) {
+    innAutoSpeakRound++;
+    if (innAutoSpeakRound < speechRepeatAllCount) {
+      innAutoSpeakIndex = 0;
+      scheduleSpeech(playNextInnAutoSpeak, 450);
+      return;
+    }
     stopInnAutoSpeak();
     return;
   }
@@ -2140,13 +2189,14 @@ function playNextInnAutoSpeak() {
     playNextInnAutoSpeak();
     return;
   }
-  speak(text, () => scheduleSpeech(playNextInnAutoSpeak, 450));
+  speakRepeated(text, speechRepeatCount, () => scheduleSpeech(playNextInnAutoSpeak, 450));
 }
 
 function startInnAutoSpeak() {
   const items = buildInnItems(currentInnFilter).filter(item => ['vocab','grammar','phrase'].includes(item.category));
   innAutoSpeakItems = items;
   innAutoSpeakIndex = 0;
+  innAutoSpeakRound = 0;
   innAutoSpeaking = items.length > 0;
   if (!innAutoSpeaking) {
     alert('読み上げできる単語・文法・フレーズがありません。');
@@ -2532,7 +2582,7 @@ async function handleAnswer(userAns, userText) {
   $('battle-msg').classList.remove('hidden');
 
   if (battleAutoSpeak && q.speakWord) {
-    scheduleSpeech(() => speak(q.speakWord), 350);
+    scheduleSpeech(() => speakRepeated(q.speakWord, speechRepeatCount), 350);
   }
 
   // 敵撃破演出
@@ -3629,6 +3679,7 @@ async function goToInn(opts = {}) {
   refreshInnLevelOptions();
   if ($('inn-level-select')) $('inn-level-select').value = currentInnLevel;
   setupSpeechControls();
+  populateInnLanguageSelect();
   renderLanguageProfile();
   renderInnList(currentInnFilter);
 
@@ -3755,7 +3806,7 @@ function renderInnList(filter) {
     if (speakText) {
       row.querySelector('.inn-speak-btn')?.addEventListener('click', ev => {
         ev.stopPropagation();
-        speak(speakText);
+        speakRepeated(speakText, speechRepeatCount);
       });
     }
 
@@ -4531,13 +4582,13 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ── リスニング：もう一度きく ── */
   $('listen-play-btn')?.addEventListener('click', () => {
     const q = battle.questions[battle.cur];
-    if (q?.speakWord) speak(q.speakWord);
+    if (q?.speakWord) speakRepeated(q.speakWord, speechRepeatCount);
   });
 
   /* ── たんご／フレーズ／タイピング：🔊きく ── */
   $('question-speak-btn')?.addEventListener('click', () => {
     const q = battle.questions[battle.cur];
-    if (q?.speakWord) speak(q.speakWord);
+    if (q?.speakWord) speakRepeated(q.speakWord, speechRepeatCount);
   });
 
   $('inn-tools-toggle')?.addEventListener('click', () => {
@@ -4560,6 +4611,17 @@ document.addEventListener('DOMContentLoaded', () => {
   $('battle-speech-rate-range')?.addEventListener('input', e => setSpeechRate(e.target.value));
   $('speech-accent-select')?.addEventListener('change', e => setEnglishAccent(e.target.value));
   $('battle-speech-accent-select')?.addEventListener('change', e => setEnglishAccent(e.target.value));
+  $('speech-repeat-count')?.addEventListener('change', e => setSpeechRepeatCount(e.target.value));
+  $('battle-speech-repeat-count')?.addEventListener('change', e => setSpeechRepeatCount(e.target.value));
+  $('speech-repeat-all-count')?.addEventListener('change', e => setSpeechRepeatAllCount(e.target.value));
+  $('inn-language-select')?.addEventListener('change', async e => {
+    setLanguage(e.target.value);
+    await ensureLanguageQuestionData();
+    refreshInnLevelOptions();
+    populateInnLanguageSelect();
+    renderLanguageProfile();
+    renderInnList(currentInnFilter);
+  });
 
   document.addEventListener('pointerdown', e => {
     const icon = e.target.closest?.('.field-icon');
