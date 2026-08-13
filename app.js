@@ -1012,6 +1012,24 @@ function levelRowByLv(lv) {
   return LEVEL_TABLE.find(row => row.lv === lv) || LEVEL_TABLE[0];
 }
 
+// 英語学習時のみ、英検の級でLv.をまとめて絞り込めるようにする（examLevelLabelのTOEIC⇔英検対応と揃えている）
+const EIKEN_LEVEL_RANGES = [
+  { code: '3q',  label: '英検3級',        lvMin: 1,  lvMax: 2 },
+  { code: 'p2q', label: '英検準2級',      lvMin: 3,  lvMax: 4 },
+  { code: '2q',  label: '英検2級',        lvMin: 5,  lvMax: 6 },
+  { code: 'p1q', label: '英検準1級',      lvMin: 7,  lvMax: 8 },
+  { code: '1q',  label: '英検1級',        lvMin: 9,  lvMax: 10 },
+];
+
+function matchesLevelFilter(lv, filterValue) {
+  if (filterValue === 'all') return true;
+  if (typeof filterValue === 'string' && filterValue.startsWith('eiken:')) {
+    const grade = EIKEN_LEVEL_RANGES.find(g => g.code === filterValue.slice(6));
+    return grade ? lv >= grade.lvMin && lv <= grade.lvMax : true;
+  }
+  return Number(lv) === Number(filterValue);
+}
+
 const FREE_LANGUAGE_CODES = ['ja', 'en'];
 const FREE_COMMAND_MODES = ['vocab', 'grammar', 'typing', 'keyboard', 'inn', 'review', 'shop', 'status'];
 const MASTER_LEVEL = 10;
@@ -1292,6 +1310,17 @@ function refreshLevelOptions() {
     opt.textContent = uiLang === 'en' ? enText : otherText;
     select.appendChild(opt);
   });
+  if (selectedLanguage === 'en') {
+    const group = document.createElement('optgroup');
+    group.label = uiLang === 'en' ? 'By Eiken grade' : '英検の級で絞る';
+    EIKEN_LEVEL_RANGES.forEach(grade => {
+      const opt = document.createElement('option');
+      opt.value = `eiken:${grade.code}`;
+      opt.textContent = `${grade.label}（Lv.${grade.lvMin}-${grade.lvMax}）`;
+      group.appendChild(opt);
+    });
+    select.appendChild(group);
+  }
   select.value = currentValue;
 }
 
@@ -1310,6 +1339,17 @@ function refreshInnLevelOptions() {
     opt.textContent = `Lv.${lv}（${examLevelLabel(selectedLanguage, lv)}）`;
     select.appendChild(opt);
   });
+  if (selectedLanguage === 'en') {
+    const group = document.createElement('optgroup');
+    group.label = uiLang === 'en' ? 'By Eiken grade' : '英検の級で絞る';
+    EIKEN_LEVEL_RANGES.forEach(grade => {
+      const opt = document.createElement('option');
+      opt.value = `eiken:${grade.code}`;
+      opt.textContent = `${grade.label}（Lv.${grade.lvMin}-${grade.lvMax}）`;
+      group.appendChild(opt);
+    });
+    select.appendChild(group);
+  }
   select.value = currentValue;
 }
 
@@ -1346,21 +1386,31 @@ function refreshCommandLocks() {
 function resolveLevelSelection(rawValue) {
   if (rawValue === 'all') return 'all';
   if (rawValue === 'auto') return languageMasteryState().effectiveLv;
+  if (typeof rawValue === 'string' && rawValue.startsWith('eiken:')) return rawValue;
   return parseInt(rawValue, 10);
 }
 
 function filterLevel(pool, level) {
   if (level === 'all') return pool;
-  return pool.filter(x => x.lv === level);
+  return pool.filter(x => matchesLevelFilter(x.lv, level));
+}
+
+function levelFilterMidpoint(level) {
+  if (typeof level === 'string' && level.startsWith('eiken:')) {
+    const grade = EIKEN_LEVEL_RANGES.find(g => g.code === level.slice(6));
+    return grade ? (grade.lvMin + grade.lvMax) / 2 : 5;
+  }
+  return level;
 }
 
 function expandPoolForCount(pool, level, count) {
   const filtered = filterLevel(pool, level);
   if (level === 'all' || filtered.length >= count) return filtered;
   const seen = new Set(filtered.map(item => item.id));
+  const target = levelFilterMidpoint(level);
   const nearby = [...pool]
     .filter(item => !seen.has(item.id))
-    .sort((a, b) => Math.abs(a.lv - level) - Math.abs(b.lv - level));
+    .sort((a, b) => Math.abs(a.lv - target) - Math.abs(b.lv - target));
   return [...filtered, ...nearby];
 }
 
@@ -3730,7 +3780,7 @@ function buildInnItems(filter = currentInnFilter) {
   else if (['new','low','weak','mastered'].includes(filter)) items = items.filter(it => classifyItem(it) === filter);
 
   if (currentInnLevel !== 'all') {
-    items = items.filter(it => Number(it.lv) === Number(currentInnLevel));
+    items = items.filter(it => matchesLevelFilter(Number(it.lv), currentInnLevel));
   }
   return items;
 }
