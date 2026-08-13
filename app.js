@@ -1305,6 +1305,15 @@ function setLanguage(code) {
   refreshHeader();
   refreshExpBar();
   refreshCommandLocks();
+  refreshEnglishAccentVisibility();
+}
+
+function refreshEnglishAccentVisibility() {
+  const isEnglish = selectedLanguage === 'en';
+  ['speech-accent-select', 'battle-speech-accent-select'].forEach(id => {
+    const wrap = $(id)?.closest('.inn-control, .battle-rate-control');
+    if (wrap) wrap.classList.toggle('hidden', !isEnglish);
+  });
 }
 
 function refreshCommandLocks() {
@@ -1872,6 +1881,18 @@ let pendingSpeechTimeouts = [];
 let cachedSpeechVoices = [];
 let speechRate = Math.min(3, Math.max(0.5, Number(localStorage.getItem('languageQuest_speechRate') || 0.85)));
 let battleAutoSpeak = localStorage.getItem('languageQuest_battleAutoSpeak') === '1';
+
+const ENGLISH_ACCENTS = [
+  { code: 'native', label: 'ネイティブ（自動）', speechLang: 'en-US', pitch: 1.0,  rateMul: 1.0 },
+  { code: 'us',     label: 'アメリカ',            speechLang: 'en-US', pitch: 1.0,  rateMul: 1.0,  nameHints: ['us', 'united states', 'america'] },
+  { code: 'gb',     label: 'イギリス',            speechLang: 'en-GB', pitch: 0.82, rateMul: 0.92, nameHints: ['uk', 'united kingdom', 'british', 'gb'] },
+  { code: 'au',     label: 'オーストラリア',      speechLang: 'en-AU', pitch: 1.22, rateMul: 1.08, nameHints: ['australia', 'au'] },
+  { code: 'in',     label: 'インド',              speechLang: 'en-IN', pitch: 1.12, rateMul: 0.9,  nameHints: ['india', 'hindi', 'in'] },
+  { code: 'cn',     label: '中国',                speechLang: 'en-US', pitch: 0.9,  rateMul: 0.8,  nameHints: ['china', 'chinese', 'mandarin', 'cn'] },
+];
+let englishAccent = ENGLISH_ACCENTS.some(a => a.code === localStorage.getItem('languageQuest_englishAccent'))
+  ? localStorage.getItem('languageQuest_englishAccent')
+  : 'native';
 let innAutoSpeakItems = [];
 let innAutoSpeakIndex = 0;
 let innAutoSpeaking = false;
@@ -1895,15 +1916,42 @@ function refreshSpeechVoices() {
   return cachedSpeechVoices;
 }
 
+function currentEnglishAccent() {
+  return ENGLISH_ACCENTS.find(a => a.code === englishAccent) || ENGLISH_ACCENTS[0];
+}
+
+// 完全一致（同じロケールの専用音声）が見つかった場合は true をセットする。
+// 見つからない場合はピッチ／速度の擬似アクセント補正を speak() 側で適用する。
+let lastPickedVoiceExactMatch = false;
+
 function pickSpeechVoice(langCode = selectedLanguage) {
+  lastPickedVoiceExactMatch = false;
   if (!window.speechSynthesis) return null;
   const lang = LANGUAGE_OPTIONS.find(l => l.code === langCode) || currentLanguage();
   const voices = cachedSpeechVoices.length ? cachedSpeechVoices : refreshSpeechVoices();
+
+  if (langCode === 'en' && englishAccent !== 'native') {
+    const accent = currentEnglishAccent();
+    const wanted = accent.speechLang.toLowerCase();
+    const base = wanted.split('-')[0];
+    const englishVoices = voices.filter(v => v.lang?.toLowerCase() === base || v.lang?.toLowerCase().startsWith(`${base}-`));
+
+    const exact = englishVoices.find(v => v.lang?.toLowerCase() === wanted);
+    if (exact) { lastPickedVoiceExactMatch = true; return exact; }
+
+    if (accent.nameHints) {
+      const byName = englishVoices.find(v => accent.nameHints.some(hint => v.name?.toLowerCase().includes(hint)));
+      if (byName) { lastPickedVoiceExactMatch = true; return byName; }
+    }
+
+    if (englishVoices.length) return englishVoices[0];
+  }
+
   const wanted = (lang.speechLang || '').toLowerCase();
   const base = wanted.split('-')[0];
-  return voices.find(v => v.lang?.toLowerCase() === wanted)
-    || voices.find(v => v.lang?.toLowerCase().startsWith(`${base}-`))
-    || null;
+  const exact = voices.find(v => v.lang?.toLowerCase() === wanted);
+  if (exact) { lastPickedVoiceExactMatch = true; return exact; }
+  return voices.find(v => v.lang?.toLowerCase().startsWith(`${base}-`)) || null;
 }
 
 function speechFallbackText(text) {
@@ -1920,10 +1968,14 @@ function speak(text, onEnd) {
   const voice = pickSpeechVoice();
   const fallback = !voice && selectedLanguage !== 'en';
   const utter = new SpeechSynthesisUtterance(fallback ? speechFallbackText(text) : text);
-  utter.lang  = fallback ? 'en-US' : currentLanguage().speechLang;
+  const isAccentedEnglish = selectedLanguage === 'en' && englishAccent !== 'native';
+  const accent = isAccentedEnglish ? currentEnglishAccent() : null;
+  utter.lang  = fallback ? 'en-US' : (accent?.speechLang || currentLanguage().speechLang);
   if (voice) utter.voice = voice;
-  utter.rate  = speechRate;
-  utter.pitch = 1.0;
+  // 端末に該当ロケールの専用音声がない場合は、ピッチ／速度で擬似的にアクセントの違いを再現する
+  const useApproximation = isAccentedEnglish && !lastPickedVoiceExactMatch;
+  utter.rate  = speechRate * (useApproximation ? accent.rateMul : 1.0);
+  utter.pitch = useApproximation ? accent.pitch : 1.0;
   if (onEnd) utter.onend = onEnd;
   // 少し遅らせて確実に再生
   scheduleSpeech(() => {
@@ -1947,9 +1999,30 @@ function setBattleAutoSpeak(enabled) {
   if ($('battle-auto-speak-toggle')) $('battle-auto-speak-toggle').checked = battleAutoSpeak;
 }
 
+function setEnglishAccent(code) {
+  englishAccent = ENGLISH_ACCENTS.some(a => a.code === code) ? code : 'native';
+  localStorage.setItem('languageQuest_englishAccent', englishAccent);
+  if ($('speech-accent-select')) $('speech-accent-select').value = englishAccent;
+  if ($('battle-speech-accent-select')) $('battle-speech-accent-select').value = englishAccent;
+}
+
+function populateEnglishAccentSelects() {
+  const options = ENGLISH_ACCENTS.map(a => `<option value="${a.code}">${a.label}</option>`).join('');
+  ['speech-accent-select', 'battle-speech-accent-select'].forEach(id => {
+    const el = $(id);
+    if (el && !el.dataset.populated) {
+      el.innerHTML = options;
+      el.dataset.populated = '1';
+    }
+  });
+}
+
 function setupSpeechControls() {
   setSpeechRate(speechRate);
   setBattleAutoSpeak(battleAutoSpeak);
+  populateEnglishAccentSelects();
+  setEnglishAccent(englishAccent);
+  refreshEnglishAccentVisibility();
 }
 
 function speakTextForReviewItem(item) {
@@ -4390,6 +4463,8 @@ document.addEventListener('DOMContentLoaded', () => {
   $('inn-auto-stop-btn')?.addEventListener('click', stopInnAutoSpeak);
   $('speech-rate-range')?.addEventListener('input', e => setSpeechRate(e.target.value));
   $('battle-speech-rate-range')?.addEventListener('input', e => setSpeechRate(e.target.value));
+  $('speech-accent-select')?.addEventListener('change', e => setEnglishAccent(e.target.value));
+  $('battle-speech-accent-select')?.addEventListener('change', e => setEnglishAccent(e.target.value));
 
   document.addEventListener('pointerdown', e => {
     const icon = e.target.closest?.('.field-icon');
