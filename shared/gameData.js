@@ -109,8 +109,19 @@ export function toeicLabel(tier) {
 
 export const EXAM_LEVEL_SYSTEMS = {
   en: {
-    name: 'TOEIC L&R',
-    labels: ['TOEIC 300','TOEIC 400','TOEIC 500','TOEIC 600','TOEIC 700','TOEIC 730','TOEIC 800','TOEIC 860','TOEIC 900','TOEIC 990'],
+    name: 'TOEIC L&R / 英検',
+    labels: [
+      'TOEIC 300・英検3級',
+      'TOEIC 400・英検3級〜準2級',
+      'TOEIC 500・英検準2級',
+      'TOEIC 600・英検準2級〜2級',
+      'TOEIC 700・英検2級',
+      'TOEIC 730・英検2級',
+      'TOEIC 800・英検準1級',
+      'TOEIC 860・英検準1級',
+      'TOEIC 900・英検準1級〜1級',
+      'TOEIC 990・英検1級',
+    ],
   },
   ja: {
     name: 'JLPT',

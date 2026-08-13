@@ -2946,14 +2946,16 @@ Object.entries({
   ],
 }).forEach(([code, rows]) => appendGrammarItems(code, rows));
 
-const NEW_WORD_TIERS = [1,1,1,1,1,1,2,2,2,2,1,1,1,2,3,3,3,3,3,2,2,2,2,2,2,3,2,3,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,1,1,1,1,1,1,1,1,1,2,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,1,1,1,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,2,2,1,1,2,1,1,1,2,1,1,1,2,1,2,2,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,1,1,2,2,1,1,1,1,1,2,2,2,2,2,2,1];
+// 語のカテゴリ順（数字/曜日/色/家族/動詞/形容詞 → 食べ物/体/天気/時間/服 → 職業/乗り物/場所/スポーツ/感情/電化製品）に沿って
+// 難易度が段階的に上がるよう、Lv.1〜10へほぼ均等（21語ずつ）に割り振る
+const NEW_WORD_TIERS = Array.from({ length: 210 }, (_, i) => Math.min(10, 1 + Math.floor(i * 10 / 210)));
 
 export const MULTI_VOCAB_DB = Object.fromEntries(
   Object.entries(BASIC_WORDS_BY_LANGUAGE).map(([code, words]) => [
     code,
     words.map((word, idx) => ({
       id: `${code}${String(idx + 1).padStart(3, '0')}`,
-      lv: idx < 40 ? Math.min(10, Math.floor(idx / 2) + 1) : NEW_WORD_TIERS[idx - 40],
+      lv: idx < 40 ? Math.floor(idx / 4) + 1 : NEW_WORD_TIERS[idx - 40],
       word,
       en: BASIC_MEANINGS[idx][0],
       pron: BASIC_PRON_BY_LANGUAGE[code]?.[idx] || word,
