@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Language Quest</title>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <script type="module" crossorigin src="./assets/index-BGYCZH6k.js"></script>
+  <script type="module" crossorigin src="./assets/index-B4i9jsrs.js"></script>
   <link rel="stylesheet" crossorigin href="./assets/index-CpiprLgh.css">
 </head>
 <body>
@@ -477,6 +477,10 @@
         <button type="button" id="inn-tools-toggle" class="inn-tools-toggle">▼ 復習メニュー</button>
         <div id="inn-tools-body" class="inn-tools-body">
           <div class="inn-filter-row">
+            <label class="inn-control inn-language-control">
+              <span>学習言語</span>
+              <select id="inn-language-select" class="dq-select"></select>
+            </label>
             <button class="dq-btn inn-filter-btn active" data-filter="all">すべて</button>
             <button class="dq-btn inn-filter-btn" data-filter="vocab">たんご</button>
             <button class="dq-btn inn-filter-btn" data-filter="grammar">ぶんぽう</button>
@@ -515,6 +519,14 @@
             <label class="inn-control inn-accent-control">
               <span>発音</span>
               <select id="speech-accent-select" class="dq-select"></select>
+            </label>
+            <label class="inn-control inn-repeat-control">
+              <span>単語くり返し回数</span>
+              <input id="speech-repeat-count" type="number" min="1" max="10" step="1" value="1">
+            </label>
+            <label class="inn-control inn-repeat-control">
+              <span>全体リピート回数</span>
+              <input id="speech-repeat-all-count" type="number" min="1" max="10" step="1" value="1">
             </label>
           </div>
         </div>
@@ -609,6 +621,10 @@
           <label class="battle-rate-control battle-accent-control">
             <span>発音</span>
             <select id="battle-speech-accent-select" class="dq-select"></select>
+          </label>
+          <label class="battle-rate-control">
+            <span>くり返し回数</span>
+            <input id="battle-speech-repeat-count" type="number" min="1" max="10" step="1" value="1">
           </label>
         </div>
 
