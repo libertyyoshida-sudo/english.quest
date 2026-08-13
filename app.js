@@ -111,6 +111,8 @@ async function handleAuthSuccess(token) {
   authToken = token;
   localStorage.setItem('eigoDQ_token', token);
   await loadFullProfile();
+  populateLanguageSelect();
+  refreshCommandLocks();
   $('logout-btn')?.classList.remove('hidden');
   goToField();
 }
@@ -1882,13 +1884,14 @@ let cachedSpeechVoices = [];
 let speechRate = Math.min(3, Math.max(0.5, Number(localStorage.getItem('languageQuest_speechRate') || 0.85)));
 let battleAutoSpeak = localStorage.getItem('languageQuest_battleAutoSpeak') === '1';
 
+// TOEIC公式リスニングの4アクセント（米・英・加・豪）を優先し、参考としてインドを追加
 const ENGLISH_ACCENTS = [
   { code: 'native', label: 'ネイティブ（自動）', speechLang: 'en-US', pitch: 1.0,  rateMul: 1.0 },
   { code: 'us',     label: 'アメリカ',            speechLang: 'en-US', pitch: 1.0,  rateMul: 1.0,  nameHints: ['us', 'united states', 'america'] },
   { code: 'gb',     label: 'イギリス',            speechLang: 'en-GB', pitch: 0.82, rateMul: 0.92, nameHints: ['uk', 'united kingdom', 'british', 'gb'] },
+  { code: 'ca',     label: 'カナダ',              speechLang: 'en-CA', pitch: 1.05, rateMul: 0.97, nameHints: ['canada', 'canadian', 'ca'] },
   { code: 'au',     label: 'オーストラリア',      speechLang: 'en-AU', pitch: 1.22, rateMul: 1.08, nameHints: ['australia', 'au'] },
   { code: 'in',     label: 'インド',              speechLang: 'en-IN', pitch: 1.12, rateMul: 0.9,  nameHints: ['india', 'hindi', 'in'] },
-  { code: 'cn',     label: '中国',                speechLang: 'en-US', pitch: 0.9,  rateMul: 0.8,  nameHints: ['china', 'chinese', 'mandarin', 'cn'] },
 ];
 let englishAccent = ENGLISH_ACCENTS.some(a => a.code === localStorage.getItem('languageQuest_englishAccent'))
   ? localStorage.getItem('languageQuest_englishAccent')
@@ -4269,6 +4272,8 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ── セッション復元（トークンがあれば自動ログイン） ── */
   tryRestoreSession().then(restored => {
     if (restored) {
+      populateLanguageSelect();
+      refreshCommandLocks();
       $('logout-btn')?.classList.remove('hidden');
       goToField();
     }
