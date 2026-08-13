@@ -25,6 +25,7 @@ export const LANGUAGE_OPTIONS = [
   { code:'ta', label:'タミル語', native:'தமிழ்', speechLang:'ta-IN' },
   { code:'hi', label:'ヒンディー語', native:'हिन्दी', speechLang:'hi-IN' },
   { code:'ne', label:'ネパール語', native:'नेपाली', speechLang:'ne-NP' },
+  { code:'ur', label:'ウルドゥー語', native:'اردو', speechLang:'ur-PK', status:'学習中', aliases:['Urdu'] },
 ];
 
 export const LANGUAGE_PROFILES = {
@@ -54,6 +55,7 @@ export const LANGUAGE_PROFILES = {
   ta: { countries:'インド、スリランカ、シンガポール、マレーシアなど', speakers:'合計 約87,000,000〜90,000,000人', note:'長い文学伝統を持つドラヴィダ語族の代表的言語。' },
   hi: { countries:'インド、フィジー、ネパール周辺、在外インド系社会など', speakers:'L1 約345,000,000人 / L2 約264,000,000人 / 合計 約609,000,000人', note:'インド北部を中心に広く使われ、映画・音楽文化とも結びつきが強い。' },
   ne: { countries:'ネパール、インド北東部、ブータン、在外ネパール人コミュニティなど', speakers:'合計 約30,000,000〜35,000,000人', note:'デーヴァナーガリー文字を使うインド・アーリア系の言語。ヒンディー語と文字体系が近い。' },
+  ur: { countries:'パキスタン、インド(北部)、在外南アジア系コミュニティなど', speakers:'L1 約70,000,000人 / L2 約100,000,000人以上 / 合計 約230,000,000人', note:'ペルシア・アラビア文字を右から左に書くインド・アーリア系の言語。文法・語彙はヒンディー語と近く、パキスタンの国語。' },
 };
 
 export const PHRASE_CATEGORIES = [
