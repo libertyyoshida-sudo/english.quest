@@ -1332,6 +1332,11 @@ body {
   grid-template-columns: auto minmax(0, 1fr);
   gap: 8px 12px;
   align-items: center;
+  padding-right: 32px;
+}
+.keyboard-setup-reopen {
+  margin-bottom: 14px;
+  font-size: .8rem;
 }
 .keyboard-mode-row {
   display: flex;

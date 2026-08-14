@@ -4533,6 +4533,14 @@ document.addEventListener('DOMContentLoaded', () => {
   $('keyboard-msg-close')?.addEventListener('click', () => $('keyboard-msg')?.classList.add('hidden'));
 
   /* ── キーボードどうじょう ── */
+  $('keyboard-setup-close')?.addEventListener('click', () => {
+    $('keyboard-setup-window')?.classList.add('hidden');
+    $('keyboard-setup-reopen')?.classList.remove('hidden');
+  });
+  $('keyboard-setup-reopen')?.addEventListener('click', () => {
+    $('keyboard-setup-window')?.classList.remove('hidden');
+    $('keyboard-setup-reopen')?.classList.add('hidden');
+  });
   $('kb-mode-pc')?.addEventListener('click', () => setKeyboardInputMode('pc'));
   $('kb-mode-mobile')?.addEventListener('click', () => setKeyboardInputMode('mobile'));
   document.addEventListener('keydown', handleKeyboardKeydown);
