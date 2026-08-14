@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Language Quest</title>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <script type="module" crossorigin src="./assets/index-DTB4a0j6.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-CpiprLgh.css">
+  <script type="module" crossorigin src="./assets/index-BAmmz35_.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-CdNc9ql_.css">
 </head>
 <body>
 
@@ -397,7 +397,8 @@
         <button type="button" id="keyboard-msg-close" class="msg-window-close" aria-label="メッセージを閉じる">✕</button>
       </div>
 
-      <div class="dq-window keyboard-setup-window">
+      <div class="dq-window keyboard-setup-window" id="keyboard-setup-window">
+        <button type="button" id="keyboard-setup-close" class="msg-window-close" aria-label="入力設定を閉じる">✕</button>
         <div class="keyboard-mode-row" role="group" aria-label="入力モード">
           <button type="button" id="kb-mode-pc" class="dq-btn kb-mode-btn">PC配列</button>
           <button type="button" id="kb-mode-mobile" class="dq-btn kb-mode-btn">スマホ入力</button>
@@ -405,6 +406,7 @@
         <div class="keyboard-setup-title" id="keyboard-setup-title">⌨️ 入力設定</div>
         <div class="keyboard-setup-text" id="keyboard-setup-text"></div>
       </div>
+      <button type="button" id="keyboard-setup-reopen" class="dq-btn dq-btn-blue keyboard-setup-reopen hidden">⌨️ 入力設定を開く</button>
 
       <div class="dq-window kb-stage-window" id="keyboard-stage-select">
         <div class="status-title">▶ れんしゅうステージを えらぼう</div>
